@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" version="26.0.7">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" version="24.8.0">
   <diagram id="5WNNjgCBTxIKJyNB-_gj" name="Use Case Diagram">
-    <mxGraphModel dx="2537" dy="988" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2190" dy="846" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -22,7 +22,7 @@
         <mxCell id="7dUUsBJXV247IeLa6GFK-6" value="" style="shape=actor;whiteSpace=wrap;html=1;" parent="7dUUsBJXV247IeLa6GFK-5" vertex="1">
           <mxGeometry x="5" width="50" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="7dUUsBJXV247IeLa6GFK-7" value="Admin" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="7dUUsBJXV247IeLa6GFK-5" vertex="1">
+        <mxCell id="7dUUsBJXV247IeLa6GFK-7" value="Owner" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="7dUUsBJXV247IeLa6GFK-5" vertex="1">
           <mxGeometry y="62" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="7dUUsBJXV247IeLa6GFK-8" value="" style="group" parent="1" vertex="1" connectable="0">
@@ -31,7 +31,7 @@
         <mxCell id="7dUUsBJXV247IeLa6GFK-9" value="" style="shape=actor;whiteSpace=wrap;html=1;" parent="7dUUsBJXV247IeLa6GFK-8" vertex="1">
           <mxGeometry x="5" width="50" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="7dUUsBJXV247IeLa6GFK-10" value="Registered - Superuser" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="7dUUsBJXV247IeLa6GFK-8" vertex="1">
+        <mxCell id="7dUUsBJXV247IeLa6GFK-10" value="Admin" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="7dUUsBJXV247IeLa6GFK-8" vertex="1">
           <mxGeometry x="-20" y="60" width="100" height="48" as="geometry" />
         </mxCell>
         <mxCell id="7dUUsBJXV247IeLa6GFK-11" value="" style="group" parent="1" vertex="1" connectable="0">
@@ -441,12 +441,6 @@
         </mxCell>
         <mxCell id="5kvOexl5CcK-21RGumjx-31" value="View Real-Time Data Dashboard" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="292" y="300" width="223" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="5kvOexl5CcK-21RGumjx-32" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#0050ef;strokeColor=#001DBC;exitX=1;exitY=0.75;exitDx=0;exitDy=0;" parent="1" source="7dUUsBJXV247IeLa6GFK-15" target="5kvOexl5CcK-21RGumjx-31" edge="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="-180" y="190" as="sourcePoint" />
-            <mxPoint x="305" y="305" as="targetPoint" />
-          </mxGeometry>
         </mxCell>
         <mxCell id="5kvOexl5CcK-21RGumjx-33" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#FF0000;" parent="1" source="7dUUsBJXV247IeLa6GFK-12" target="5kvOexl5CcK-21RGumjx-31" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
