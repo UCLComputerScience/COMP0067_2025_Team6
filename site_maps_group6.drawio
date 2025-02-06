@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.9 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.9">
   <diagram name="Page-1" id="6zZcQ8GVPLcVQGp1yhAT">
-    <mxGraphModel dx="4063" dy="2963" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2603" dy="2118" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -118,13 +118,13 @@
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="4qyZhOksH_dMV-Qbtl2D-35" target="4qyZhOksH_dMV-Qbtl2D-31" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-35" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;Admin&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;fillColor=light-dark(#FF9999,var(--ge-dark-color, #121212));fontStyle=1" parent="1" vertex="1">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-35" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;Site Owner&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;fillColor=light-dark(#FF9999,var(--ge-dark-color, #121212));fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="-420" y="340" width="170" height="60" as="geometry" />
         </mxCell>
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="4qyZhOksH_dMV-Qbtl2D-36" target="4qyZhOksH_dMV-Qbtl2D-35" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-65" value="&lt;font&gt;Admin only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-46" vertex="1" connectable="0">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-65" value="&lt;font&gt;Owner (Hilton) only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-46" vertex="1" connectable="0">
           <mxGeometry x="0.4396" y="3" relative="1" as="geometry">
             <mxPoint x="79" y="-3" as="offset" />
           </mxGeometry>
@@ -246,7 +246,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-84" value="&lt;font&gt;Super user only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-83" vertex="1" connectable="0">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-84" value="&lt;font&gt;Admin only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-83" vertex="1" connectable="0">
           <mxGeometry x="-0.4136" y="-1" relative="1" as="geometry">
             <mxPoint x="-51" y="1" as="offset" />
           </mxGeometry>
@@ -404,10 +404,10 @@
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-210" value="" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;fillColor=light-dark(#FF9999,var(--ge-dark-color, #121212));" parent="1" vertex="1">
           <mxGeometry x="-340" y="210" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-215" value="&lt;font&gt;: Admin only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-215" value="&lt;font&gt;: Owner only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
           <mxGeometry x="-290" y="210" width="150" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-216" value="&lt;font&gt;: Superuser only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-216" value="&lt;font&gt;: Admin only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
           <mxGeometry x="-290" y="180" width="170" height="20" as="geometry" />
         </mxCell>
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-217" value="&lt;font&gt;: Standard user&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
@@ -595,7 +595,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-362" value="&lt;font&gt;Superuser only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-361" vertex="1" connectable="0">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-362" value="&lt;font&gt;Admin only&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=20;" parent="4qyZhOksH_dMV-Qbtl2D-361" vertex="1" connectable="0">
           <mxGeometry x="-0.4136" y="-1" relative="1" as="geometry">
             <mxPoint x="-51" y="1" as="offset" />
           </mxGeometry>
@@ -738,7 +738,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-392" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;&lt;font style=&quot;&quot;&gt;Site Map for Super user&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-392" value="&lt;font style=&quot;font-size: 30px;&quot;&gt;&lt;font style=&quot;&quot;&gt;Site Map for admin&lt;/font&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="-350" y="1120" width="180" height="90" as="geometry" />
         </mxCell>
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-393" value="" style="rounded=1;whiteSpace=wrap;html=1;shadow=0;fillColor=light-dark(#99FF99,var(--ge-dark-color, #121212));" parent="1" vertex="1">
@@ -750,7 +750,7 @@
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-395" value="" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-340" y="1220" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="4qyZhOksH_dMV-Qbtl2D-398" value="&lt;font&gt;: Superuser only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
+        <mxCell id="4qyZhOksH_dMV-Qbtl2D-398" value="&lt;font&gt;: Admin only&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
           <mxGeometry x="-290" y="1280" width="160" height="20" as="geometry" />
         </mxCell>
         <mxCell id="4qyZhOksH_dMV-Qbtl2D-399" value="&lt;font&gt;: Standard user&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" parent="1" vertex="1">
