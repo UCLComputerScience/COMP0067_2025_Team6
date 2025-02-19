@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 export const metadata = {
-  title: "Default",
+  title: "Saas",
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
