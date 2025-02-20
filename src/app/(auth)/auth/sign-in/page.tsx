@@ -154,12 +154,14 @@ function SignIn() {
             <BackgroundOverlay />
             <ContentWrapper>
               <Typography
-                variant="display-medium"
-                component="h1"
-                align="center"
                 sx={{
-                  fontWeight: 1,
+                  fontFamily: "Roboto",
+                  fontSize: "45px",
+                  lineHeight: "52px",
+                  fontWeight: 400,
+                  letterSpacing: "0px",
                   mb: 2,
+                  textAlign: "center",
                 }}
               >
                 Welcome!
