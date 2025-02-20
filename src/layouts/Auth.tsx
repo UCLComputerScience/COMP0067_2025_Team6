@@ -15,36 +15,44 @@ interface AuthType {
 }
 
 const Root = styled.div`
-  max-width: 520px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100vh;
+  display: flex;
   justify-content: center;
   align-items: center;
-  display: flex;
-  min-height: 100%;
   flex-direction: column;
+  flex-grow: 1;
 `;
 
-const Brand = styled(Logo)`
-  fill: ${(props) => props.theme.palette.primary.main};
-  width: 64px;
-  height: 64px;
-  margin-bottom: 32px;
-`;
+// const Brand = styled(Logo)`
+//   fill: ${(props) => props.theme.palette.primary.main};
+//   width: 64px;
+//   height: 64px;
+//   margin-bottom: 32px;
+// `;
 
 const Wrapper = styled(Paper)`
-  padding: ${(props) => props.theme.spacing(6)};
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centers children horizontally */
+  justify-content: center; /* Centers children vertically */
+  padding: 0 !important; /* Remove any padding */
+  margin: 0; /* Remove any margin */
+  box-shadow: none; /* Removes any unwanted box shadow */
+  border-radius: 0; /* Ensures no rounded edges */
 
   ${(props) => props.theme.breakpoints.up("md")} {
-    padding: ${(props) => props.theme.spacing(10)};
+    padding: 0 !important;
   }
 `;
-
 const Auth: React.FC<AuthType> = ({ children }) => {
   return (
     <Root>
       <CssBaseline />
       <GlobalStyle />
-      <Brand />
+      {/* <Brand /> */}
       <Wrapper>{children}</Wrapper>
       <Settings />
     </Root>
