@@ -34,6 +34,7 @@ const TopBar = styled(AppBar)`
 const Logo = styled.img`
   height: 40px;
   margin-right: 32px;
+  object-fit: contain;
 `;
 
 const NavButton = styled(Button)`
@@ -66,21 +67,59 @@ const SignUpButton = styled(Button)`
 `;
 
 const LeftSection = styled(Box)`
-  background-color: #f5f5f5;
-  min-height: calc(100vh - 64px);
+  background-image: url("/sign_in_image.jpg"); // Path to your image
+  background-size: cover; // Cover the entire section
+  background-position: center; // Center the image
+  background-repeat: no-repeat; // Do not repeat the image
+  min-height: calc(100vh - 64px); // Adjust to full height minus the top bar
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 48px;
-  background-size: cover;
-  background-position: center;
+  position: relative;
+`;
+
+const BackgroundOverlay = styled(Box)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(
+    0,
+    0,
+    0,
+    0.8
+  ); // Dark overlay to make the text stand out more
+  z-index: -1; // Place it behind the text
+`;
+
+const LeftSectionImage = styled(Box)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/sign_in_image.jpg"); // Path to your image
+  background-size: cover; // Cover the entire section
+  background-position: center; // Center the image
+  background-repeat: no-repeat; // Do not repeat the image
+  opacity: 0.2; // 20% opacity
+  z-index: -2; // Make sure it's behind the content
+`;
+
+const ContentWrapper = styled(Box)`
+  position: relative; // Ensure text stays above the background
+  margin-top: calc(50vh - 250px);
+  z-index: 1; // Ensure the text stays above the background image
+  text-align: center;
 `;
 
 const RightSection = styled(Paper)`
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
   padding: 48px;
 `;
 
@@ -89,7 +128,7 @@ function SignIn() {
     <React.Fragment>
       <TopBar position="static">
         <Toolbar>
-          <Logo src="/logo.png" alt="Logo" />
+          <Logo src="/UCL_logo.jpg" alt="Logo" />
           <NavButton>Home</NavButton>
           <NavButton>About</NavButton>
           <NavButton>Resources</NavButton>
@@ -111,49 +150,55 @@ function SignIn() {
       <Grid container>
         <Grid item xs={12} md={6}>
           <LeftSection>
-            <Typography
-              variant="display-medium"
-              component="h1"
-              align="center"
-              sx={{
-                fontWeight: 1,
-                mb: 2,
-              }}
-            >
-              Welcome!
-            </Typography>
-            <Typography
-              variant="headline-small"
-              component="p"
-              align="center"
-              sx={{
-                maxWidth: "600px",
-                margin: "0 auto",
-                color: "rgba(0, 0, 0, 0.54)",
-              }}
-            >
-              Experience real-time interaction with digital twin data through a
-              seamless, centralized platform. Empowering researchers, industry
-              partners, students, and staff to collaborate, analyze, and make
-              data-driven decisions—anytime, anywhere.
-            </Typography>
+            <LeftSectionImage />
+            <BackgroundOverlay />
+            <ContentWrapper>
+              <Typography
+                variant="display-medium"
+                component="h1"
+                align="center"
+                sx={{
+                  fontWeight: 1,
+                  mb: 2,
+                }}
+              >
+                Welcome!
+              </Typography>
+              <Typography
+                variant="headline-small"
+                component="p"
+                align="center"
+                sx={{
+                  maxWidth: "600px",
+                  margin: "0 auto",
+                  color: "rgba(0, 0, 0, 0.54)",
+                }}
+              >
+                Experience real-time interaction with digital twin data through
+                a seamless, centralized platform. Empowering researchers,
+                industry partners, students, and staff to collaborate, analyze,
+                and make data-driven decisions—anytime, anywhere.
+              </Typography>
+            </ContentWrapper>
           </LeftSection>
         </Grid>
         <Grid item xs={12} md={6}>
           <RightSection elevation={0}>
-            <Typography
-              align="center"
-              sx={{
-                fontFamily: "Inter",
-                fontSize: "20px",
-                fontWeight: 600,
-                color: "rgba(0, 0, 0, 0.87)",
-                mb: 2,
-              }}
-            >
-              Sign in to your account
-            </Typography>
-            <SignInComponent />
+            <ContentWrapper>
+              <Typography
+                align="center"
+                sx={{
+                  fontFamily: "Inter",
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  color: "rgba(0, 0, 0, 0.87)",
+                  mb: 2,
+                }}
+              >
+                Sign in to your account
+              </Typography>
+              <SignInComponent />
+            </ContentWrapper>
           </RightSection>
         </Grid>
       </Grid>
