@@ -35,6 +35,7 @@ function SignUp() {
       initialValues={{
         firstName: "",
         lastName: "",
+        organisation: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -43,6 +44,7 @@ function SignUp() {
       validationSchema={Yup.object().shape({
         firstName: Yup.string().max(255).required("First name is required"),
         lastName: Yup.string().max(255).required("Last name is required"),
+        organisation: Yup.string().max(255).required("Organisation is required"),
         email: Yup.string()
           .email("Must be a valid email")
           .max(255)
@@ -63,7 +65,8 @@ function SignUp() {
             values.email,
             values.password,
             values.firstName,
-            values.lastName
+            values.lastName,
+            values.organisation
           );
           router.push("/auth/sign-in");
         } catch (error: any) {
@@ -110,6 +113,18 @@ function SignUp() {
             error={Boolean(touched.lastName && errors.lastName)}
             fullWidth
             helperText={touched.lastName && errors.lastName}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            my={3}
+          />
+          <TextField
+            type="text"
+            name="organisation"
+            label="Organisation"
+            value={values.organisation}
+            error={Boolean(touched.organisation && errors.organisation)}
+            fullWidth
+            helperText={touched.organisation && errors.organisation}
             onBlur={handleBlur}
             onChange={handleChange}
             my={3}

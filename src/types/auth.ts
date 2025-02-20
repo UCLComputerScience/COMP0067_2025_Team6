@@ -30,7 +30,8 @@ export type JWTContextType = {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    organisation: string
   ) => Promise<void>;
   resetPassword: (email: string) => void;
 };
@@ -48,7 +49,8 @@ export type FirebaseAuthContextType = {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    organisation: string
   ) => Promise<void>;
   signInWithGoogle: () => Promise<firebase.auth.UserCredential>;
   signInWithFaceBook: () => Promise<firebase.auth.UserCredential>;
@@ -77,7 +79,8 @@ export type CognitoContextType = {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    organisation: string
   ) => Promise<unknown>;
   signOut: VoidFunction;
   resetPassword: (email: string) => void;
