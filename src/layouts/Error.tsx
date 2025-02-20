@@ -28,7 +28,7 @@ const Error: React.FC<ErrorType> = ({ children }) => {
       <CssBaseline />
       <GlobalStyle />
       {children}
-      <Settings />
+      {/* <Settings /> */}
     </Root>
   );
 };

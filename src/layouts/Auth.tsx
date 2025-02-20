@@ -44,9 +44,9 @@ const Auth: React.FC<AuthType> = ({ children }) => {
     <Root>
       <CssBaseline />
       <GlobalStyle />
-      <Brand />
+      {/* <Brand /> */}
       <Wrapper>{children}</Wrapper>
-      <Settings />
+      {/* <Settings /> */}
     </Root>
   );
 };
