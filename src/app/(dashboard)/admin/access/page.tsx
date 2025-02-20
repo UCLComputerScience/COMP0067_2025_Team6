@@ -10,6 +10,11 @@ import {
   Breadcrumbs as MuiBreadcrumbs,
   Button,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
   Divider as MuiDivider,
   Grid2 as Grid,
   IconButton,
@@ -26,14 +31,19 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  Fab,
+  Tabs,
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { orange } from "@mui/material/colors";
 import {
-  Add as AddIcon,
-  Archive as ArchiveIcon,
-  FilterList as FilterListIcon,
-  RemoveRedEye as RemoveRedEyeIcon,
+  Edit as EditIcon,
   Star as StarIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
 
@@ -80,165 +90,38 @@ const RatingIcon = styled(StarIcon)`
   color: ${() => orange[400]};
 `;
 
+const SearchContainer = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: center;
+`;
+
 function createData(
   id: string,
-  name: string,
-  variant: string,
-  price: string,
-  stock: number,
-  category: string,
-  rating: string,
-  reviews: number,
-  image: string
+  firstname: string,
+  lastname: string,
+  usertype: string,
+  status: string
 ) {
-  return { id, name, variant, price, stock, category, rating, reviews, image };
+  return { id, firstname, lastname, usertype, status };
 }
 
 type RowType = {
   [key: string]: string | number;
   id: string;
-  name: string;
-  variant: string;
-  price: string;
-  stock: number;
-  category: string;
-  rating: string;
-  reviews: number;
-  image: string;
+  firstname: string;
+  lastname: string;
+  usertype: string;
+  status: string;
 };
 const rows: Array<RowType> = [
-  createData(
-    "1",
-    "Apple iPad Pro",
-    "Silver",
-    "$ 1,399.00",
-    48,
-    "Tablets",
-    "4.6",
-    55,
-    "/static/img/products/product-9.png"
-  ),
-  createData(
-    "2",
-    "Apple iPad Pro",
-    "Space Gray",
-    "$ 1,399.00",
-    48,
-    "Tablets",
-    "4.3",
-    25,
-    "/static/img/products/product-8.png"
-  ),
-  createData(
-    "3",
-    "Apple iPhone 15 Pro Max",
-    "Blue Titanium",
-    "$ 1499.00",
-    38,
-    "Smartphones",
-    "4.6",
-    40,
-    "/static/img/products/product-4.png"
-  ),
-  createData(
-    "4",
-    "Apple iPhone 15 Pro Max",
-    "Natural Titanium",
-    "$ 1499.00",
-    30,
-    "Smartphones",
-    "4.8",
-    50,
-    "/static/img/products/product-3.png"
-  ),
-  createData(
-    "5",
-    "Apple iPhone 15 Pro Max",
-    "White Titanium",
-    "$ 1499.00",
-    45,
-    "Smartphones",
-    "4.9",
-    60,
-    "/static/img/products/product-5.png"
-  ),
-  createData(
-    "6",
-    'Apple MacBook Pro 16"',
-    "Silver",
-    "$ 2,399.00",
-    55,
-    "Notebooks",
-    "4.7",
-    45,
-    "/static/img/products/product-7.png"
-  ),
-  createData(
-    "7",
-    'Apple MacBook Pro 16"',
-    "Space Black",
-    "$ 2,399.00",
-    50,
-    "Notebooks",
-    "4.4",
-    30,
-    "/static/img/products/product-6.png"
-  ),
-  createData(
-    "8",
-    "Apple Watch SE",
-    "Midnight",
-    "$ 299.00",
-    49,
-    "Smartwatches",
-    "4.7",
-    40,
-    "/static/img/products/product-11.png"
-  ),
-  createData(
-    "9",
-    "Apple Watch SE",
-    "Silver",
-    "$ 299.00",
-    30,
-    "Smartwatches",
-    "4.7",
-    40,
-    "/static/img/products/product-12.png"
-  ),
-  createData(
-    "10",
-    "Apple Watch SE",
-    "Starlight",
-    "$ 299.00",
-    54,
-    "Smartwatches",
-    "4.5",
-    35,
-    "/static/img/products/product-10.png"
-  ),
-  createData(
-    "11",
-    "Apple Watch Series 9",
-    "Midnight",
-    "$ 349.00",
-    42,
-    "Smartwatches",
-    "4.2",
-    20,
-    "/static/img/products/product-1.png"
-  ),
-  createData(
-    "12",
-    "Apple Watch Series 9",
-    "Starlight",
-    "$ 349.00",
-    54,
-    "Smartwatches",
-    "4.5",
-    35,
-    "/static/img/products/product-2.png"
-  ),
+  createData("1", "Jack", "Smith", "Owner", "Active"),
+  createData("2", "Mike", "Bernie", "Standard", "Active"),
+  createData("3", "Linda", "Thompson", "Standard", "Active"),
+  createData("4", "Carlos", "Perez", "Owner", "Active"),
+  createData("5", "Belinda", "Jacobs", "Standard", "Active"),
+  createData("6", "Lucy", "Tillman", "Guest", "Active"),
 ];
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
@@ -278,14 +161,13 @@ type HeadCell = {
   alignment: "left" | "center" | "right" | "justify" | "inherit" | undefined;
   label: string;
   disablePadding?: boolean;
+  width?: string;
 };
 const headCells: Array<HeadCell> = [
-  { id: "name", alignment: "left", label: "Item Name" },
-  { id: "price", alignment: "right", label: "Price" },
-  { id: "stock", alignment: "right", label: "Stock" },
-  { id: "category", alignment: "left", label: "Category" },
-  { id: "rating", alignment: "left", label: "Rating" },
-  { id: "actions", alignment: "right", label: "Actions" },
+  { id: "firstname", alignment: "left", label: "First Name", width: "20%" },
+  { id: "lastname", alignment: "left", label: "Last Name", width: "20%" },
+  { id: "usertype", alignment: "left", label: "User Type", width: "20%" },
+  { id: "status", alignment: "left", label: "Status", width: "20%" },
 ];
 
 type EnhancedTableHeadProps = {
@@ -312,7 +194,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
+        <TableCell padding="checkbox" style={{ width: "5%" }}>
           <Checkbox
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
@@ -326,6 +208,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
             align={headCell.alignment}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
+            style={{ width: headCell.width }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -336,14 +219,18 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
             </TableSortLabel>
           </TableCell>
         ))}
+        <TableCell style={{ width: "15%" }} /> {/* For action buttons */}
       </TableRow>
     </TableHead>
   );
 };
 
-type EnhancedTableToolbarProps = { numSelected: number };
+type EnhancedTableToolbarProps = {
+  numSelected: number;
+  onManageAccess: () => void;
+};
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const { numSelected } = props;
+  const { numSelected, onManageAccess } = props;
 
   return (
     <Toolbar>
@@ -354,26 +241,20 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
           </Typography>
         ) : (
           <Typography variant="h6" id="tableTitle">
-            Products
+            Users
           </Typography>
         )}
       </ToolbarTitle>
       <Spacer />
-      <div>
-        {numSelected > 0 ? (
-          <Tooltip title="Delete">
-            <IconButton aria-label="Delete" size="large">
-              <ArchiveIcon />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Tooltip title="Filter list">
-            <IconButton aria-label="Filter list" size="large">
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </div>
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        disabled={numSelected === 0}
+        onClick={onManageAccess}
+      >
+        Manage Access
+      </Button>
     </Toolbar>
   );
 };
@@ -384,6 +265,38 @@ function EnhancedTable() {
   const [selected, setSelected] = React.useState<Array<string>>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(6);
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [editingRow, setEditingRow] = React.useState<RowType | null>(null);
+  const [currentTab, setCurrentTab] = React.useState(0);
+  const [instrumentAccess, setInstrumentAccess] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [userTypeFilter, setUserTypeFilter] = React.useState("All");
+  const [regionFilter, setRegionFilter] = React.useState("All");
+  const [projectFilter, setProjectFilter] = React.useState("All");
+
+  const handleEditClick = (row: RowType) => {
+    setEditingRow(row);
+    setOpenDialog(true);
+  };
+
+  const handleManageAccess = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingRow(null);
+    setCurrentTab(0);
+  };
+
+  const handleSaveChanges = () => {
+    // Here you would typically make an API call to update the data
+    handleCloseDialog();
+  };
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
 
   const handleRequestSort = (event: any, property: string) => {
     const isAsc = orderBy === property && order === "asc";
@@ -444,8 +357,63 @@ function EnhancedTable() {
 
   return (
     <div>
+      <SearchContainer>
+        <TextField
+          placeholder="Search"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon color="action" />,
+          }}
+          sx={{ minWidth: 300 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>User Type</InputLabel>
+          <Select
+            value={userTypeFilter}
+            label="User Type"
+            onChange={(e) => setUserTypeFilter(e.target.value)}
+          >
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Owner">Owner</MenuItem>
+            <MenuItem value="Standard">Standard</MenuItem>
+            <MenuItem value="Guest">Guest</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Region</InputLabel>
+          <Select
+            value={regionFilter}
+            label="Region"
+            onChange={(e) => setRegionFilter(e.target.value)}
+          >
+            <MenuItem value="All">All</MenuItem>
+            {/* Add your region options here */}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Project</InputLabel>
+          <Select
+            value={projectFilter}
+            label="Project"
+            onChange={(e) => setProjectFilter(e.target.value)}
+          >
+            <MenuItem value="All">All</MenuItem>
+            {/* Add your project options here */}
+          </Select>
+        </FormControl>
+        <Button variant="contained" color="primary">
+          Go
+        </Button>
+      </SearchContainer>
+
       <Paper>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar
+          numSelected={selected.length}
+          onManageAccess={handleManageAccess}
+        />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -485,35 +453,29 @@ function EnhancedTable() {
                       </TableCell>
                       <TableCell component="th" id={labelId} scope="row">
                         <Customer>
-                          <ImageWrapper>
-                            <Image src={row.image} alt={row.name} />
-                          </ImageWrapper>
-                          <Box ml={3}>
-                            <Typography variant="body1">{row.name}</Typography>
-                            <Typography variant="body1" color="textSecondary">
-                              {row.variant}
+                          <Box>
+                            <Typography variant="body1">
+                              {row.firstname}
                             </Typography>
                           </Box>
                         </Customer>
                       </TableCell>
-                      <TableCell align="right">{row.price}</TableCell>
-                      <TableCell align="right">{row.stock}</TableCell>
-                      <TableCell align="left">{row.category}</TableCell>
-                      <TableCell>
-                        <Rating>
-                          <RatingIcon />
-                          <Typography variant="body1">{row.rating} </Typography>
-                          <Typography variant="body1" color="textSecondary">
-                            of {row.reviews} Reviews
-                          </Typography>
-                        </Rating>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.lastname}</Typography>
                       </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.usertype}</Typography>
+                      </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.status}</Typography>
+                      </TableCell>
+
                       <TableCell align="right">
-                        <IconButton aria-label="delete" size="large">
-                          <ArchiveIcon />
-                        </IconButton>
-                        <IconButton aria-label="details" size="large">
-                          <RemoveRedEyeIcon />
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleEditClick(row)}
+                        >
+                          <EditIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -537,6 +499,50 @@ function EnhancedTable() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Edit Access</DialogTitle>
+        <DialogContent>
+          <Tabs value={currentTab} onChange={handleTabChange}>
+            <Tab label="Instrument Access" />
+            <Tab label="Dashboard Access" />
+            <Tab label="Control Access" />
+          </Tabs>
+
+          {currentTab === 0 && (
+            <Box sx={{ mt: 2 }}>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Instrument Access</InputLabel>
+                <Select
+                  value={instrumentAccess}
+                  onChange={(e) => setInstrumentAccess(e.target.value)}
+                  label="Instrument Access"
+                >
+                  <MenuItem value="full">Full Access</MenuItem>
+                  <MenuItem value="limited">Limited Access</MenuItem>
+                  <MenuItem value="none">No Access</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+
+          {currentTab === 1 && (
+            <Box sx={{ mt: 2 }}>
+              {/* Dashboard Access fields will go here */}
+            </Box>
+          )}
+
+          {currentTab === 2 && (
+            <Box sx={{ mt: 2 }}>{/* Control Access fields will go here */}</Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveChanges} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
@@ -559,14 +565,6 @@ function Products() {
             </Link> */}
             <Typography>Manage Access</Typography>
           </Breadcrumbs>
-        </Grid>
-        <Grid>
-          <div>
-            <Button variant="contained" color="primary">
-              <AddIcon />
-              New Product
-            </Button>
-          </div>
         </Grid>
       </Grid>
       <Divider my={6} />
