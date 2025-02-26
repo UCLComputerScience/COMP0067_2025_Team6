@@ -1,25 +1,10 @@
 "use client";
-
+import PersonIcon from "@mui/icons-material/Person";
+import BusinessIcon from "@mui/icons-material/Business";
 import React from "react";
-import type { ReactElement } from "react";
+import { useState, useEffect } from "react";
 import styled from "@emotion/styled";
-import { withTheme } from "@emotion/react";
 import NextLink from "next/link";
-
-import { Bar } from "react-chartjs-2";
-
-import {
-  Briefcase,
-  DollarSign,
-  ExternalLink,
-  Home,
-  MapPin,
-  ShoppingBag,
-} from "lucide-react";
-
-import Facebook from "@/vendor/facebook.svg";
-import Instagram from "@/vendor/instagram.svg";
-
 import {
   Avatar as MuiAvatar,
   Box,
@@ -27,522 +12,399 @@ import {
   Button as MuiButton,
   Card as MuiCard,
   CardContent,
-  Chip as MuiChip,
   Divider as MuiDivider,
-  Grid2 as MuiGrid,
-  LinearProgress as MuiLinearProgress,
-  Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+ // Grid as MuiGrid,
   Typography as MuiTypography,
+  TextField,
+  Chip as MuiChip,
 } from "@mui/material";
-import { spacing, SpacingProps } from "@mui/system";
+import { Edit } from "@mui/icons-material";
+import { Grid } from "@mui/material";
 
-import { ThemeProps } from "@/types/theme";
-
-const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
-
-const Button = styled(MuiButton)(spacing);
-
-const Card = styled(MuiCard)(spacing);
-
-const Chip = styled(MuiChip)(spacing);
-
-const Divider = styled(MuiDivider)(spacing);
-
-const Grid = styled(MuiGrid)(spacing);
-
-const LinearProgress = styled(MuiLinearProgress)(spacing);
-
-const Spacer = styled.div(spacing);
-
-interface TypographyProps extends SpacingProps {
-  component?: string;
-}
-const Typography = styled(MuiTypography)<TypographyProps>(spacing);
-
-const Centered = styled.div`
-  text-align: center;
+const Breadcrumbs = styled(MuiBreadcrumbs)`
+  margin-bottom: 16px;
 `;
+
+const Button = styled(MuiButton)`
+  margin-right: 8px;
+`;
+
+const Card = styled(MuiCard)`
+  margin-bottom: 24px;
+`;
+
+const Divider = styled(MuiDivider)`
+  margin: 24px 0;
+`;
+const StyledGrid = styled(Grid)`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const Typography = styled(MuiTypography)``;
 
 const Avatar = styled(MuiAvatar)`
-  display: inline-block;
-  height: 128px;
   width: 128px;
+  height: 128px;
+  margin-bottom: 16px;
 `;
 
-const AboutIcon = styled.span`
-  display: flex;
-  padding-right: ${(props) => props.theme.spacing(2)};
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
+const Chip = styled(MuiChip)`
+  margin: 4px;
 `;
 
-const ChartWrapper = styled.div`
-  height: 280px;
-  position: relative;
-`;
-
-const StatsIcon = styled.div`
-  position: absolute;
-  right: 16px;
-  top: 32px;
-
-  svg {
-    width: 32px;
-    height: 32px;
-    color: ${(props) => props.theme.palette.secondary.main};
-  }
-`;
-
-const ProductsChip = styled(Chip)`
-  height: 20px;
-  padding: 4px 0;
-  font-size: 90%;
-  background-color: ${(props) =>
-    props.theme.palette[props.color ? props.color : "primary"].light};
-  color: ${(props) => props.theme.palette.common.white};
-`;
-
-const TableWrapper = styled.div`
-  overflow-y: auto;
-  max-width: calc(100vw - ${(props) => props.theme.spacing(12)});
-`;
-
-function Details() {
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Profile Details
-        </Typography>
-
-        <Spacer mb={4} />
-
-        <Centered>
-          <Avatar alt="Lucy Lavender" src="/static/img/avatars/avatar-1.jpg" />
-          <Typography variant="body2" component="div" gutterBottom>
-            <Box fontWeight="fontWeightMedium">Lucy Lavender</Box>
-            <Box fontWeight="fontWeightRegular">Lead Developer</Box>
-          </Typography>
-
-          <Button mr={2} variant="contained" color="primary" size="small">
-            Follow
-          </Button>
-          <Button mr={2} variant="contained" color="primary" size="small">
-            Message
-          </Button>
-        </Centered>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Skills() {
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Skills
-        </Typography>
-
-        <Spacer mb={4} />
-
-        <Centered>
-          <Chip size="small" mr={1} mb={1} label="HTML" color="secondary" />
-          <Chip size="small" mr={1} mb={1} label="JavaScript" />
-          <Chip size="small" mr={1} mb={1} label="Sass" />
-          <Chip size="small" mr={1} mb={1} label="React" />
-          <Chip size="small" mr={1} mb={1} label="Redux" />
-          <Chip size="small" mr={1} mb={1} label="Next.js" />
-          <Chip size="small" mr={1} mb={1} label="Material UI" />
-          <Chip size="small" mr={1} mb={1} label="UI" />
-          <Chip size="small" mr={1} mb={1} label="UX" />
-        </Centered>
-      </CardContent>
-    </Card>
-  );
-}
-
-function About() {
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          About
-        </Typography>
-
-        <Spacer mb={4} />
-
-        <Grid container direction="row" alignItems="center" mb={2}>
-          <Grid>
-            <AboutIcon>
-              <Home />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            Lives in{" "}
-            <Link href="https://mira.bootlab.io/">San Fransisco, SA</Link>
-          </Grid>
-        </Grid>
-        <Grid container direction="row" alignItems="center" mb={2}>
-          <Grid>
-            <AboutIcon>
-              <Briefcase />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            Works at <Link href="https://mira.bootlab.io/">Material UI</Link>
-          </Grid>
-        </Grid>
-        <Grid container direction="row" alignItems="center">
-          <Grid>
-            <AboutIcon>
-              <MapPin />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            Lives in <Link href="https://mira.bootlab.io/">Boston</Link>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Elsewhere() {
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Elsewhere
-        </Typography>
-
-        <Spacer mb={4} />
-
-        <Grid container direction="row" alignItems="center" mb={2}>
-          <Grid>
-            <AboutIcon>
-              <ExternalLink />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            <Link href="https://mira.bootlab.io/">lucylavender.io</Link>
-          </Grid>
-        </Grid>
-        <Grid container direction="row" alignItems="center" mb={2}>
-          <Grid>
-            <AboutIcon>
-              <Facebook />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            <Link href="https://mira.bootlab.io/">Facebook</Link>
-          </Grid>
-        </Grid>
-        <Grid container direction="row" alignItems="center">
-          <Grid>
-            <AboutIcon>
-              <Instagram />
-            </AboutIcon>
-          </Grid>
-          <Grid>
-            <Link href="https://mira.bootlab.io/">Instagram</Link>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Earnings() {
-  return (
-    <Box position="relative">
-      <Card mb={6} pt={2}>
-        <CardContent>
-          <Typography variant="h2" gutterBottom>
-            <Box fontWeight="fontWeightRegular">$ 2.405</Box>
-          </Typography>
-          <Typography variant="body2" gutterBottom mt={3} mb={0}>
-            Total Earnings
-          </Typography>
-
-          <StatsIcon>
-            <DollarSign />
-          </StatsIcon>
-          <LinearProgress
-            variant="determinate"
-            value={75}
-            color="secondary"
-            mt={4}
-          />
+const ProfileCompletion = () => {
+    const loadSavedData = () => {
+      const savedData = localStorage.getItem("personalInfo");
+      return savedData
+        ? JSON.parse(savedData)
+        : {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phoneNumber: "",
+            address1: "",
+            address2: "",
+            city: "",
+            county: "",
+            postcode: "",
+          };
+    };
+  
+    const [profileData, setProfileData] = useState(loadSavedData);
+    const [skills, setSkills] = useState<string[]>(() => {
+      const savedSkills = localStorage.getItem("userSkills");
+      return savedSkills ? JSON.parse(savedSkills) : [];
+    });
+    const [description, setDescription] = useState(() => {
+      const savedDescription = localStorage.getItem("userDescription");
+      return savedDescription || "";
+    });
+  
+    useEffect(() => {
+      const handleStorageChange = () => {
+        setProfileData(loadSavedData());
+        setSkills(JSON.parse(localStorage.getItem("userSkills") || "[]"));
+        setDescription(localStorage.getItem("userDescription") || "");
+      };
+  
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
+    }, []);
+  
+    const calculateCompletion = () => {
+      const filledFields = Object.values(profileData).filter((value) => value !== "").length;
+      const totalFields = Object.keys(profileData).length;
+      const skillsCompleted = skills.length > 0 ? 1 : 0; 
+      const descriptionCompleted = description.trim() !== "" ? 1 : 0;
+  
+      return Math.round(((filledFields + skillsCompleted + descriptionCompleted) / (totalFields + 2)) * 100);
+    };
+  
+    const completionPercentage = calculateCompletion();
+  
+    if (completionPercentage === 100) return null;
+  
+    return (
+      <Card>
+        <CardContent style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box>
+            <Typography variant="h6" color="primary">
+              Complete Your Profile ({completionPercentage}%)
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Please update your profile details to reach 100% completion.
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
-    </Box>
-  );
-}
-
-function Orders() {
-  return (
-    <Box position="relative">
-      <Card mb={6} pt={2}>
-        <CardContent>
-          <Typography variant="h2" gutterBottom>
-            <Box fontWeight="fontWeightRegular">30</Box>
-          </Typography>
-          <Typography variant="body2" gutterBottom mt={3} mb={0}>
-            Orders Today
-          </Typography>
-
-          <StatsIcon>
-            <ShoppingBag />
-          </StatsIcon>
-          <LinearProgress
-            variant="determinate"
-            value={30}
-            color="secondary"
-            mt={4}
-          />
-        </CardContent>
-      </Card>
-    </Box>
-  );
-}
-
-function Revenue() {
-  return (
-    <Box position="relative">
-      <Card mb={6} pt={2}>
-        <CardContent>
-          <Typography variant="h2" gutterBottom>
-            <Box fontWeight="fontWeightRegular">$ 1.224</Box>
-          </Typography>
-          <Typography variant="body2" gutterBottom mt={3} mb={0}>
-            Total Revenue
-          </Typography>
-
-          <StatsIcon>
-            <DollarSign />
-          </StatsIcon>
-          <LinearProgress
-            variant="determinate"
-            value={50}
-            color="secondary"
-            mt={4}
-          />
-        </CardContent>
-      </Card>
-    </Box>
-  );
-}
-
-function Products() {
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Products
-        </Typography>
-        <TableWrapper>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Tech</TableCell>
-                <TableCell>License</TableCell>
-                <TableCell>Sales</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell component="th" scope="row">
-                  AppStack
-                </TableCell>
-                <TableCell>
-                  <ProductsChip size="small" label="HTML" color="primary" />
-                </TableCell>
-                <TableCell>Single License</TableCell>
-                <TableCell>76</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">
-                  Mira
-                </TableCell>
-                <TableCell>
-                  <ProductsChip size="small" label="React" color="success" />
-                </TableCell>
-                <TableCell>Single License</TableCell>
-                <TableCell>38</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">
-                  Milo
-                </TableCell>
-                <TableCell>
-                  <ProductsChip size="small" label="HTML" color="primary" />
-                </TableCell>
-                <TableCell>Single License</TableCell>
-                <TableCell>43</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">
-                  Robust UI Kit
-                </TableCell>
-                <TableCell>
-                  <ProductsChip size="small" label="Angular" color="error" />
-                </TableCell>
-                <TableCell>Single License</TableCell>
-                <TableCell>27</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell component="th" scope="row">
-                  Spark
-                </TableCell>
-                <TableCell>
-                  <ProductsChip size="small" label="React" color="success" />
-                </TableCell>
-                <TableCell>Single License</TableCell>
-                <TableCell>12</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableWrapper>
-      </CardContent>
-    </Card>
-  );
-}
-
-const SalesRevenue = withTheme(({ theme }: ThemeProps) => {
-  const data = {
-    labels: [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ],
-    datasets: [
-      {
-        label: "Sales",
-        backgroundColor: theme.palette.secondary.main,
-        borderColor: theme.palette.secondary.main,
-        hoverBackgroundColor: theme.palette.secondary.main,
-        hoverBorderColor: theme.palette.secondary.main,
-        data: [54, 67, 41, 55, 62, 45, 55, 73, 60, 76, 48, 79],
-        barPercentage: 0.625,
-        categoryPercentage: 0.5,
-      },
-      {
-        label: "Revenue",
-        backgroundColor: theme.palette.grey[200],
-        borderColor: theme.palette.grey[200],
-        hoverBackgroundColor: theme.palette.grey[200],
-        hoverBorderColor: theme.palette.grey[200],
-        data: [69, 66, 24, 48, 52, 51, 44, 53, 62, 79, 51, 68],
-        barPercentage: 0.625,
-        categoryPercentage: 0.5,
-      },
-    ],
+    );
   };
+  
 
-  const options = {
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        grid: {
-          display: false,
-        },
-        stacked: false,
-      },
 
-      x: {
-        stacked: false,
-        grid: {
-          color: "transparent",
-        },
-      },
-    },
-  };
-
-  return (
-    <Card mb={6}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Sales / Revenue
-        </Typography>
-
-        <Spacer mb={6} />
-
-        <ChartWrapper>
-          <Bar data={data} options={options} />
-        </ChartWrapper>
-      </CardContent>
-    </Card>
-  );
-});
-
-function Profile() {
-  return (
-    <React.Fragment>
-      <Typography variant="h3" gutterBottom display="inline">
-        Profile
+const ProfileDetails = () => (
+  <Card>
+    <CardContent style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <Avatar alt="User Profile" src="/static/img/avatar.jpg" />
+      <Typography variant="h5">Jerome Hansel</Typography>
+      <Typography variant="subtitle1" color="textSecondary" mb={2}>
+        Admin
       </Typography>
 
-      <Breadcrumbs aria-label="Breadcrumb" mt={2}>
-        <Link component={NextLink} href="/">
-          Dashboard
-        </Link>
-        <Link component={NextLink} href="/">
-          Pages
-        </Link>
-        <Typography>Profile</Typography>
-      </Breadcrumbs>
+      <Box width="100%" mt={2}>
+        <NextLink href="/account/profile" passHref>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}
+          >
+            <PersonIcon />
+            Personal Information
+          </Button>
+        </NextLink>
 
-      <Divider my={6} />
+        <NextLink href="/account/profile/organisation" passHref>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}
+          >
+            <BusinessIcon />
+            Organisation Information
+          </Button>
+        </NextLink>
+      </Box>
+    </CardContent>
+  </Card>
+);
 
-      <Grid container spacing={6}>
-        <Grid size={{ xs: 12, lg: 4, xl: 3 }}>
-          <Details />
-          <Skills />
-          <About />
-          <Elsewhere />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 8, xl: 9 }}>
-          <SalesRevenue />
-          <Grid container spacing={6}>
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Earnings />
+const PersonalInformation = () => {
+  const loadSavedData = () => {
+    const savedData = localStorage.getItem("personalInfo");
+    return savedData
+      ? JSON.parse(savedData)
+      : {
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          address1: "",
+          address2: "",
+          city: "",
+          county: "",
+          postcode: "",
+        };
+  };
+
+  const [formData, setFormData] = useState(loadSavedData);
+  const [lastSavedData, setLastSavedData] = useState(loadSavedData);
+
+  useEffect(() => {
+    localStorage.setItem("personalInfo", JSON.stringify(formData));
+  }, [formData]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveChanges = () => {
+    setLastSavedData(formData);
+    alert("Profile information saved!");
+  };
+
+  const handleCancel = () => {
+    setFormData(lastSavedData);
+    alert("Changes discarded.");
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h6">Personal Information</Typography>
+        <Divider />
+
+        <Box mt={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField label="First Name" name="firstName" fullWidth variant="outlined" value={formData.firstName} onChange={handleInputChange} />
             </Grid>
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Orders />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Revenue />
+            <Grid item xs={12} md={6}>
+              <TextField label="Last Name" name="lastName" fullWidth variant="outlined" value={formData.lastName} onChange={handleInputChange} />
             </Grid>
           </Grid>
-          <Products />
+        </Box>
+
+        <Box mt={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField label="Email" name="email" fullWidth variant="outlined" value={formData.email} onChange={handleInputChange} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField label="Phone Number" name="phoneNumber" fullWidth variant="outlined" value={formData.phoneNumber} onChange={handleInputChange} />
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Box mt={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField label="Address Line 1" name="address1" fullWidth variant="outlined" value={formData.address1} onChange={handleInputChange} />
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Box mt={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField label="Address Line 2" name="address2" fullWidth variant="outlined" value={formData.address2} onChange={handleInputChange} />
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Box mt={3}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField label="City" name="city" fullWidth variant="outlined" value={formData.city} onChange={handleInputChange} />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField label="County" name="county" fullWidth variant="outlined" value={formData.county} onChange={handleInputChange} />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField label="Postcode" name="postcode" fullWidth variant="outlined" value={formData.postcode} onChange={handleInputChange} />
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
+          <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+            Save Changes
+          </Button>
+          <Button variant="contained" color="secondary" onClick={handleCancel}>
+            Cancel
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const Skills = () => {
+  const loadSavedSkills = (): string[] => {
+    const savedSkills = localStorage.getItem("userSkills");
+    return savedSkills ? JSON.parse(savedSkills) : ["Pharmaceutical Science", "Chemistry"];
+  };
+
+  const [skills, setSkills] = useState<string[]>(loadSavedSkills);
+  const [newSkill, setNewSkill] = useState<string>("");
+
+  useEffect(() => {
+    localStorage.setItem("userSkills", JSON.stringify(skills));
+  }, [skills]);
+ 
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill("");
+    }
+  };
+
+  const handleDeleteSkill = (skillToDelete: string) => {
+    setSkills((prevSkills) => prevSkills.filter((skill) => skill !== skillToDelete));
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">Specialisation</Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <TextField
+              value={newSkill}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSkill(e.target.value)}
+              placeholder="Add a skill"
+              size="small"
+              variant="outlined"
+            />
+            <Button variant="contained" color="primary" onClick={handleAddSkill} disabled={!newSkill.trim()}>
+              Add
+            </Button>
+          </Box>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Box display="flex" flexWrap="wrap" gap={1}>
+          {skills.map((skill: string, index: number) => (
+            <Chip key={index} label={skill} color="primary" onDelete={() => handleDeleteSkill(skill)} />
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const Description = () => {
+  const loadSavedDescription = () => {
+    const savedDescription = localStorage.getItem("userDescription");
+    return savedDescription ? savedDescription : "";
+  };
+
+  const [description, setDescription] = useState(loadSavedDescription);
+  const [lastSavedDescription, setLastSavedDescription] = useState(loadSavedDescription);
+
+  useEffect(() => {
+    localStorage.setItem("userDescription", description);
+  }, [description]);
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDescription(e.target.value);
+  };
+
+  const handleSaveChanges = () => {
+    setLastSavedDescription(description);
+    alert("Description saved!");
+  };
+
+  const handleCancel = () => {
+    setDescription(lastSavedDescription);
+    alert("Changes discarded. Restored last saved description.");
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h6">Description</Typography>
+        <Divider />
+        <TextField
+          multiline
+          rows={4}
+          fullWidth
+          placeholder="Enter description here"
+          variant="outlined"
+          value={description}
+          onChange={handleDescriptionChange}
+        />
+        <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
+          <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+            Save Changes
+          </Button>
+          <Button variant="contained" color="secondary" onClick={handleCancel}>
+            Cancel
+          </Button>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+
+const ProfilePage = () => {
+  return (
+    <>
+      <Typography variant="h4">Profile</Typography>
+      <Breadcrumbs>
+        <NextLink href="/">Home</NextLink>
+        <Typography color="textPrimary">Profile</Typography>
+      </Breadcrumbs>
+      <ProfileCompletion />
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Box display="flex" gap={3} mb={3}>
+            <Box width="300px">
+              <ProfileDetails />
+            </Box>
+            <Box flex={1} display="flex" flexDirection="column">
+              <PersonalInformation />
+              <Skills />
+              <Description />
+            </Box>
+          </Box>
         </Grid>
       </Grid>
-    </React.Fragment>
+    </>
   );
-}
+};
+export default ProfilePage;
 
-export default Profile;
