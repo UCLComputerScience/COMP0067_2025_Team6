@@ -4,6 +4,10 @@ import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { Select, MenuItem, FormControl, InputLabel, TextField } from "@mui/material";
+import { useState} from "react";
 
 import {
   Box,
@@ -56,188 +60,118 @@ const Customer = styled.div`
   align-items: center;
 `;
 
-const ImageWrapper = styled.div`
-  width: 50px;
-  height: 50px;
-  padding: ${(props) => props.theme.spacing(1)};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Image = styled.img`
-  max-width: 100%;
-  max-height: 100%;
-`;
-
-const Rating = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${(props) => props.theme.spacing(1)};
-`;
-
-const RatingIcon = styled(StarIcon)`
-  color: ${() => orange[400]};
-`;
-
 function createData(
   id: string,
-  name: string,
-  variant: string,
-  price: string,
-  stock: number,
-  category: string,
-  rating: string,
-  reviews: number,
-  image: string
+  timestamp: string,
+  userSystem: string,
+  action: string,
+  location: string,
+  status: string,
+  additionalDetails: string
 ) {
-  return { id, name, variant, price, stock, category, rating, reviews, image };
+  return { id, timestamp, userSystem, action, location, status, additionalDetails };
 }
 
 type RowType = {
-  [key: string]: string | number;
+  [key: string]: string;
   id: string;
-  name: string;
-  variant: string;
-  price: string;
-  stock: number;
-  category: string;
-  rating: string;
-  reviews: number;
-  image: string;
+  timestamp: string;
+  userSystem: string;
+  action: string;
+  location: string;
+  status: string;
+  additionalDetails: string;
 };
 const rows: Array<RowType> = [
   createData(
     "1",
-    "Apple iPad Pro",
-    "Silver",
-    "$ 1,399.00",
-    48,
-    "Tablets",
-    "4.6",
-    55,
-    "/static/img/products/product-9.png"
+    "05/02/2025 13:00",
+    "John Smith",
+    "Details Changed",
+    "UK",
+    "Successful",
+    " "
   ),
   createData(
     "2",
-    "Apple iPad Pro",
-    "Space Gray",
-    "$ 1,399.00",
-    48,
-    "Tablets",
-    "4.3",
-    25,
-    "/static/img/products/product-8.png"
+    "05/02/2025 11:00",
+    "Linda Harvey",
+    "Dashboard Edited",
+    "UK",
+    "Failed",
+    " "
   ),
   createData(
     "3",
-    "Apple iPhone 15 Pro Max",
-    "Blue Titanium",
-    "$ 1499.00",
-    38,
-    "Smartphones",
-    "4.6",
-    40,
-    "/static/img/products/product-4.png"
+    "04/02/2025 09:00",
+    "Bob Johnson",
+    "Report Export",
+    "UK",
+    "Error",
+    " "
   ),
   createData(
     "4",
-    "Apple iPhone 15 Pro Max",
-    "Natural Titanium",
-    "$ 1499.00",
-    30,
-    "Smartphones",
-    "4.8",
-    50,
-    "/static/img/products/product-3.png"
+    "15/01/2025 09:00",
+    "Lucas Smith",
+    "Details Changed",
+    "UK",
+    "Error",
+    " "
   ),
   createData(
     "5",
-    "Apple iPhone 15 Pro Max",
-    "White Titanium",
-    "$ 1499.00",
-    45,
-    "Smartphones",
-    "4.9",
-    60,
-    "/static/img/products/product-5.png"
+    "04/02/2025 09:00",
+    "Bob",
+    "Report Export",
+    "UK",
+    "Error",
+    "Hehe"
   ),
   createData(
     "6",
-    'Apple MacBook Pro 16"',
-    "Silver",
-    "$ 2,399.00",
-    55,
-    "Notebooks",
-    "4.7",
-    45,
-    "/static/img/products/product-7.png"
+    "04/02/2025 09:00",
+    "Billy",
+    "Report Export",
+    "UK",
+    "Error",
+    "Pepe"
   ),
   createData(
     "7",
-    'Apple MacBook Pro 16"',
-    "Space Black",
-    "$ 2,399.00",
-    50,
-    "Notebooks",
-    "4.4",
-    30,
-    "/static/img/products/product-6.png"
+    "04/02/2025 09:00",
+    "John",
+    "Report Export",
+    "UK",
+    "Error",
+    " "
   ),
   createData(
     "8",
-    "Apple Watch SE",
-    "Midnight",
-    "$ 299.00",
-    49,
-    "Smartwatches",
-    "4.7",
-    40,
-    "/static/img/products/product-11.png"
+    "04/02/2025 09:00",
+    "Rob",
+    "Report Export",
+    "UK",
+    "Error",
+    " "
   ),
   createData(
     "9",
-    "Apple Watch SE",
-    "Silver",
-    "$ 299.00",
-    30,
-    "Smartwatches",
-    "4.7",
-    40,
-    "/static/img/products/product-12.png"
+    "04/02/2025 09:00",
+    "John",
+    "Report Export",
+    "UK",
+    "Error",
+    " "
   ),
   createData(
     "10",
-    "Apple Watch SE",
-    "Starlight",
-    "$ 299.00",
-    54,
-    "Smartwatches",
-    "4.5",
-    35,
-    "/static/img/products/product-10.png"
-  ),
-  createData(
-    "11",
-    "Apple Watch Series 9",
-    "Midnight",
-    "$ 349.00",
-    42,
-    "Smartwatches",
-    "4.2",
-    20,
-    "/static/img/products/product-1.png"
-  ),
-  createData(
-    "12",
-    "Apple Watch Series 9",
-    "Starlight",
-    "$ 349.00",
-    54,
-    "Smartwatches",
-    "4.5",
-    35,
-    "/static/img/products/product-2.png"
+    "04/02/2025 09:00",
+    "Meow",
+    "Report Export",
+    "UK",
+    "Error",
+    " "
   ),
 ];
 
@@ -280,12 +214,12 @@ type HeadCell = {
   disablePadding?: boolean;
 };
 const headCells: Array<HeadCell> = [
-  { id: "name", alignment: "left", label: "Item Name" },
-  { id: "price", alignment: "right", label: "Price" },
-  { id: "stock", alignment: "right", label: "Stock" },
-  { id: "category", alignment: "left", label: "Category" },
-  { id: "rating", alignment: "left", label: "Rating" },
-  { id: "actions", alignment: "right", label: "Actions" },
+  { id: "timestamp", alignment: "left", label: "Timestamp" },
+  { id: "userSystem", alignment: "left", label: "User/System" },
+  { id: "action", alignment: "left", label: "Action" },
+  { id: "location", alignment: "left", label: "Location" },
+  { id: "status", alignment: "left", label: "Status" },
+  { id: "additionalDetails", alignment: "left", label: "Additional Details" },
 ];
 
 type EnhancedTableHeadProps = {
@@ -312,14 +246,6 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   return (
     <TableHead>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{ "aria-label": "select all" }}
-          />
-        </TableCell>
         {headCells.map((headCell: HeadCell) => (
           <TableCell
             key={headCell.id}
@@ -341,49 +267,124 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   );
 };
 
-type EnhancedTableToolbarProps = { numSelected: number };
-const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const { numSelected } = props;
+type EnhancedTableToolbarProps = {
+  numSelected: number;
+  filters: { user: string; activity: string; status: string; date: string };
+  setFilters: React.Dispatch<React.SetStateAction<any>>;
+};
 
+const EnhancedTableToolbar = ({ numSelected, filters, setFilters }: EnhancedTableToolbarProps) => {
   return (
-    <Toolbar>
-      <ToolbarTitle>
-        {numSelected > 0 ? (
-          <Typography color="inherit" variant="subtitle1">
-            {numSelected} selected
-          </Typography>
-        ) : (
-          <Typography variant="h6" id="tableTitle">
-            Products
-          </Typography>
-        )}
-      </ToolbarTitle>
-      <Spacer />
-      <div>
-        {numSelected > 0 ? (
-          <Tooltip title="Delete">
-            <IconButton aria-label="Delete" size="large">
-              <ArchiveIcon />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <Tooltip title="Filter list">
-            <IconButton aria-label="Filter list" size="large">
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </div>
+    <Toolbar style={{ display: "flex", justifyContent: "flex-start", gap: "20px", flexWrap: "wrap" }}>
+      <TextField
+        label="Search User/System"
+        variant="outlined"
+        size="small"
+        style={{ minWidth: 200 }}
+        value={filters.user}
+        onChange={(e) =>
+          setFilters((prev: typeof filters) => ({
+            ...prev,
+            user: e.target.value,
+          }))
+        }
+      />
+
+      <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
+        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>Activity Type</InputLabel>
+        <Select
+          value={filters.activity}
+          displayEmpty
+          onChange={(e) =>
+            setFilters((prev: typeof filters) => ({
+              ...prev,
+              activity: e.target.value,
+            }))
+          }
+        >
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="Details Changed">Details Changed</MenuItem>
+          <MenuItem value="Dashboard Edited">Dashboard Edited</MenuItem>
+          <MenuItem value="Report Export">Report Export</MenuItem>
+        </Select>
+      </FormControl>
+
+      <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
+        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>Status</InputLabel>
+        <Select
+          value={filters.status}
+          displayEmpty
+          onChange={(e) =>
+            setFilters((prev: typeof filters) => ({
+              ...prev,
+              status: e.target.value, 
+            }))
+          }
+        >
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="Successful">Successful</MenuItem>
+          <MenuItem value="Failed">Failed</MenuItem>
+          <MenuItem value="Error">Error</MenuItem>
+        </Select>
+      </FormControl>
+
+      <TextField
+        type="date"
+        variant="outlined"
+        size="small"
+        label="Date"
+        InputLabelProps={{ shrink: true }}
+        style={{ minWidth: 200 }}
+        value={filters.date}
+        onChange={(e) =>
+          setFilters((prev: typeof filters) => ({
+            ...prev,
+            date: e.target.value,
+          }))
+        }
+      />
     </Toolbar>
   );
 };
 
-function EnhancedTable() {
+function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowType>, filters: any) => void }) {
   const [order, setOrder] = React.useState<"desc" | "asc">("asc");
-  const [orderBy, setOrderBy] = React.useState("customer");
-  const [selected, setSelected] = React.useState<Array<string>>([]);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(6);
+  const [orderBy, setOrderBy] = React.useState("timestamp");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(6);
+  
+  const [filters, setFilters] = useState({
+    user: "",
+    activity: "",
+    status: "",
+    date: "",
+  });
+
+  const formatDate = (timestamp: string) => {
+    const [datePart] = timestamp.split(" ");
+    const [day, month, year] = datePart.split("/");
+    return `${year}-${month}-${day}`;
+  };
+
+  const filteredRows = React.useMemo(() => {
+    return rows.filter((row) => {
+      const rowDate = formatDate(row.timestamp);
+      return (
+        (filters.user === "" || row.userSystem.toLowerCase().includes(filters.user.toLowerCase())) &&
+        (filters.activity === "" || row.action === filters.activity) &&
+        (filters.status === "" || row.status === filters.status) &&
+        (filters.date === "" || rowDate === filters.date)
+      );
+    });
+  }, [filters]);
+
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onDataFiltered(filteredRows, filters);
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters, filteredRows, onDataFiltered]);
 
   const handleRequestSort = (event: any, property: string) => {
     const isAsc = orderBy === property && order === "asc";
@@ -391,157 +392,170 @@ function EnhancedTable() {
     setOrderBy(property);
   };
 
-  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    id: string
-  ) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: Array<string> = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
-  };
-
-  const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
-    newPage: number
-  ) => {
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 6));
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value));
     setPage(0);
   };
 
-  const isSelected = (id: string) => selected.indexOf(id) !== -1;
+  React.useEffect(() => {
+    setPage(0);
+  }, [filters]);
 
-  const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
+  const emptyRows = Math.max(0, (1 + page) * rowsPerPage - filteredRows.length);
 
   return (
     <div>
       <Paper>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar
+          numSelected={0} 
+          filters={filters} 
+          setFilters={setFilters} 
+        />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
             size={"medium"}
             aria-label="enhanced table"
           >
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-              rowCount={rows.length}
-            />
-            <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row: RowType, index: number) => {
-                  const isItemSelected = isSelected(row.id);
-                  const labelId = `enhanced-table-checkbox-${index}`;
-
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={`${row.id}-${index}`}
-                      selected={isItemSelected}
+            <TableHead>
+              <TableRow>
+                {headCells.map((headCell) => (
+                  <TableCell
+                    key={headCell.id}
+                    align={headCell.alignment}
+                    padding={headCell.disablePadding ? "none" : "normal"}
+                    sortDirection={orderBy === headCell.id ? order : false}
+                  >
+                    <TableSortLabel
+                      active={orderBy === headCell.id}
+                      direction={orderBy === headCell.id ? order : "asc"}
+                      onClick={(e) => handleRequestSort(e, headCell.id)}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={isItemSelected}
-                          inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id)}
-                        />
-                      </TableCell>
-                      <TableCell component="th" id={labelId} scope="row">
-                        <Customer>
-                          <ImageWrapper>
-                            <Image src={row.image} alt={row.name} />
-                          </ImageWrapper>
-                          <Box ml={3}>
-                            <Typography variant="body1">{row.name}</Typography>
-                            <Typography variant="body1" color="textSecondary">
-                              {row.variant}
-                            </Typography>
-                          </Box>
-                        </Customer>
-                      </TableCell>
-                      <TableCell align="right">{row.price}</TableCell>
-                      <TableCell align="right">{row.stock}</TableCell>
-                      <TableCell align="left">{row.category}</TableCell>
-                      <TableCell>
-                        <Rating>
-                          <RatingIcon />
-                          <Typography variant="body1">{row.rating} </Typography>
-                          <Typography variant="body1" color="textSecondary">
-                            of {row.reviews} Reviews
-                          </Typography>
-                        </Rating>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton aria-label="delete" size="large">
-                          <ArchiveIcon />
-                        </IconButton>
-                        <IconButton aria-label="details" size="large">
-                          <RemoveRedEyeIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                      {headCell.label}
+                    </TableSortLabel>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {stableSort(filteredRows, getComparator(order, orderBy))
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row: RowType, index: number) => (
+                  <TableRow
+                    hover
+                    tabIndex={-1}
+                    key={`${row.id}-${index}`}
+                  >
+                    <TableCell>{row.timestamp}</TableCell>
+                    <TableCell>{row.userSystem}</TableCell>
+                    <TableCell>{row.action}</TableCell>
+                    <TableCell>{row.location}</TableCell>
+                    <TableCell>{row.status}</TableCell>
+                    <TableCell>{row.additionalDetails}</TableCell>
+                  </TableRow>
+                ))}
               {emptyRows > 0 && (
                 <TableRow style={{ height: 53 * emptyRows }}>
-                  <TableCell colSpan={7} />
+                  <TableCell colSpan={6} />
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
-          rowsPerPageOptions={[6, 12, 18]}
           component="div"
-          count={rows.length}
+          rowsPerPageOptions={[6, 12, 18]}
+          count={filteredRows.length}
           rowsPerPage={rowsPerPage}
-          page={page}
+          page={filteredRows.length <= page * rowsPerPage && page > 0 ? 0 : page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          SelectProps={{
+            native: false
+          }}
         />
       </Paper>
     </div>
   );
 }
 
-function Products() {
+function ActivityLogs() {
+  const [filteredData, setFilteredData] = useState(rows);
+  const [currentFilters, setCurrentFilters] = useState({
+    user: "",
+    activity: "",
+    status: "",
+    date: "",
+  });
+
+  const handleDataFiltered = (newData: Array<RowType>, filters: any) => {
+    setFilteredData(newData);
+    setCurrentFilters(filters);
+  };
+
+  const handleExport = () => {
+    const doc = new jsPDF();
+    
+    const columns = [
+      { header: 'Timestamp', dataKey: 'timestamp' },
+      { header: 'User/System', dataKey: 'userSystem' },
+      { header: 'Action', dataKey: 'action' },
+      { header: 'Location', dataKey: 'location' },
+      { header: 'Status', dataKey: 'status' },
+      { header: 'Additional Details', dataKey: 'additionalDetails' }
+    ];
+
+    const data = filteredData.map(row => ({
+      timestamp: row.timestamp,
+      userSystem: row.userSystem,
+      action: row.action,
+      location: row.location,
+      status: row.status,
+      additionalDetails: row.additionalDetails
+    }));
+
+    doc.setFontSize(16);
+    doc.text('Activity Logs Report', 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 25);
+
+    let yPosition = 35;
+    const activeFilters = [];
+    
+    if (currentFilters.user) activeFilters.push(`User Search: "${currentFilters.user}"`);
+    if (currentFilters.activity) activeFilters.push(`Activity Type: ${currentFilters.activity}`);
+    if (currentFilters.status) activeFilters.push(`Status: ${currentFilters.status}`);
+    if (currentFilters.date) activeFilters.push(`Date: ${currentFilters.date}`);
+
+    if (activeFilters.length > 0) {
+      doc.setFontSize(10);
+      doc.text('Applied Filters:', 14, yPosition);
+      activeFilters.forEach((filter, index) => {
+        yPosition += 5;
+        doc.text(`• ${filter}`, 16, yPosition);
+      });
+      yPosition += 10;
+    } else {
+      yPosition = 30;
+    }
+
+    autoTable(doc, {
+      columns: columns,
+      body: data,
+      startY: yPosition,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [71, 117, 163] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { top: 30 }
+    });
+    
+    doc.save('activity-logs.pdf');
+  };
+
   return (
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={10}>
@@ -554,17 +568,18 @@ function Products() {
             <Link component={NextLink} href="/">
               Dashboard
             </Link>
-            {/* <Link component={NextLink} href="/">
-              Pages
-            </Link> */}
             <Typography>Activity Logs</Typography>
           </Breadcrumbs>
         </Grid>
         <Grid>
           <div>
-            <Button variant="contained" color="primary">
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={handleExport}
+            >
               <AddIcon />
-              New Product
+              Export
             </Button>
           </div>
         </Grid>
@@ -572,11 +587,11 @@ function Products() {
       <Divider my={6} />
       <Grid container spacing={6}>
         <Grid size={12}>
-          <EnhancedTable />
+          <EnhancedTable onDataFiltered={handleDataFiltered} />
         </Grid>
       </Grid>
     </React.Fragment>
   );
 }
 
-export default Products;
+export default ActivityLogs;
