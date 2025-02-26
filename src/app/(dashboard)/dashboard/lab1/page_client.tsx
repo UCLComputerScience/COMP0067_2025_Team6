@@ -26,15 +26,72 @@ const Divider = styled(MuiDivider)(spacing);
 
 const Typography = styled(MuiTypography)(spacing);
 
-const Lab1: React.FC<DeviceProps> = ({ device }) => {
+const Lab1 = () => {
+  const [selectedOption, setSelectedOption] = React.useState<string>("?days=1");
+  const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
+
+  // Function to fetch data based on the selected category
+  const fetchData = async (selectedOption: string) => {
+      try {
+          const response = await fetch(`https://api.thingspeak.com/channels/2606541/feeds.json${selectedOption}`);
+          const result = await response.json();
+          setData(result);
+      } catch (error) {
+          console.error("Error fetching data:", error);
+      }
+    };
+
   const { t } = useTranslation();
-  const channel = device["channel"]["name"]
-  const field1 = device["channel"]["field1"]
-  const field2 = device["channel"]["field2"]
-  const field3 = device["channel"]["field3"]
-  const temperature = device["feeds"].map((feed) => +feed["field1"]);
-  const humidity = device["feeds"].map((feed) => +feed["field2"]);
-  const pressure = device["feeds"].map((feed) => +feed["field3"]);
+  // const channel = data["channel"]["name"]
+  // const field1 = data["channel"]["field1"]
+  // const field2 = data["channel"]["field2"]
+  // const field3 = data["channel"]["field3"]
+  // const temperature: number[] = data["feeds"].map((feed: { created_at: string; entry_id: number; field1: string; field2: string; field3: string; }) => +feed["field1"]);
+  // const humidity: number[] = data["feeds"].map((feed: { created_at: string; entry_id: number; field1: string; field2: string; field3: string; }) => +feed["field2"]);
+  // const pressure: number[] = data["feeds"].map((feed: { created_at: string; entry_id: number; field1: string; field2: string; field3: string; }) => +feed["field3"]);
+    // Safely accessing the data with optional chaining
+  const channel = data?.channel?.name || "N/A";
+  const field1 = data?.channel?.field1 || "N/A";
+  const field2 = data?.channel?.field2 || "N/A";
+  const field3 = data?.channel?.field3 || "N/A";
+
+  // Mapping feeds for temperature, humidity, and pressure
+  const rdata = data?.feeds?.slice().reverse();
+  const temperature: number[] = rdata.map((feed) => +feed.field1) || [];
+  const humidity: number[] = rdata.map((feed) => +feed.field2) || [];
+  const pressure: number[] = rdata.map((feed) => +feed.field3) || [];
+
+  type Feed = {
+    created_at: string;
+    entry_id: number;
+    field1?: string;
+    field2?: string;
+    field3?: string;
+  };
+  
+  type ApiResponse = {
+    channel: {
+      id: number;
+      name: string;
+      field1?: string;
+      field2?: string;
+      field3?: string;
+    };
+    feeds: Feed[];
+  };
+  
+  function extractTimestamps(data: ApiResponse): string[] {
+    return data.feeds.map(feed => feed.created_at);
+  }
+  
+  // Example usage
+  const DeviceLabels = extractTimestamps(data);
+
+  // UseEffect to fetch data whenever the category state changes
+  React.useEffect(() => {
+    fetchData(selectedOption);
+  }, [selectedOption]);  // Dependency array ensures the fetch runs only when category changes
+
 
   return (
     <React.Fragment>
@@ -52,7 +109,7 @@ const Lab1: React.FC<DeviceProps> = ({ device }) => {
         </Grid>
 
         <Grid>
-          <Actions />
+          <Actions selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
         </Grid>
       </Grid>
       <Divider my={6} />
@@ -134,7 +191,7 @@ const Lab1: React.FC<DeviceProps> = ({ device }) => {
             lg: 6,
           }}
         > 
-          <LineChart channel={channel} field={field1} DeviceData={temperature} />
+          <LineChart channel={channel} field={field1} DeviceData={temperature} DeviceLabels={DeviceLabels} />
         </Grid>
         <Grid
           size={{
@@ -152,7 +209,7 @@ const Lab1: React.FC<DeviceProps> = ({ device }) => {
             lg: 6,
           }}
         >
-          <LineChart channel={channel} field={field2} DeviceData={humidity} />
+          <LineChart channel={channel} field={field2} DeviceData={humidity} DeviceLabels={DeviceLabels} />
         </Grid>
         <Grid
           size={{
@@ -170,7 +227,7 @@ const Lab1: React.FC<DeviceProps> = ({ device }) => {
             lg: 6,
           }}
         > 
-          <LineChart channel={channel} field={field3} DeviceData={pressure} />
+          <LineChart channel={channel} field={field3} DeviceData={pressure} DeviceLabels={DeviceLabels} />
         </Grid>
         <Grid
           size={{

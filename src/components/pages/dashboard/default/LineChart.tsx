@@ -23,23 +23,12 @@ const ChartWrapper = styled.div`
   height: 378px;
 `;
 
-const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceData }) => {
+const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceData, DeviceLabels }) => {
   const data = {
-    labels: [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-    ],
+    labels: DeviceLabels,
     datasets: [
       {
-        label: "Sales ($)",
+        label: "",
         fill: true,
         backgroundColor: function (context: any) {
           const chart = context.chart;
@@ -58,6 +47,7 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceDa
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
         data: DeviceData,
+        pointRadius: 0, // Hide points on the line
       },
       // {
       //   label: "Orders",
@@ -82,6 +72,9 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceDa
     },
     scales: {
       x: {
+        ticks: {
+          display: false, // Hide x-axis labels but keep the scale
+        },        
         grid: {
           color: "rgba(0,0,0,0.0)",
         },

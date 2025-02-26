@@ -7,6 +7,8 @@ import {
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
+import { ActionsProps } from "@/types/devices";
+import { el } from "date-fns/locale";
 
 const Button = styled(MuiButton)(spacing);
 
@@ -20,8 +22,9 @@ const SmallButton = styled(Button)`
   }
 `;
 
-function Actions() {
+const Actions: React.FC<ActionsProps> = ({ selectedOption, setSelectedOption }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [buttonText, setButtonText] = React.useState<string>("Today");
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -29,6 +32,23 @@ function Actions() {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  // Handle selecting a menu item
+  const handleSelect = (option: string) => {
+    if (option === "Today") {
+      setSelectedOption("?days=1");
+    } else if (option === "Last 7 Days") {
+      setSelectedOption("?days=7");
+    } else if (option === "Last 30 Days") {
+      setSelectedOption("?days=30");
+    } else if (option === "Last Year") {
+      setSelectedOption("?days=365");
+    } else if (option === "All Data") {
+      setSelectedOption("");
+    }
+    setButtonText(option);               // Set the selected option as the button text
+    handleClose();               // Close the menu after selection
   };
 
   return (
@@ -46,7 +66,7 @@ function Actions() {
         aria-haspopup="true"
         onClick={handleClick}
       >
-        Today: April 29
+        {buttonText}  {/* Display the selected option here */}
       </Button>
       <Menu
         id="simple-menu"
@@ -54,11 +74,11 @@ function Actions() {
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleClose}>Today</MenuItem>
-        <MenuItem onClick={handleClose}>Last 7 Days</MenuItem>
-        <MenuItem onClick={handleClose}>Last 30 Days</MenuItem>
-        <MenuItem onClick={handleClose}>Last Year</MenuItem>
-        <MenuItem onClick={handleClose}>All Data</MenuItem>
+        {["Today", "Last 7 Days", "Last 30 Days", "Last Year", "All Data"].map((option) => (
+          <MenuItem key={option} onClick={() => handleSelect(option)}>
+            {option}
+          </MenuItem>
+        ))}
       </Menu>
     </React.Fragment>
   );
