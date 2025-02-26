@@ -13,7 +13,9 @@ import {
 import { spacing } from "@mui/system";
 import { alpha } from "@mui/material/styles";
 
-import { ThemeProps } from "@/types/theme";
+// import { ThemeProps } from "@/types/theme";
+import { DevicePropsTheme } from "@/types/devices";
+import { Theme } from "@mui/material";
 
 const Card = styled(MuiCard)(spacing);
 
@@ -21,10 +23,9 @@ const ChartWrapper = styled.div`
   height: 378px;
 `;
 
-function LineChart({ theme }: ThemeProps) {
+const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceData }) => {
   const data = {
     labels: [
-      "0",
       "1",
       "2",
       "3",
@@ -35,19 +36,6 @@ function LineChart({ theme }: ThemeProps) {
       "8",
       "9",
       "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20",
-      "21",
-      "22",
-      "23",
     ],
     datasets: [
       {
@@ -69,9 +57,7 @@ function LineChart({ theme }: ThemeProps) {
         },
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
-        data: [
-          41, 43, 38, 45, 42, 45, 40, 47, 44, 38, 31, 36, 33, 31, 35, 41, 46, 43, 52, 54, 47, 50, 48, 52,
-        ],
+        data: DeviceData,
       },
       // {
       //   label: "Orders",
@@ -117,7 +103,7 @@ function LineChart({ theme }: ThemeProps) {
             <MoreVertical />
           </IconButton>
         }
-        title="Digibox 1 Temperature"
+        title={channel + " - " + field}
       />
       <CardContent>
         <ChartWrapper>
