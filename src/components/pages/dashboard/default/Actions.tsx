@@ -36,9 +36,9 @@ function Actions() {
       <SmallButton size="small" mr={2}>
         <LoopIcon />
       </SmallButton>
-      <SmallButton size="small" mr={2}>
+      {/* <SmallButton size="small" mr={2}>
         <FilterListIcon />
-      </SmallButton>
+      </SmallButton> */}
       <Button
         variant="contained"
         color="secondary"
@@ -55,11 +55,10 @@ function Actions() {
         onClose={handleClose}
       >
         <MenuItem onClick={handleClose}>Today</MenuItem>
-        <MenuItem onClick={handleClose}>Yesterday</MenuItem>
-        <MenuItem onClick={handleClose}>Last 7 days</MenuItem>
-        <MenuItem onClick={handleClose}>Last 30 days</MenuItem>
-        <MenuItem onClick={handleClose}>This month</MenuItem>
-        <MenuItem onClick={handleClose}>Last month</MenuItem>
+        <MenuItem onClick={handleClose}>Last 7 Days</MenuItem>
+        <MenuItem onClick={handleClose}>Last 30 Days</MenuItem>
+        <MenuItem onClick={handleClose}>Last Year</MenuItem>
+        <MenuItem onClick={handleClose}>All Data</MenuItem>
       </Menu>
     </React.Fragment>
   );
