@@ -13,8 +13,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Module {
-  id Int @id @default(autoincrement())
-  code String
-  title String
+// Table for Channel Metadata
+model Channel {
+  id          Int      @id
+  name        String
+  latitude    Float
+  longitude   Float
+  field1      String  // First sensor type (e.g., Temperature)
+  field2      String  // Second sensor type (e.g., Humidity)
+  field3      String  // Third sensor type (e.g., Pressure)
+  lastEntryId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Table for Sensor Readings (Feeds)
+model Feed {
+  id        Int      @id @default(autoincrement())
+  entryId   Int      @unique
+  createdAt DateTime
+  field1    Float?
+  field2    Float?
+  field3    Float?
 }

@@ -24,7 +24,7 @@ const SmallButton = styled(Button)`
 
 const Actions: React.FC<ActionsProps> = ({ selectedOption, setSelectedOption }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [buttonText, setButtonText] = React.useState<string>("Last Year");
+  const [buttonText, setButtonText] = React.useState<string>("All");
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -53,9 +53,9 @@ const Actions: React.FC<ActionsProps> = ({ selectedOption, setSelectedOption }) 
 
   return (
     <React.Fragment>
-      <SmallButton size="small" mr={2}>
+      {/* <SmallButton size="small" mr={2}>
         <LoopIcon />
-      </SmallButton>
+      </SmallButton> */}
       {/* <SmallButton size="small" mr={2}>
         <FilterListIcon />
       </SmallButton> */}

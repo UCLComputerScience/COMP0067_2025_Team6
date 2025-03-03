@@ -16,6 +16,8 @@ import { green, red } from "@mui/material/colors";
 import { DeviceProps } from "@/types/devices";
 
 import Actions from "@/components/pages/dashboard/default/Actions";
+import ActionsAdd from "@/components/pages/dashboard/default/ActionsAdd";
+import ActionsFilter from "@/components/pages/dashboard/default/ActionsFilter";
 import BarChart from "@/components/pages/dashboard/default/BarChart";
 import LineChart from "@/components/pages/dashboard/default/LineChart";
 import DoughnutChart from "@/components/pages/dashboard/default/DoughnutChart";
@@ -27,7 +29,7 @@ const Divider = styled(MuiDivider)(spacing);
 const Typography = styled(MuiTypography)(spacing);
 
 const Lab1 = () => {
-  const [selectedOption, setSelectedOption] = React.useState<string>("?days=1");
+  const [selectedOption, setSelectedOption] = React.useState<string>("?days=365");
   const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
 
   // Function to fetch data based on the selected category
@@ -56,7 +58,7 @@ const Lab1 = () => {
   const field3 = data?.channel?.field3 || "N/A";
 
   // Mapping feeds for temperature, humidity, and pressure
-  const rdata = data?.feeds?.slice().reverse();
+  const rdata = data?.feeds || [];
   const temperature: number[] = rdata.map((feed) => +feed.field1) || [];
   const humidity: number[] = rdata.map((feed) => +feed.field2) || [];
   const pressure: number[] = rdata.map((feed) => +feed.field3) || [];
@@ -81,7 +83,7 @@ const Lab1 = () => {
   };
   
   function extractTimestamps(data: ApiResponse): string[] {
-    return data.feeds.map(feed => feed.created_at);
+    return rdata.map(feed => feed.created_at);
   }
   
   // Example usage
@@ -108,8 +110,16 @@ const Lab1 = () => {
           </Typography>
         </Grid>
 
-        <Grid>
-          <Actions selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+        <Grid container spacing={3}>
+          <Grid>
+            <Actions selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+          </Grid>
+          <Grid>
+            <ActionsFilter selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+          </Grid>
+          <Grid>
+            <ActionsAdd selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+          </Grid>
         </Grid>
       </Grid>
       <Divider my={6} />
@@ -174,25 +184,17 @@ const Lab1 = () => {
             xl: "grow",
           }}
         >
-          {/* <Stats
+          <Stats
             title="Pending Orders"
             amount="45"
             chip="Yearly"
             percentagetext="-9%"
             percentagecolor={red[500]}
             illustration="/static/img/illustrations/waiting.png"
-          /> */}
+          />
         </Grid>
       </Grid>
       <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6,
-          }}
-        > 
-          <LineChart channel={channel} field={field1} DeviceData={temperature} DeviceLabels={DeviceLabels} />
-        </Grid>
         <Grid
           size={{
             xs: 12,
@@ -200,16 +202,6 @@ const Lab1 = () => {
           }}
         >
           <DoughnutChart />
-        </Grid>
-      </Grid>
-      <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6,
-          }}
-        >
-          <LineChart channel={channel} field={field2} DeviceData={humidity} DeviceLabels={DeviceLabels} />
         </Grid>
         <Grid
           size={{
@@ -224,18 +216,28 @@ const Lab1 = () => {
         <Grid
           size={{
             xs: 12,
-            lg: 6,
+            lg: 12,
           }}
         > 
-          <LineChart channel={channel} field={field3} DeviceData={pressure} DeviceLabels={DeviceLabels} />
+          <LineChart channel={channel} field={field1} DeviceData={temperature} DeviceLabels={DeviceLabels} />
         </Grid>
         <Grid
           size={{
             xs: 12,
-            lg: 6,
+            lg: 12,
           }}
         >
-          <DoughnutChart />
+          <LineChart channel={channel} field={field2} DeviceData={humidity} DeviceLabels={DeviceLabels} />
+        </Grid>
+      </Grid>
+      <Grid container spacing={6}>
+        <Grid
+          size={{
+            xs: 12,
+            lg: 12,
+          }}
+        > 
+          <LineChart channel={channel} field={field3} DeviceData={pressure} DeviceLabels={DeviceLabels} />
         </Grid>
       </Grid>
     </React.Fragment>
