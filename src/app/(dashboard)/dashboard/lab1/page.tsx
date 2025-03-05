@@ -13,6 +13,8 @@ export default async function Lab1() {
 
   return (
     // <Lab1_client device={device} />
+    <>
     <Lab1_client />
+    </>  
   );
 }
