@@ -4,6 +4,7 @@ import { Paper } from "@mui/material";
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
+import Link from "next/link";
 
 import {
   Avatar,
@@ -143,7 +144,9 @@ function SignIn() {
           >
             Sign In
           </Button>
-          <SignUpButton variant="contained">Sign Up</SignUpButton>
+          <Link href="/auth/sign-up" passHref>
+            <SignUpButton variant="contained">Sign Up</SignUpButton>
+          </Link>
         </Toolbar>
       </TopBar>
 
