@@ -44,3 +44,6 @@ yarn.lock
 tsconfig.tsbuildinfo
 
 *.bkp
+
+# virtual environment
+venv
