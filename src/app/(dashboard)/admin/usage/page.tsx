@@ -31,7 +31,7 @@ import { spacing, SpacingProps } from "@mui/system";
 
 import DoughnutChart from "@/components/pages/dashboard/usagehistory/DoughnutChart_UsageHistory";
 // import StackedLineChart from "@/components/pages/dashboard/usagehistory/StackedLineChart_UsageHistory";
-import StackedLineChart from "@/components/pages/dashboard/usagehistory/StackedLineChart_alt";
+import StackedLineChart from "@/components/pages/dashboard/usagehistory/StackedLineChart_UsageHistory";
 
 
 const Divider = styled(MuiDivider)(spacing);

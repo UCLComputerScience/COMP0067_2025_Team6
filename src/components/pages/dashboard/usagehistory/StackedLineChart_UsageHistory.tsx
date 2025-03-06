@@ -1,120 +1,183 @@
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Label } from 'recharts';
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import styled from '@emotion/styled';
-import { Card as MuiCard, CardContent, CardHeader, IconButton, Box } from '@mui/material';
-import { spacing } from '@mui/system';
-import { withTheme } from "@emotion/react";
+import React, { ReactNode } from "react";
+import { Card, CardContent, CardHeader, IconButton, Box } from "@mui/material";
+import { ChevronRight } from "@mui/icons-material";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Filler,
+  Legend,
+  ChartOptions,
+  ChartData
+} from "chart.js";
 
-const Card = styled(MuiCard)(spacing);
+// Import locationData from DoughnutChart
+import { locationData } from "./DoughnutChart_UsageHistory";
 
-const FixedWidthContainer = styled(Box)`
-  // width: 800px;
-  // height: 500px;
-  max-width: 90vw; // Prevent overflow on small screens
-  margin: 0 auto;
-  overflow-x: auto; // Add horizontal scroll if needed
-`;
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Filler,
+  Legend
+);
 
-// Keep ChartWrapper for height only
-const ChartWrapper = styled.div`
-  height: 378px;
-`;
+// Create a fixed-width container component with proper TypeScript types
+interface FixedWidthContainerProps {
+  children: ReactNode;
+}
 
+const FixedWidthContainer = ({ children }: FixedWidthContainerProps) => (
+  <Box
+    sx={{
+      // width: '900px',
+      maxWidth: '90vw',
+      margin: '0 auto',
+      overflowX: 'auto'
+    }}
+  >
+    {children}
+  </Box>
+);
 
+// location labels 
+const locationLabels = ["London", "Glasgow", "Manchester"];
 
+// year labels
+const yearLabels = ["2018", "2019", "2020", "2021", "2022", "2023", "2024"];
 
-const data = [
-  { year: 2016, Brazil: 50, Canada: 300, India: 100 },
-  { year: 2017, Brazil: 120, Canada: 320, India: 180 },
-  { year: 2018, Brazil: 200, Canada: 310, India: 150 },
-  { year: 2019, Brazil: 250, Canada: 350, India: 220 },
+//rows are locations and columns are years
+const dataMatrix = [
+  // London data
+  [50, 60, 70, 65, 60, 65, 70],
+  // Glasgow data
+  [40, 50, 40, 45, 55, 45, 60],
+  // Manchester data
+  [30, 40, 30, 40, 35, 40, 50]
 ];
 
-const options = {
-  margin: { top: 10, right: 50, left: 0, bottom: 20 },
-  xAxis: { tick: { fontWeight: 'bold' } },
-  yAxis: {
-    position: "right",
-    tick: { fontWeight: 'bold' },
-    grid: { strokeDasharray: '3 3', strokeOpacity: 0.5 },
-  },
-  tooltip: {},
-  legend: { position: "bottom", height: 36 },
+// Map doughnut chart locations to the order in our line chart
+const locationMap = {
+  "London Office": 0,   // index in locationLabels array for "London"
+  "Glasgow Office": 1,  // index in locationLabels array for "Glasgow"
+  "Manchester Office": 2 // index in locationLabels array for "Manchester"
 };
 
-function StackedLineChart() {
+// Update the last column (2024) with total usage values from imported locationData
+locationData.forEach(location => {
+  //type assertion, key exists
+  const rowIndex = locationMap[location.locationName as keyof typeof locationMap];
+  if (rowIndex !== undefined) {
+    // Last column index (2024) is yearLabels.length - 1
+    dataMatrix[rowIndex][yearLabels.length - 1] = location.totalUsage;
+  }
+});
+
+const userColors = [
+  { border: "rgba(234, 196, 80, 0.5)", background: "rgba(234, 196, 80, 0.2)" },
+  { border: "rgba(30, 145, 89, 0.5)", background: "rgba(30, 145, 89, 0.2)" },
+  { border: "rgba(20, 12, 178, 0.5)", background: "rgba(20, 12, 178, 0.2)" }
+];
+
+const StackedLineChart = () => {
+  
+  const chartData: ChartData<"line"> = {
+    labels: yearLabels,
+    datasets: locationLabels.map((location, index) => ({
+      label: location,
+      data: dataMatrix[index],
+      borderColor: userColors[index].border,
+      backgroundColor: userColors[index].background,
+      fill: false,
+      tension: 0
+    }))
+  };
+
+  const options: ChartOptions<"line"> = {
+    maintainAspectRatio: false,
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          usePointStyle: true,
+          padding: 20
+        }
+      },
+      tooltip: {
+        mode: "index",
+        intersect: false,
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          color: "rgba(0,0,0,0.0375)",
+        },
+        ticks: {
+          font: {
+            weight: "bold"
+          },
+          autoSkip: false // Prevent skipping labels
+        },
+        border: {
+          display: true,
+          color: 'rgba(0,0,0,0.1)'
+        }
+      },
+      y: {
+        position: "right",
+        display: true,
+        min: 0, // Start from 0
+        grid: {
+          color: "rgba(0,0,0,0.0375)",
+          drawTicks: true,
+          tickLength: 4,
+          lineWidth: 1,
+        },
+        border: {
+          display: true,
+          color: 'rgba(0,0,0,0.1)'
+        },
+        ticks: {
+          display: true,
+          color: 'rgba(0,0,0,0.75)'
+        }
+      }
+    },
+  };
+
   return (
     <FixedWidthContainer>
       <Card sx={{ mb: 6, width: '100%' }}>
         <CardHeader
           action={
             <IconButton aria-label="settings" size="large">
-              <ChevronRight size={20} />
+              {/* <ChevronRight size={20} /> */}
             </IconButton>
           }
-          title="User Location"
+          title="Location Usage History"
         />
+
         <CardContent>
-          <ChartWrapper>
-            <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={data} margin={{ top: 20, right: 40, left: 20, bottom: 30 }}>
-                <XAxis dataKey="year" tick={{ fontWeight: 'bold' }} />
-                <YAxis 
-                  yAxisId="left"
-                  orientation="left" 
-                  display="none" 
-                />
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right" 
-                  tick={{ fontWeight: 'bold' }}
-                  tickLine={{ stroke: '#333' }}
-                  axisLine={{ stroke: '#333' }}
-                >
-                  <Label 
-                    value="Total" 
-                    position="top" 
-                    offset={20}
-                    dy={-10}
-                    style={{ textAnchor: 'middle', fontWeight: 'bold' }}
-                  />
-                </YAxis>
-                <Tooltip />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                />
-                <Area 
-                  yAxisId="right"
-                  type="linear" 
-                  dataKey="Brazil" 
-                  stackId="1" 
-                  stroke="#E69F66" 
-                  fill="#E69F66" 
-                />
-                <Area 
-                  yAxisId="right"
-                  type="linear" 
-                  dataKey="Canada" 
-                  stackId="1" 
-                  stroke="#4BAA9A" 
-                  fill="#4BAA9A" 
-                />
-                <Area 
-                  yAxisId="right"
-                  type="linear" 
-                  dataKey="India" 
-                  stackId="1" 
-                  stroke="#8854D0" 
-                  fill="#8854D0" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartWrapper>
+          <div style={{ position: "relative", width: "100%" }}>
+            <div style={{ height: "375px" }}>
+              <Line data={chartData} options={options} />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </FixedWidthContainer>
   );
-}
-export default withTheme(StackedLineChart);
+};
+
+export default StackedLineChart;
