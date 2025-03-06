@@ -14,18 +14,18 @@ import {
 import { spacing } from "@mui/system";
 import { green, red } from "@mui/material/colors";
 
-import Actions from "@/components/pages/dashboard/default/Actions";
-import BarChart from "@/components/pages/dashboard/default/BarChart";
-import LineChart from "@/components/pages/dashboard/default/LineChart";
-import DoughnutChart from "@/components/pages/dashboard/default/DoughnutChart";
-import Stats from "@/components/pages/dashboard/default/Stats";
-import Table from "@/components/pages/dashboard/default/Table";
+import Actions from "@/components/pages/dashboard/saas/Actions";
+import BarChart from "@/components/pages/dashboard/saas/BarChart";
+import DoughnutChart from "@/components/pages/dashboard/saas/DoughnutChart";
+import USAMap from "@/components/pages/dashboard/saas/USAMap";
+import Stats from "@/components/pages/dashboard/saas/Stats";
+import Table from "@/components/pages/dashboard/saas/Table";
 
 const Divider = styled(MuiDivider)(spacing);
 
 const Typography = styled(MuiTypography)(spacing);
 
-function Default() {
+function SaaS() {
   const { t } = useTranslation();
 
   return (
@@ -33,10 +33,10 @@ function Default() {
       <Grid justifyContent="space-between" container spacing={6}>
         <Grid>
           <Typography variant="h3" gutterBottom>
-            Lab 1
+            SaaS Dashboard
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, Stephen! {t("We've missed you")}.{" "}
+            {t("Welcome back")}, Lucy! {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
             </span>
@@ -59,10 +59,10 @@ function Default() {
           }}
         >
           <Stats
-            title="Average Temperature"
-            amount="41 C"
-            chip="Today"
-            percentagetext="+26%"
+            title="Income"
+            amount="$37.500"
+            chip="Monthly"
+            percentagetext="+14%"
             percentagecolor={green[500]}
           />
         </Grid>
@@ -76,10 +76,10 @@ function Default() {
           }}
         >
           <Stats
-            title="Average Pressure"
-            amount="1.1 bar"
-            chip="Today"
-            percentagetext="-14%"
+            title="Visitors"
+            amount="150.121"
+            chip="Annual"
+            percentagetext="-12%"
             percentagecolor={red[500]}
           />
         </Grid>
@@ -93,10 +93,10 @@ function Default() {
           }}
         >
           <Stats
-            title="Average Humidity"
-            amount="70%"
-            chip="Today"
-            percentagetext="+18%"
+            title="Completed Orders"
+            amount="12.432"
+            chip="Weekly"
+            percentagetext="+24%"
             percentagecolor={green[500]}
           />
         </Grid>
@@ -109,47 +109,47 @@ function Default() {
             xl: "grow",
           }}
         >
-          {/* <Stats
+          <Stats
             title="Pending Orders"
-            amount="45"
-            chip="Yearly"
-            percentagetext="-9%"
+            amount="22"
+            chip="Weekly"
+            percentagetext="-6%"
             percentagecolor={red[500]}
             illustration="/static/img/illustrations/waiting.png"
-          /> */}
+          />
         </Grid>
       </Grid>
       <Grid container spacing={6}>
         <Grid
           size={{
             xs: 12,
-            lg: 6,
+            lg: 5,
           }}
         >
-          <LineChart />
+          <USAMap />
         </Grid>
         <Grid
           size={{
             xs: 12,
-            lg: 6,
+            lg: 7,
+          }}
+        >
+          <BarChart />
+        </Grid>
+      </Grid>
+      <Grid container spacing={6}>
+        <Grid
+          size={{
+            xs: 12,
+            lg: 4,
           }}
         >
           <DoughnutChart />
         </Grid>
-      </Grid>
-      <Grid container spacing={6}>
         <Grid
           size={{
             xs: 12,
-            lg: 6,
-          }}
-        >
-          <LineChart />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6,
+            lg: 8,
           }}
         >
           <Table />
@@ -159,4 +159,4 @@ function Default() {
   );
 }
 
-export default Default;
+export default SaaS;

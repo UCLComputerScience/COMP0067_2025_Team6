@@ -24,18 +24,30 @@ const ChartWrapper = styled.div`
 function LineChart({ theme }: ThemeProps) {
   const data = {
     labels: [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
     ],
     datasets: [
       {
@@ -58,21 +70,20 @@ function LineChart({ theme }: ThemeProps) {
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
         data: [
-          2115, 1562, 1584, 1892, 1587, 1923, 2566, 2448, 2805, 3438, 2917,
-          3327,
+          41, 43, 38, 45, 42, 45, 40, 47, 44, 38, 31, 36, 33, 31, 35, 41, 46, 43, 52, 54, 47, 50, 48, 52,
         ],
       },
-      {
-        label: "Orders",
-        fill: true,
-        backgroundColor: "transparent",
-        borderColor: theme.palette.grey[500],
-        borderDash: [4, 4],
-        tension: 0.4,
-        data: [
-          958, 724, 629, 883, 915, 1214, 1476, 1212, 1554, 2128, 1466, 1827,
-        ],
-      },
+      // {
+      //   label: "Orders",
+      //   fill: true,
+      //   backgroundColor: "transparent",
+      //   borderColor: theme.palette.grey[500],
+      //   borderDash: [4, 4],
+      //   tension: 0.4,
+      //   data: [
+      //     958, 724, 629, 883, 915, 1214, 1476, 1212, 1554, 2128, 1466, 1827,
+      //   ],
+      // },
     ],
   };
 
@@ -106,7 +117,7 @@ function LineChart({ theme }: ThemeProps) {
             <MoreVertical />
           </IconButton>
         }
-        title="Temperature"
+        title="Digibox 1 Temperature"
       />
       <CardContent>
         <ChartWrapper>
