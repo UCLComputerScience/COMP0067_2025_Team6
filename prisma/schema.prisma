@@ -28,3 +28,8 @@ model Feed {
   field2    Float?
   field3    Float?
 }
+
+model ApiKey {
+  id  Int    @id @default(autoincrement())
+  api String @unique
+}
