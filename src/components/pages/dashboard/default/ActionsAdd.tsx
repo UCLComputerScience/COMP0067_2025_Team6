@@ -1,87 +1,66 @@
 import React from "react";
 import styled from "@emotion/styled";
 
-import { Button as MuiButton, Menu, MenuItem } from "@mui/material";
-import {
-  Loop as LoopIcon,
-  FilterList as FilterListIcon,
-} from "@mui/icons-material";
 import { spacing } from "@mui/system";
-import { ActionsProps } from "@/types/devices";
-import { el } from "date-fns/locale";
 
-const Button = styled(MuiButton)(spacing);
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Card as MuiCard,
+  Paper as MuiPaper,
+  TextField,
+} from "@mui/material";
 
-const SmallButton = styled(Button)`
-  padding: 4px;
-  min-width: 0;
+const Card = styled(MuiCard)(spacing);
 
-  svg {
-    width: 0.9em;
-    height: 0.9em;
-  }
-`;
+const Paper = styled(MuiPaper)(spacing);
 
-const Actions: React.FC<ActionsProps> = ({ selectedOption, setSelectedOption }) => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [buttonText, setButtonText] = React.useState<string>("Add");
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  // Handle selecting a menu item
-  const handleSelect = (option: string) => {
-    if (option === "Today") {
-      setSelectedOption("?days=1");
-    } else if (option === "Last 7 Days") {
-      setSelectedOption("?days=7");
-    } else if (option === "Last 30 Days") {
-      setSelectedOption("?days=30");
-    } else if (option === "Last Year") {
-      setSelectedOption("?days=365");
-    } else if (option === "All Data") {
-      setSelectedOption("");
-    }
-    setButtonText(option);               // Set the selected option as the button text
-    handleClose();               // Close the menu after selection
-  };
+function FormDialog() {
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <React.Fragment>
-      {/* <SmallButton size="small" mr={2}>
-        <LoopIcon />
-      </SmallButton> */}
-      {/* <SmallButton size="small" mr={2}>
-        <FilterListIcon />
-      </SmallButton> */}
+    <div>
       <Button
         variant="contained"
-        color="secondary"
-        aria-owns={anchorEl ? "simple-menu" : undefined}
-        aria-haspopup="true"
-        onClick={handleClick}
+        color="primary"
+        onClick={() => setOpen(true)}
       >
-        {buttonText}  {/* Display the selected option here */}
+        Add
       </Button>
-      <Menu
-        id="simple-menu"
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="form-dialog-title"
       >
-        {["Today", "Last 7 Days", "Last 30 Days", "Last Year", "All Data"].map((option) => (
-          <MenuItem key={option} onClick={() => handleSelect(option)}>
-            {option}
-          </MenuItem>
-        ))}
-      </Menu>
-    </React.Fragment>
+        <DialogTitle id="form-dialog-title">Add New Channel</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please enter the API key of the channel you wish to add.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="API key"
+            type="text"
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={() => setOpen(false)} color="primary">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 }
 
-export default Actions;
+export default FormDialog;
