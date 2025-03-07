@@ -65,7 +65,7 @@ function Default() {
             Lab 1
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, {session?.user?.firstName || "Stephen"}!{" "}
+            {t("Welcome back")}, {session?.user?.name || "Stephen"}!{" "}
             {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
