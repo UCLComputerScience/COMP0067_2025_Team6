@@ -1,5 +1,6 @@
 "use client";
 
+import { Paper } from "@mui/material";
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
@@ -14,7 +15,6 @@ import {
   Box,
   Container,
   Grid,
-  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 

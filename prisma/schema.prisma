@@ -33,3 +33,11 @@ model ApiKey {
   id  Int    @id @default(autoincrement())
   api String @unique
 }
+
+// New User model
+model User {
+  id        Int    @id @default(autoincrement())
+  email     String @unique
+  password  String
+  firstName String?
+}

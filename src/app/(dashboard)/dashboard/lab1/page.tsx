@@ -1,10 +1,11 @@
 "use client";
 
-import React, { use } from "react";
+import React, { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
-
+import { useRouter } from "next/navigation"; // Import useRouter for redirect
 import { useTranslation } from "react-i18next";
+import { useSession } from "next-auth/react"; // Import useSession
 
 import {
   Grid2 as Grid,
@@ -196,6 +197,34 @@ const Lab1 = () => {
   }
 
 
+  // Get session data using the useSession hook
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // State for controlling loading or redirection state
+  const [loading, setLoading] = useState(true);
+
+  // Check if the user is authenticated and redirect if needed
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      setLoading(false); // Stop loading when we know the user is unauthenticated
+      router.push("/auth/sign-in"); // Redirect to login page if not authenticated
+    } else if (status === "authenticated") {
+      setLoading(false); // Stop loading when user is authenticated
+    }
+  }, [status, router]);
+
+  // Show a loading state or "Please log in" message while checking session
+  if (loading) {
+    return (
+      <div>
+        <Typography variant="h5" gutterBottom>
+          {t("Please log in to view this page.")}
+        </Typography>
+      </div>
+    );
+  }
+
   return (
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={6}>
@@ -204,7 +233,8 @@ const Lab1 = () => {
             Lab 1
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, Stephen! {t("We've missed you")}.{" "}
+            {t("Welcome back")}, {session?.user?.name || "Stephen"}!{" "}
+            {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
             </span>
@@ -315,61 +345,6 @@ const Lab1 = () => {
       </Grid>
 
       <DevicesGrid />
-
-      {/* <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        > 
-          <LineChart channel={channel} field={field1} DeviceData={temperature} DeviceLabels={DeviceLabels} />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        >
-          <LineChart channel={channel} field={field2} DeviceData={humidity} DeviceLabels={DeviceLabels} />
-        </Grid>
-      </Grid>
-      <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        > 
-          <LineChart channel={channel} field={field3} DeviceData={pressure} DeviceLabels={DeviceLabels} />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        > 
-          <LineChart channel={channel_db_name} field={field1_db} DeviceData={temperature_db} DeviceLabels={DeviceLabels_db} />
-        </Grid>
-      </Grid>
-      <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        > 
-          <LineChart channel={channel_db_name} field={field2_db} DeviceData={humidity_db} DeviceLabels={DeviceLabels_db} />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 12,
-          }}
-        > 
-          <LineChart channel={channel_db_name} field={field3_db} DeviceData={pressure_db} DeviceLabels={DeviceLabels_db} />
-        </Grid>
-      </Grid> */}
     </React.Fragment>
   );
 }
