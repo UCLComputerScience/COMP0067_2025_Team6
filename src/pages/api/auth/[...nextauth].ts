@@ -25,7 +25,14 @@ export default NextAuth({
         // Check if user exists and password matches (hash your passwords in production)
         if (user && credentials.password === user.password) {
           // Return user object with necessary fields
-          return { id: user.id, email: user.email, firstName: user.firstName };
+          return {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            organisation: user.organisation,
+            avatar: user.avatar,
+          };
         }
 
         return null; // Return null if credentials are incorrect
@@ -45,24 +52,24 @@ export default NextAuth({
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.firstName = user.firstName; // Add firstName to JWT token
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.organisation = user.organisation;
+        token.avatar = user.avatar;
       }
       return token; // Return the token with added information
     },
     
     async session({ session, token }) {
-      // Add firstName from JWT token to the session object
-      if (token?.firstName) {
-        session.user.firstName = token.firstName; // Add firstName to session
-      }
-      if (token?.email) {
-        session.user.email = token.email; // Add email to session if not already set
-      }
-      if (token?.id) {
-        session.user.id = token.id; // Ensure user ID is added to the session
-      }
+      // Add user details from JWT token to the session
+      session.user.id = token.id;
+      session.user.email = token.email;
+      session.user.firstName = token.firstName;
+      session.user.lastName = token.lastName;
+      session.user.organisation = token.organisation;
+      session.user.avatar = token.avatar;
 
-      return session; // Return the session with added user info
+      return session;
     },
   },
 });

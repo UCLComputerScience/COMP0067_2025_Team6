@@ -7,15 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Module {
-  id    Int    @id @default(autoincrement())
-  code  String
-  title String
-}
-
 model User {
   id        Int     @id @default(autoincrement())
   email     String  @unique @db.VarChar(255)
   password  String  @db.VarChar(255)
   firstName String? @db.VarChar(255)
+  lastName       String?
+  organisation   String?
+  avatar         String?
+  resetToken     String? 
+  resetTokenExpiry DateTime? 
 }
