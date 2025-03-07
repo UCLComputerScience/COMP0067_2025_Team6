@@ -49,7 +49,7 @@ function SignUp() {
           .max(255)
           .required("Email is required"),
         password: Yup.string()
-          .min(12, "Must be at least 12 characters")
+          .min(6, "Must be at least 6 characters")
           .max(255)
           .required("Required"),
         confirmPassword: Yup.string().oneOf(

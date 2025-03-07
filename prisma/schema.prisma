@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  SUPER_USER
+  STANDARD_USER
+  TEMPORARY_USER
+}
+
 model User {
   id        Int     @id @default(autoincrement())
   email     String  @unique @db.VarChar(255)
@@ -17,4 +24,5 @@ model User {
   avatar         String?
   resetToken     String? 
   resetTokenExpiry DateTime? 
+  role      Role    @default(STANDARD_USER)
 }

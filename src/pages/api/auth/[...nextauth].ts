@@ -32,6 +32,7 @@ export default NextAuth({
             lastName: user.lastName,
             organisation: user.organisation,
             avatar: user.avatar,
+            role: user.role,
           };
         }
 
@@ -56,6 +57,7 @@ export default NextAuth({
         token.lastName = user.lastName;
         token.organisation = user.organisation;
         token.avatar = user.avatar;
+        token.role = user.role;
       }
       return token; // Return the token with added information
     },
@@ -68,7 +70,7 @@ export default NextAuth({
       session.user.lastName = token.lastName;
       session.user.organisation = token.organisation;
       session.user.avatar = token.avatar;
-
+      session.user.role = token.role;
       return session;
     },
   },
