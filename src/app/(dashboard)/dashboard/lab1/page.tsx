@@ -182,8 +182,8 @@ const Lab1 = () => {
   const DevicesGrid = () => {
     return (
       <Grid container spacing={6}>
-        {devices.map((device) => (
-          <Grid
+        {devices.map((device, index) => (
+          <Grid key={index} // Change index key to id
             size={{
               xs: 12,
               lg: 12,
@@ -233,7 +233,7 @@ const Lab1 = () => {
             Lab 1
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, {session?.user?.name || "Stephen"}!{" "}
+            {t("Welcome back")}, {session?.user?.firstName || "Stephen"}!{" "}
             {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
