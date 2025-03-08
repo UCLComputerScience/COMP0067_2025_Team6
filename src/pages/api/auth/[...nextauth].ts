@@ -25,7 +25,7 @@ export default NextAuth({
         // Check if user exists and password matches (hash your passwords in production)
         if (user && credentials.password === user.password) {
           // Return user object with necessary fields
-          return { id: user.id, email: user.email, firstName: user.firstName };
+          return { id: user.id.toString(), email: user.email, firstName: user.firstName ?? '' };
         }
 
         return null; // Return null if credentials are incorrect
