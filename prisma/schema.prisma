@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  SUPER_USER
+  STANDARD_USER
+  TEMPORARY_USER
+
 model Channel {
   id          Int      @id
   name        String
@@ -34,10 +40,15 @@ model ApiKey {
   api String @unique
 }
 
-// New User model
 model User {
   id        Int     @id @default(autoincrement())
-  email     String  @unique
-  password  String
-  firstName String?
+  email     String  @unique @db.VarChar(255)
+  password  String  @db.VarChar(255)
+  firstName String? @db.VarChar(255)
+  lastName       String?
+  organisation   String?
+  avatar         String?
+  resetToken     String? 
+  resetTokenExpiry DateTime? 
+  role      Role    @default(STANDARD_USER)
 }
