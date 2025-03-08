@@ -17,9 +17,7 @@ import { spacing } from "@mui/system";
 import useAuth from "@/hooks/useAuth";
 
 const Alert = styled(MuiAlert)(spacing);
-
 const TextField = styled(MuiTextField)(spacing);
-
 const Button = styled(MuiButton)(spacing);
 
 const Centered = styled(MuiTypography)`
@@ -65,11 +63,16 @@ function ResetPassword() {
         values,
       }) => (
         <form noValidate onSubmit={handleSubmit}>
+          <MuiTypography component="h1" variant="h5" align="center" gutterBottom>
+            Reset Password
+          </MuiTypography>
+
           {errors.submit && (
             <Alert mt={2} mb={1} severity="warning">
               {errors.submit}
             </Alert>
           )}
+
           <TextField
             type="email"
             name="email"
@@ -82,6 +85,7 @@ function ResetPassword() {
             onChange={handleChange}
             my={3}
           />
+
           <Button
             type="submit"
             fullWidth
@@ -92,9 +96,10 @@ function ResetPassword() {
           >
             Reset password
           </Button>
+
           <Centered>
             Don't have an account?{" "}
-            <Link href="sign-up" component={NextLink}>
+            <Link href="/auth/sign-up" component={NextLink}>
               Sign up
             </Link>
           </Centered>
