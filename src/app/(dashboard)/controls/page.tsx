@@ -22,7 +22,7 @@ import {
   Card as MuiCard,
   CardContent as MuiCardContent,
   Divider as MuiDivider,
-  Grid2 as Grid,
+  Grid,
   Link,
   Typography as MuiTypography,
   IconButton,
@@ -107,6 +107,16 @@ const sensorRanges = {
 };
 
 // SensorField Component (Handles the Slider Display)
+interface SensorFieldProps {
+  label: string;
+  value: number[];
+  min: number;
+  max: number;
+  step: number;
+  onSliderChange: (event: Event, newValue: number | number[]) => void;
+  latestValue: string | number;
+}
+
 function SensorField({
   label,
   value,
@@ -115,7 +125,7 @@ function SensorField({
   step,
   onSliderChange,
   latestValue,
-}) {
+}: SensorFieldProps) {
   return (
     <Box
       sx={{
@@ -140,7 +150,7 @@ function SensorField({
         // Marks: an indicator for the actual sensor reading.
         marks={[
           {
-            value: parseFloat(latestValue),
+            value: parseFloat(latestValue.toString()),
             label: `${latestValue} units`,
           },
         ]}
@@ -167,7 +177,11 @@ function SensorField({
   );
 }
 
-function LabCard({ channelId }) {
+interface LabCardProps {
+  channelId: number;
+}
+
+function LabCard({ channelId }: LabCardProps) {
   // Look up the channel data using the channelId
   const { channel, feeds } = labData; // For now, labData is our static source
   if (channel.id !== channelId) {
@@ -183,23 +197,27 @@ function LabCard({ channelId }) {
   const fields = Object.keys(channel)
     .filter((key) => key.startsWith("field"))
     .map((key) => ({
-      label: channel[key], // e.g., "Temperature", "Humidity", etc.
-      latestValue: latestFeed[key], // e.g., "25.05000", etc.
+      label: String(channel[key as keyof typeof channel]), // e.g., "Temperature", "Humidity", etc.
+      latestValue: latestFeed[key as keyof typeof latestFeed], // e.g., "25.05000", etc.
     }));
 
   // Initialize slider values for each sensor as a range: [defaultMin, defaultMax]
   // For example, here we default each slider to [30, 70]
   const [sliderValues, setSliderValues] = useState(fields.map(() => [30, 70]));
 
-  const handleSliderChange = (index, newValue) => {
+  interface SliderChangeHandler {
+    (index: number, newValue: number | number[]): void;
+  }
+
+  const handleSliderChange: SliderChangeHandler = (index, newValue) => {
     const updated = [...sliderValues];
-    updated[index] = newValue; // newValue is an array: [minThreshold, maxThreshold]
+    updated[index] = newValue as number[]; // newValue is an array: [minThreshold, maxThreshold]
     setSliderValues(updated);
   };
 
   // Toggle state for the switch at the bottom of the card
   const [toggle, setToggle] = useState(false);
-  const handleToggleChange = (event) => {
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     setToggle(event.target.checked);
   };
 
@@ -285,7 +303,7 @@ function Controls() {
   const latestFeed = labData.feeds[labData.feeds.length - 1];
   const fields = Object.keys(latestFeed)
     .filter((key) => key.startsWith("field"))
-    .map((key) => ({ label: labData.channel[key], value: latestFeed[key] }));
+    .map((key) => ({ label: labData.channel[key as keyof typeof labData.channel], value: latestFeed[key as keyof typeof latestFeed] }));
 
   return (
     <>

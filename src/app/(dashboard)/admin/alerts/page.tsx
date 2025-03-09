@@ -296,7 +296,7 @@ function EnhancedTable() {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id);
+      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id.toString());
       setSelected(newSelecteds);
       return;
     }
@@ -367,7 +367,7 @@ function EnhancedTable() {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.id);
+                  const isItemSelected = isSelected(row.id.toString());
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -383,7 +383,7 @@ function EnhancedTable() {
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id)}
+                          onClick={(event) => handleClick(event, row.id.toString())}
                         />
                       </TableCell>
 
