@@ -12,6 +12,7 @@ enum Role {
   SUPER_USER
   STANDARD_USER
   TEMPORARY_USER
+}
 
 model Channel {
   id          Int      @id

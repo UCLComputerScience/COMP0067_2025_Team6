@@ -26,12 +26,12 @@ export default NextAuth({
         if (user && credentials.password === user.password) {
           // Return user object with necessary fields
           return {
-            id: user.id,
+            id: user.id.toString(),
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            organisation: user.organisation,
-            avatar: user.avatar,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            organisation: user.organisation || "",
+            avatar: user.avatar || "",
             role: user.role,
           };
         }
@@ -54,10 +54,10 @@ export default NextAuth({
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
-        token.lastName = user.lastName;
-        token.organisation = user.organisation;
-        token.avatar = user.avatar;
-        token.role = user.role;
+        token.lastName = (user as any).lastName;
+        token.organisation = (user as any).organisation;
+        token.avatar = (user as any).avatar;
+        token.role = (user as any).role;
       }
       return token; // Return the token with added information
     },
