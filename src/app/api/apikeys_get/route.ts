@@ -4,10 +4,10 @@ import prisma from "../../../lib/prisma";
 
 export async function GET() {
   try {
-    const channels = await prisma.channel.findMany();
-    return NextResponse.json(channels);
+    const apikeys = await prisma.apiKey.findMany();
+    return NextResponse.json(apikeys);
   } catch (error) {
-    console.error("Error fetching channels:", error);
+    console.error("Error fetching apikeys:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }

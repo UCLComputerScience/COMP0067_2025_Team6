@@ -63,3 +63,8 @@ export type DeviceProps = {
     selectedOption: string;
     setSelectedOption: React.Dispatch<React.SetStateAction<string>>;
   }
+
+  export type DataProps = {
+    data: string;
+    setData: React.Dispatch<React.SetStateAction<string>>;
+  }

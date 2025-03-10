@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "@emotion/styled";
 
 import { spacing } from "@mui/system";
+import { DataProps } from "@/types/devices";
 
 import {
   Button,
@@ -19,7 +20,7 @@ const Card = styled(MuiCard)(spacing);
 
 const Paper = styled(MuiPaper)(spacing);
 
-function FormDialog() {
+const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const [open, setOpen] = React.useState(false);
   const [api, setApi] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ function FormDialog() {
       if (res.ok) {
         setMessage("API added successfully!");
         setApi("");
+        setData(`${api}`);
       } else {
         setMessage("Failed to add api.");
       }

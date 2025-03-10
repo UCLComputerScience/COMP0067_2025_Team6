@@ -8,7 +8,6 @@ import {
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
 import { ActionsProps } from "@/types/devices";
-import { el } from "date-fns/locale";
 
 const Button = styled(MuiButton)(spacing);
 
