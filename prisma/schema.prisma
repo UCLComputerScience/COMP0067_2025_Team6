@@ -1,20 +1,194 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Module {
-  id Int @id @default(autoincrement())
-  code String
-  title String
+model alerts {
+  alertid            Int                @id @default(autoincrement())
+  serialnumber       Int
+  priority           priority_type?
+  alertdescription   String             @db.VarChar(255)
+  alertstatus        alert_status
+  alertdate          DateTime           @db.Timestamp(6)
+  instrumentspecific instrumentspecific @relation(fields: [serialnumber], references: [serialnumber], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model images {
+  imageid            Int                @id @default(autoincrement())
+  contentid          Int
+  imageurl           String             @db.VarChar(255)
+  landingpagecontent landingpagecontent @relation(fields: [contentid], references: [contentid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model instrumentaccess {
+  userid             Int
+  serialnumber       Int
+  instrumentspecific instrumentspecific @relation(fields: [serialnumber], references: [serialnumber], onDelete: NoAction, onUpdate: NoAction)
+  users              users              @relation(fields: [userid], references: [userid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([userid, serialnumber])
+}
+
+model instrumentdata {
+  dataid             Int                @id @default(autoincrement())
+  serialnumber       Int
+  datacategory       String             @db.VarChar(50)
+  datadesc           String             @db.VarChar(255)
+  datadatetime       DateTime           @db.Timestamp(6)
+  instrumentspecific instrumentspecific @relation(fields: [serialnumber], references: [serialnumber], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model instrumentspecific {
+  serialnumber     Int                @id @default(autoincrement())
+  instrumenttypeid Int
+  labid            Int
+  instrumentstatus instrument_status?
+  alerts           alerts[]
+  instrumentaccess instrumentaccess[]
+  instrumentdata   instrumentdata[]
+  instrumenttype   instrumenttype     @relation(fields: [instrumenttypeid], references: [instrumenttypeid], onDelete: NoAction, onUpdate: NoAction)
+  labs             labs               @relation(fields: [labid], references: [labid], onDelete: NoAction, onUpdate: NoAction)
+  useraccess       useraccess[]
+}
+
+model instrumenttype {
+  instrumenttypeid   Int                  @id @default(autoincrement())
+  instrumentname     String               @db.VarChar(100)
+  instrumentcategory String               @db.VarChar(50)
+  instrumentamount   Int
+  instrumentspecific instrumentspecific[]
+}
+
+model labs {
+  labid              Int                  @id @default(autoincrement())
+  lablocation        String               @db.VarChar(100)
+  managerid          Int
+  instrumentspecific instrumentspecific[]
+  users              users                @relation(fields: [managerid], references: [userid], onDelete: NoAction, onUpdate: NoAction)
+  projects           projects[]
+}
+
+model landingpagecontent {
+  contentid          Int      @id @default(autoincrement())
+  contenttype        String   @db.VarChar(50)
+  contentname        String   @db.VarChar(100)
+  contentdescription String?
+  images             images[]
+}
+
+model projects {
+  projectid          Int             @id
+  labid              Int
+  projectname        String          @db.VarChar
+  projectdescription String?         @db.VarChar
+  projectstatus      project_status?
+  creatorid          Int
+  projectstartdate   DateTime        @db.Timestamp(6)
+  projectenddate     DateTime?       @db.Timestamp(6)
+  labs               labs            @relation(fields: [labid], references: [labid], onDelete: NoAction, onUpdate: NoAction)
+  users              users           @relation(fields: [labid], references: [userid], onDelete: NoAction, onUpdate: NoAction, map: "projects_labid_fkey1")
+  projectusers       projectusers[]
+}
+
+model projectusers {
+  userid          Int
+  projectid       Int
+  projectrole     String   @db.VarChar(50)
+  projectjoindate DateTime @db.Timestamp(6)
+  projects        projects @relation(fields: [projectid], references: [projectid], onDelete: NoAction, onUpdate: NoAction)
+  users           users    @relation(fields: [userid], references: [userid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([userid, projectid])
+}
+
+model systemsettings {
+  settingid    Int     @id @default(autoincrement())
+  settingname  String  @db.VarChar(100)
+  settingvalue String  @db.VarChar(255)
+  apikey       String? @db.VarChar(255)
+}
+
+model useraccess {
+  userid             Int
+  serialnumber       Int
+  accesslevel        access_level
+  accessstatus       access_status
+  accessstartdate    DateTime           @db.Timestamp(6)
+  accessexpirydate   DateTime?          @db.Timestamp(6)
+  instrumentspecific instrumentspecific @relation(fields: [serialnumber], references: [serialnumber], onDelete: NoAction, onUpdate: NoAction)
+  users              users              @relation(fields: [userid], references: [userid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([userid, serialnumber])
+}
+
+model useractivity {
+  activityid          Int      @id @default(autoincrement())
+  activitydate        DateTime @db.Timestamp(6)
+  userid              Int
+  activitydescription String   @db.VarChar(255)
+  users               users    @relation(fields: [userid], references: [userid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  userid           Int                @id @default(autoincrement())
+  userrole         user_role
+  email            String             @unique @db.VarChar(100)
+  userpassword     String             @db.VarChar(50)
+  firstname        String             @db.VarChar(50)
+  lastname         String             @db.VarChar(50)
+  instrumentaccess instrumentaccess[]
+  labs             labs[]
+  projects         projects[]
+  projectusers     projectusers[]
+  useraccess       useraccess[]
+  useractivity     useractivity[]
+}
+
+enum access_level {
+  read_only @map("read-only")
+  editor
+  admin
+}
+
+enum access_status {
+  active
+  inactive
+  pending
+  revoked
+}
+
+enum alert_status {
+  resolved
+  unresolved
+}
+
+enum instrument_status {
+  available
+  in_use    @map("in-use")
+  inactive
+}
+
+enum priority_type {
+  high
+  moderate
+  low
+}
+
+enum project_status {
+  pending
+  approved
+  in_progress @map("in progress")
+  completed
+  rejected
+}
+
+enum user_role {
+  admin
+  user
+  guest
 }
