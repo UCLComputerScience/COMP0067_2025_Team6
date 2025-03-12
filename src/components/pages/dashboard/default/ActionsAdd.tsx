@@ -25,6 +25,7 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const [api, setApi] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [id, setId] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +33,24 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
     setMessage("");
 
     try {
+      const response = await fetch(api);
+      const data = await response.json();
+  
+      if (data.channel && data.channel.id) {
+        setId(data.channel.id);
+      } else {
+        throw new Error("Channel number not found in the response");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return null;
+    }
+
+    try {
       const res = await fetch("/api/apikeys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api }),
+        body: JSON.stringify({ channel_id: Number(id), api }),
       });
 
       if (res.ok) {

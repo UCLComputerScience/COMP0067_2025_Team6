@@ -55,9 +55,9 @@ function Footer() {
             <ListItemButton component="a" href="#">
               <ListItemText primary="Support" />
             </ListItemButton>
-            <ListItemButton component="a" href="#">
+            {/* <ListItemButton component="a" href="#">
               <ListItemText primary="Help Center" />
-            </ListItemButton>
+            </ListItemButton> */}
             <ListItemButton component="a" href="#">
               <ListItemText primary="Privacy" />
             </ListItemButton>
@@ -76,7 +76,7 @@ function Footer() {
         >
           <List>
             <ListItemButton>
-              <ListItemText primary={`© ${new Date().getFullYear()} - Mira`} />
+              <ListItemText primary={`© ${new Date().getFullYear()} - Hilton Labs`} />
             </ListItemButton>
           </List>
         </Grid>
