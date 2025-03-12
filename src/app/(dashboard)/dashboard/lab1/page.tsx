@@ -30,7 +30,7 @@ const Divider = styled(MuiDivider)(spacing);
 const Typography = styled(MuiTypography)(spacing);
 
 const Lab1 = () => {
-  const [selectedOption, setSelectedOption] = React.useState<string>("?days=365");
+  const [selectedOption, setSelectedOption] = React.useState<string>("");
   // const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
   // const [channel_db, setChannel_db] = React.useState<ChannelProps>({} as ChannelProps);  // Channel data from db
   // const [feeds_db, setFeeds_db] = React.useState<FeedPropsDb[]>([]);  // Feeds data from db
@@ -119,6 +119,10 @@ const Lab1 = () => {
     fetchApikeys();
   }, [data]);
 
+  React.useEffect(() => {
+    console.log(apidata); // This will log the updated value of apikeys whenever it changes
+  }, [apidata]); // This effect runs every time apikeys changes
+
   // Function to fetch data based on the selected category
   // const fetchData = async (selectedOption: string) => {
   //     try {
@@ -133,7 +137,9 @@ const Lab1 = () => {
   // Function to fetch data based on the selected category and apikey
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
     try {
-        const response = await fetch(`${apikey}${selectedOption}`);
+        const url = selectedOption ? `${apikey}` + `${selectedOption}` : apikey;
+        // const url = `${apikey}`;
+        const response = await fetch(url);
         const result = await response.json();
         return result;
     } catch (error) {
@@ -144,8 +150,6 @@ const Lab1 = () => {
 
   useEffect(() => {    
     const fetchAllData = async () => {
-      if (!selectedOption || apikeys.length === 0) return;
-
       const results = await Promise.all(apikeys.map((key) => fetchDataFromApi(selectedOption, key)));
       setApidata(results.filter(Boolean)); // Remove null values from failed fetches
     };
@@ -181,9 +185,9 @@ const Lab1 = () => {
   function extractTimestamps(data: FeedProps[]): string[] {
     return data.map(feed => feed.created_at);
   }
-  function extractTimestamps_db(data: FeedPropsDb[]): string[] {
-    return data.map(feed => feed.createdAt);
-  }
+  // function extractTimestamps_db(data: FeedPropsDb[]): string[] {
+  //   return data.map(feed => feed.createdAt);
+  // }
   
   // Example usage
   // const DeviceLabels = extractTimestamps(rdata);
@@ -365,7 +369,7 @@ const Lab1 = () => {
         </Grid>
       </Grid>
       <Divider my={6} />
-      <Grid container spacing={6}>
+      {/* <Grid container spacing={6}>
         <Grid
           size={{
             xs: 12,
@@ -435,8 +439,8 @@ const Lab1 = () => {
             illustration="/static/img/illustrations/waiting.png"
           />
         </Grid>
-      </Grid>
-      <Grid container spacing={6}>
+      </Grid> */}
+      {/* <Grid container spacing={6}>
         <Grid
           size={{
             xs: 12,
@@ -453,7 +457,7 @@ const Lab1 = () => {
         >
           <Table />
         </Grid>
-      </Grid>
+      </Grid> */}
 
       <DevicesGridApi />
     </React.Fragment>
