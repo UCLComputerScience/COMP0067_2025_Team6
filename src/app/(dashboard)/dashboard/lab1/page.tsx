@@ -200,6 +200,7 @@ const Lab1 = () => {
 
   const devicesApi = apidata.map((item) => {
     const channel = item?.channel?.name || "N/A";
+    const channel_id = item?.channel?.id || 0;
     const field1 = item?.channel?.field1 || "N/A";
     const field2 = item?.channel?.field2 || "N/A";
     const field3 = item?.channel?.field3 || "N/A";
@@ -216,18 +217,21 @@ const Lab1 = () => {
     const DeviceLabels = extractTimestamps(rdata);
   
     return [{
+      channel_id: channel_id,
       channel: channel,
       field: field1,
       DeviceData: temperature,
       DeviceLabels: DeviceLabels
     },
     {
+      channel_id: channel_id,
       channel: channel,
       field: field2,
       DeviceData: humidity,
       DeviceLabels: DeviceLabels
     },
     {
+      channel_id: channel_id,
       channel: channel,
       field: field3,
       DeviceData: pressure,
@@ -247,7 +251,7 @@ const Lab1 = () => {
               lg: 12,
             }}
           >
-            <LineChart channel={device.channel} field={device.field} DeviceData={device.DeviceData} DeviceLabels={device.DeviceLabels} />
+            <LineChart channel_id={device.channel_id} channel={device.channel} field={device.field} DeviceData={device.DeviceData} DeviceLabels={device.DeviceLabels} setData={setData} />
           </Grid>
         ))}
       </Grid>

@@ -35,34 +35,61 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
     try {
       const response = await fetch(api);
       const data = await response.json();
-  
-      if (data.channel && data.channel.id) {
-        setId(data.channel.id);
-      } else {
+    
+      if (!data.channel || !data.channel.id) {
         throw new Error("Channel number not found in the response");
       }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      return null;
-    }
-
-    try {
+    
+      const channelId = Number(data.channel.id); // Extract value directly
+    
       const res = await fetch("/api/apikeys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel_id: Number(id), api }),
+        body: JSON.stringify({ api, channel_id: channelId }),
       });
-
+    
       if (res.ok) {
         setMessage("API added successfully!");
         setApi("");
         setData(`${api}`);
       } else {
-        setMessage("Failed to add api.");
+        setMessage("Failed to add API.");
       }
     } catch (error) {
+      console.error("Error:", error);
       setMessage("Something went wrong.");
     }
+    // try {
+    //   const response = await fetch(api);
+    //   const data = await response.json();
+  
+    //   if (data.channel && data.channel.id) {
+    //     setId(data.channel.id);
+    //   } else {
+    //     throw new Error("Channel number not found in the response");
+    //   }
+    // } catch (error) {
+    //   console.error("Error fetching data:", error);
+    //   return null;
+    // }
+
+    // try {
+    //   const res = await fetch("/api/apikeys", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ channel_id: Number(id), api }),
+    //   });
+
+    //   if (res.ok) {
+    //     setMessage("API added successfully!");
+    //     setApi("");
+    //     setData(`${api}`);
+    //   } else {
+    //     setMessage("Failed to add api.");
+    //   }
+    // } catch (error) {
+    //   setMessage("Something went wrong.");
+    // }
 
     setLoading(false);
     setOpen(false)
