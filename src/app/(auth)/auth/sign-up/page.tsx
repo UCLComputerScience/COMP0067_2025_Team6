@@ -14,7 +14,7 @@ function SignUp() {
         Get started
       </Typography>
       <Typography component="h2" variant="subtitle1" align="center">
-        Start creating the best possible user experience for you customers
+        Connect your lab to its Digital Twin and perform analytics
       </Typography>
 
       <SignUpComponent />

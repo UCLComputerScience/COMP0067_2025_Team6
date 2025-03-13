@@ -93,14 +93,14 @@ const DoughnutChart = ({ theme }: ThemeProps) => {
             <MoreVertical />
           </IconButton>
         }
-        title="Weekly sales"
+        title="Temperature Alerts"
       />
 
       <CardContent>
         <ChartWrapper>
           <DoughnutInner>
             <Typography variant="h4">+27%</Typography>
-            <Typography variant="caption">more sales</Typography>
+            <Typography variant="caption">more errors</Typography>
           </DoughnutInner>
           <Doughnut data={data} options={options} />
         </ChartWrapper>
@@ -108,45 +108,45 @@ const DoughnutChart = ({ theme }: ThemeProps) => {
           <TableHead>
             <TableRow>
               <TableCell>Source</TableCell>
-              <TableCell align="right">Revenue</TableCell>
+              <TableCell align="right">Error Readings</TableCell>
               <TableCell align="right">Value</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             <TableRow>
               <TableCell component="th" scope="row">
-                Social
+                Digibox 1
               </TableCell>
-              <TableCell align="right">260</TableCell>
+              <TableCell align="right">2</TableCell>
               <TableCell align="right">
-                <GreenText>+35%</GreenText>
+                <GreenText>-35%</GreenText>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">
-                Search Engines
+                Digibox 2
               </TableCell>
-              <TableCell align="right">125</TableCell>
+              <TableCell align="right">12</TableCell>
               <TableCell align="right">
-                <RedText>-12%</RedText>
+                <RedText>+12%</RedText>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">
-                Direct
+                Digibox 3
               </TableCell>
-              <TableCell align="right">54</TableCell>
+              <TableCell align="right">4</TableCell>
               <TableCell align="right">
-                <GreenText>+46%</GreenText>
+                <GreenText>-46%</GreenText>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell component="th" scope="row">
-                Other
+                Digibox 4
               </TableCell>
-              <TableCell align="right">146</TableCell>
+              <TableCell align="right">6</TableCell>
               <TableCell align="right">
-                <GreenText>+24%</GreenText>
+                <GreenText>-24%</GreenText>
               </TableCell>
             </TableRow>
           </TableBody>

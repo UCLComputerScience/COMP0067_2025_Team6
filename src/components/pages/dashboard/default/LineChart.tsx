@@ -13,7 +13,9 @@ import {
 import { spacing } from "@mui/system";
 import { alpha } from "@mui/material/styles";
 
-import { ThemeProps } from "@/types/theme";
+// import { ThemeProps } from "@/types/theme";
+import { DevicePropsTheme } from "@/types/devices";
+import { Theme } from "@mui/material";
 
 const Card = styled(MuiCard)(spacing);
 
@@ -21,25 +23,12 @@ const ChartWrapper = styled.div`
   height: 378px;
 `;
 
-function LineChart({ theme }: ThemeProps) {
+const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel, field, DeviceData, DeviceLabels }) => {
   const data = {
-    labels: [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ],
+    labels: DeviceLabels,
     datasets: [
       {
-        label: "Sales ($)",
+        label: "",
         fill: true,
         backgroundColor: function (context: any) {
           const chart = context.chart;
@@ -57,22 +46,20 @@ function LineChart({ theme }: ThemeProps) {
         },
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
-        data: [
-          2115, 1562, 1584, 1892, 1587, 1923, 2566, 2448, 2805, 3438, 2917,
-          3327,
-        ],
+        data: DeviceData,
+        pointRadius: 0, // Hide points on the line
       },
-      {
-        label: "Orders",
-        fill: true,
-        backgroundColor: "transparent",
-        borderColor: theme.palette.grey[500],
-        borderDash: [4, 4],
-        tension: 0.4,
-        data: [
-          958, 724, 629, 883, 915, 1214, 1476, 1212, 1554, 2128, 1466, 1827,
-        ],
-      },
+      // {
+      //   label: "Orders",
+      //   fill: true,
+      //   backgroundColor: "transparent",
+      //   borderColor: theme.palette.grey[500],
+      //   borderDash: [4, 4],
+      //   tension: 0.4,
+      //   data: [
+      //     958, 724, 629, 883, 915, 1214, 1476, 1212, 1554, 2128, 1466, 1827,
+      //   ],
+      // },
     ],
   };
 
@@ -85,6 +72,9 @@ function LineChart({ theme }: ThemeProps) {
     },
     scales: {
       x: {
+        ticks: {
+          display: false, // Hide x-axis labels but keep the scale
+        },        
         grid: {
           color: "rgba(0,0,0,0.0)",
         },
@@ -106,7 +96,7 @@ function LineChart({ theme }: ThemeProps) {
             <MoreVertical />
           </IconButton>
         }
-        title="Temperature"
+        title={channel + " - " + field}
       />
       <CardContent>
         <ChartWrapper>

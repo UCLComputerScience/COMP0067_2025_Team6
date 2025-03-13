@@ -1,17 +1,53 @@
-import { useContext } from "react";
-
-import { AuthContext } from "@/contexts/JWTContext";
-// import { AuthContext } from "@/contexts/FirebaseAuthContext";
-// import { AuthContext } from "@/contexts/Auth0Context";
-// import { AuthContext } from "@/contexts/CognitoContext";
+import {
+  useSession,
+  signIn as nextAuthSignIn,
+  signOut as nextAuthSignOut,
+} from "next-auth/react";
 
 const useAuth = () => {
-  const context = useContext(AuthContext);
+  const { data: session, status } = useSession();
 
-  if (!context)
-    throw new Error("AuthContext must be placed within AuthProvider");
+  const signIn = async (email: string, password: string) => {
+    const result = await nextAuthSignIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    });
 
-  return context;
+    if (result?.error) {
+      throw new Error(result.error);
+    }
+
+    return result;
+  };
+
+  const signOut = async () => {
+    await nextAuthSignOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    const response = await fetch("/api/auth/reset-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message);
+
+    return data;
+  };
+
+  return {
+    signIn,
+    signOut,
+    resetPassword,
+    session,
+    isAuthenticated: !!session,
+    status,
+    userName: session?.user?.name || "",
+  };
 };
 
 export default useAuth;
+

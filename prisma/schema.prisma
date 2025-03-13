@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPER_USER
+  STANDARD_USER
+  TEMPORARY_USER
+}
+
+model Channel {
+  id          Int      @id
+  name        String
+  latitude    Float
+  longitude   Float
+  field1      String
+  field2      String
+  field3      String
+  lastEntryId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Feed {
+  id        Int      @id @default(autoincrement())
+  entryId   Int      @unique
+  createdAt DateTime
+  field1    Float?
+  field2    Float?
+  field3    Float?
+}
+
+model ApiKey {
+  id  Int    @id @default(autoincrement())
+  api String @unique
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique @db.VarChar(255)
+  password  String  @db.VarChar(255)
+  firstName String? @db.VarChar(255)
+  lastName       String?
+  organisation   String?
+  avatar         String?
+  resetToken     String? 
+  resetTokenExpiry DateTime? 
+  role      Role    @default(STANDARD_USER)
+}

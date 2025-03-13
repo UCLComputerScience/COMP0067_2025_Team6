@@ -11,22 +11,21 @@ import {
   Divider as MuiDivider,
   Typography as MuiTypography,
 } from "@mui/material";
-import { green, red } from "@mui/material/colors";
 import { spacing } from "@mui/system";
+import { green, red } from "@mui/material/colors";
 
-import Actions from "@/components/pages/dashboard/analytics/Actions";
-import BarChart from "@/components/pages/dashboard/analytics/BarChart";
-import DoughnutChart from "@/components/pages/dashboard/analytics/DoughnutChart";
-import LanguagesTable from "@/components/pages/dashboard/analytics/LanguagesTable";
-import Stats from "@/components/pages/dashboard/analytics/Stats";
-import Table from "@/components/pages/dashboard/analytics/Table";
-import WorldMap from "@/components/pages/dashboard/analytics/WorldMap";
+import Actions from "@/components/pages/dashboard/default/Actions";
+import BarChart from "@/components/pages/dashboard/default/BarChart";
+import LineChart from "@/components/pages/dashboard/default/LineChart";
+import DoughnutChart from "@/components/pages/dashboard/default/DoughnutChart";
+import Stats from "@/components/pages/dashboard/default/Stats";
+import Table from "@/components/pages/dashboard/default/Table";
 
 const Divider = styled(MuiDivider)(spacing);
 
 const Typography = styled(MuiTypography)(spacing);
 
-function Analytics() {
+function Default() {
   const { t } = useTranslation();
 
   return (
@@ -34,10 +33,10 @@ function Analytics() {
       <Grid justifyContent="space-between" container spacing={6}>
         <Grid>
           <Typography variant="h3" gutterBottom>
-            Analytics Dashboard
+            Lab 2
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, Lucy! {t("We've missed you")}.{" "}
+            {t("Welcome back")}, Stephen! {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
             </span>
@@ -53,97 +52,86 @@ function Analytics() {
         <Grid
           size={{
             xs: 12,
-            lg: 5,
+            sm: 12,
+            md: 6,
+            lg: 3,
+            xl: "grow",
           }}
         >
-          <React.Fragment>
-            <Grid container spacing={6}>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                  md: 6,
-                }}
-              >
-                <Stats
-                  title="Visitors"
-                  amount="24.532"
-                  chip="Today"
-                  percentagetext="+14%"
-                  percentagecolor={green[500]}
-                  illustration="/static/img/illustrations/working.png"
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                  md: 6,
-                }}
-              >
-                <Stats
-                  title="Activity"
-                  amount="63.200"
-                  chip="Annual"
-                  percentagetext="-12%"
-                  percentagecolor={red[500]}
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                  md: 6,
-                }}
-              >
-                <Stats
-                  title="Real-Time"
-                  amount="1.320"
-                  chip="Monthly"
-                  percentagetext="-18%"
-                  percentagecolor={red[500]}
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                  md: 6,
-                }}
-              >
-                <Stats
-                  title="Bounce"
-                  amount="12.364"
-                  chip="Yearly"
-                  percentagetext="+27%"
-                  percentagecolor={green[500]}
-                />
-              </Grid>
-            </Grid>
-          </React.Fragment>
+          <Stats
+            title="Average Temperature"
+            amount="41 C"
+            chip="Today"
+            percentagetext="+26%"
+            percentagecolor={green[500]}
+          />
         </Grid>
         <Grid
           size={{
             xs: 12,
-            lg: 7,
+            sm: 12,
+            md: 6,
+            lg: 3,
+            xl: "grow",
           }}
         >
-          <BarChart />
+          <Stats
+            title="Average Pressure"
+            amount="1.1 bar"
+            chip="Today"
+            percentagetext="-14%"
+            percentagecolor={red[500]}
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 12,
+            md: 6,
+            lg: 3,
+            xl: "grow",
+          }}
+        >
+          <Stats
+            title="Average Humidity"
+            amount="70%"
+            chip="Today"
+            percentagetext="+18%"
+            percentagecolor={green[500]}
+          />
+        </Grid>
+        <Grid
+          size={{
+            xs: 12,
+            sm: 12,
+            md: 6,
+            lg: 3,
+            xl: "grow",
+          }}
+        >
+          {/* <Stats
+            title="Pending Orders"
+            amount="45"
+            chip="Yearly"
+            percentagetext="-9%"
+            percentagecolor={red[500]}
+            illustration="/static/img/illustrations/waiting.png"
+          /> */}
         </Grid>
       </Grid>
       <Grid container spacing={6}>
         <Grid
           size={{
             xs: 12,
-            lg: 8,
+            lg: 6,
           }}
         >
-          <WorldMap />
+          <LineChart />
         </Grid>
         <Grid
           size={{
             xs: 12,
-            lg: 4,
+            lg: 6,
           }}
         >
           <DoughnutChart />
@@ -153,15 +141,15 @@ function Analytics() {
         <Grid
           size={{
             xs: 12,
-            lg: 4,
+            lg: 6,
           }}
         >
-          <LanguagesTable />
+          <LineChart />
         </Grid>
         <Grid
           size={{
             xs: 12,
-            lg: 8,
+            lg: 6,
           }}
         >
           <Table />
@@ -171,4 +159,4 @@ function Analytics() {
   );
 }
 
-export default Analytics;
+export default Default;
