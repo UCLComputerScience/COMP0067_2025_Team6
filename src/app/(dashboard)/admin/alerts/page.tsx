@@ -28,12 +28,14 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { green, orange, red } from "@mui/material/colors";
+import { green, orange, red, blue, grey } from "@mui/material/colors";
 import {
   Add as AddIcon,
   Archive as ArchiveIcon,
   FilterList as FilterListIcon,
   RemoveRedEye as RemoveRedEyeIcon,
+  Delete as DeleteIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { spacing, SpacingProps } from "@mui/system";
 
@@ -43,17 +45,31 @@ const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
 
 const Paper = styled(MuiPaper)(spacing);
 
-interface ChipProps extends SpacingProps {
-  shipped?: number;
-  processing?: number;
-  cancelled?: number;
+interface PriorityChipProps extends SpacingProps {
+  priority?: string;
 }
-const Chip = styled(MuiChip)<ChipProps>`
+
+const PriorityChip = styled(MuiChip)<PriorityChipProps>`
   ${spacing};
 
-  background: ${(props) => props.shipped && green[500]};
-  background: ${(props) => props.processing && orange[700]};
-  background: ${(props) => props.cancelled && red[500]};
+  background: ${(props) =>
+    props.priority === "High"
+      ? red[500]
+      : props.priority === "Moderate"
+      ? orange[500]
+      : green[500]}; // Use green for Low priority
+
+  color: ${(props) => props.theme.palette.common.white};
+`;
+
+interface StatusChipProps extends SpacingProps {
+  status?: string;
+}
+const StatusChip = styled(MuiChip)<StatusChipProps>`
+  ${spacing};
+
+  background: ${(props) =>
+    props.status === "Resolved" ? blue[500] : grey[500]};
   color: ${(props) => props.theme.palette.common.white};
 `;
 
@@ -66,63 +82,63 @@ const ToolbarTitle = styled.div`
 `;
 
 function createData(
-  id: string,
-  product: string,
-  date: string,
-  total: string,
-  status: number,
-  method: string
+  id: number,
+  location: string,
+  equipment: string,
+  priority: string,
+  desc: string,
+  status: string,
+  date: string
 ) {
-  return { id, product, date, total, status, method };
+  return { id, location, equipment, priority, desc, status, date };
 }
 
 type RowType = {
   [key: string]: string | number;
-  id: string;
-  product: string;
+  id: number;
+  location: string;
+  equipment: string;
+  priority: string;
+  desc: string;
+  status: string;
   date: string;
-  total: string;
-  status: number;
-  method: string;
 };
 const rows: Array<RowType> = [
   createData(
-    "000253",
-    "Salt & Pepper Grinder",
-    "2023-01-02",
-    "$32,00",
-    0,
-    "Visa"
+    1,
+    "247",
+    "Box 7",
+    "High",
+    "Temperature levels has exceeded the threshold",
+    "Resolved",
+    "12/12/2022"
   ),
-  createData("000254", "Backpack", "2023-01-04", "$130,00", 0, "PayPal"),
   createData(
-    "000255",
-    "Pocket Speaker",
-    "2023-01-04",
-    "$80,00",
     2,
-    "Mastercard"
+    "247",
+    "Box 19",
+    "High",
+    "Temperature levels has exceeded the threshold",
+    "Unresolved",
+    "12/12/2022"
   ),
-  createData("000256", "Glass Teapot", "2023-01-08", "$45,00", 0, "Visa"),
   createData(
-    "000257",
-    "Unbreakable Water Bottle",
-    "2023-01-09",
-    "$40,00",
-    0,
-    "PayPal"
+    3,
+    "247",
+    "Box 17",
+    "Moderate",
+    "Pressure levels has exceeded the threshold",
+    "Resolved",
+    "12/12/2022"
   ),
-  createData("000258", "Spoon Saver", "2023-01-14", "$15,00", 0, "Mastercard"),
-  createData("000259", "Hip Flash", "2023-01-16", "$25,00", 1, "Visa"),
-  createData("000260", "Woven Slippers", "2023-01-22", "$20,00", 0, "PayPal"),
-  createData("000261", "Womens Watch", "2023-01-22", "$65,00", 2, "Visa"),
   createData(
-    "000262",
-    "Over-Ear Headphones",
-    "2023-01-23",
-    "$210,00",
-    0,
-    "Mastercard"
+    4,
+    "249",
+    "Box 27",
+    "Low",
+    "Humity levels has exceeded the threshold",
+    "Unresolved",
+    "12/12/2022"
   ),
 ];
 
@@ -165,12 +181,12 @@ type HeadCell = {
   disablePadding?: boolean;
 };
 const headCells: Array<HeadCell> = [
-  { id: "id", alignment: "right", label: "Order ID" },
-  { id: "product", alignment: "left", label: "Product" },
-  { id: "date", alignment: "left", label: "Date" },
-  { id: "total", alignment: "right", label: "Total" },
+  { id: "location", alignment: "right", label: "Location" },
+  { id: "equipment", alignment: "left", label: "Equipment" },
+  { id: "priority", alignment: "left", label: "Priority" },
+  { id: "desc", alignment: "left", label: "Description" },
   { id: "status", alignment: "left", label: "Status" },
-  { id: "method", alignment: "left", label: "Payment Method" },
+  { id: "date", alignment: "left", label: "Date" },
   { id: "actions", alignment: "right", label: "Actions" },
 ];
 
@@ -241,7 +257,7 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
           </Typography>
         ) : (
           <Typography variant="h6" id="tableTitle">
-            Orders
+            Alerts
           </Typography>
         )}
       </ToolbarTitle>
@@ -250,7 +266,7 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         {numSelected > 0 ? (
           <Tooltip title="Delete">
             <IconButton aria-label="Delete" size="large">
-              <ArchiveIcon />
+              <DeleteIcon />
             </IconButton>
           </Tooltip>
         ) : (
@@ -280,7 +296,7 @@ function EnhancedTable() {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id);
+      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id.toString());
       setSelected(newSelecteds);
       return;
     }
@@ -351,7 +367,7 @@ function EnhancedTable() {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.id);
+                  const isItemSelected = isSelected(row.id.toString());
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -367,51 +383,70 @@ function EnhancedTable() {
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id)}
+                          onClick={(event) => handleClick(event, row.id.toString())}
                         />
                       </TableCell>
 
-                      <TableCell align="right">#{row.id}</TableCell>
-                      <TableCell align="left">{row.product}</TableCell>
-                      <TableCell align="left">{row.date}</TableCell>
-                      <TableCell align="right">{row.total}</TableCell>
-                      <TableCell>
-                        {row.status === 0 && (
-                          <Chip
+                      <TableCell align="center">{row.location}</TableCell>
+                      <TableCell align="left">{row.equipment}</TableCell>
+                      <TableCell align="left">
+                        {row.priority === "High" && (
+                          <PriorityChip
                             size="small"
                             mr={1}
                             mb={1}
-                            label="Shipped"
-                            shipped={+true}
+                            label="High"
+                            priority="High"
                           />
                         )}
-                        {row.status === 1 && (
-                          <Chip
+                        {row.priority === "Moderate" && (
+                          <PriorityChip
                             size="small"
                             mr={1}
                             mb={1}
-                            label="Processing"
-                            processing={+true}
+                            label="Moderate"
+                            priority="Moderate"
                           />
                         )}
-                        {row.status === 2 && (
-                          <Chip
+                        {row.priority === "Low" && (
+                          <PriorityChip
                             size="small"
                             mr={1}
                             mb={1}
-                            label="Cancelled"
-                            cancelled={+true}
+                            label="Low"
+                            priority="Low"
                           />
                         )}
                       </TableCell>
-                      <TableCell align="left">{row.method}</TableCell>
+                      <TableCell align="left">{row.desc}</TableCell>
+                      <TableCell>
+                        {row.status === "Resolved" && (
+                          <StatusChip
+                            size="small"
+                            mr={1}
+                            mb={1}
+                            label="Resolved"
+                            status="Resolved" // Pass status prop to style it
+                          />
+                        )}
+                        {row.status === "Unresolved" && (
+                          <StatusChip
+                            size="small"
+                            mr={1}
+                            mb={1}
+                            label="Unresolved"
+                            status="Unresolved" // Pass status prop to style it
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell align="left">{row.date}</TableCell>
                       <TableCell padding="none" align="right">
                         <Box mr={2}>
                           <IconButton aria-label="delete" size="large">
-                            <ArchiveIcon />
+                            <DeleteIcon />
                           </IconButton>
                           <IconButton aria-label="details" size="large">
-                            <RemoveRedEyeIcon />
+                            <CheckCircleIcon />
                           </IconButton>
                         </Box>
                       </TableCell>
@@ -462,8 +497,7 @@ function OrderList() {
         <Grid>
           <div>
             <Button variant="contained" color="primary">
-              <AddIcon />
-              New Order
+              Manage Alerts
             </Button>
           </div>
         </Grid>

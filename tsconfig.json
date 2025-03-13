@@ -1,13 +1,10 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
+    "types": ["node"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -18,61 +15,30 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "typeRoots": [
-      "src/types",
-      "node_modules/@types"
-    ],
+    "typeRoots": ["src/types", "node_modules/@types"],
     "noFallthroughCasesInSwitch": true,
     "incremental": true,
     "baseUrl": "src/",
     "paths": {
       // Folders
-      "@/components/*": [
-        "components/*"
-      ],
-      "@/contexts/*": [
-        "contexts/*"
-      ],
-      "@/hooks/*": [
-        "hooks/*"
-      ],
-      "@/layouts/*": [
-        "layouts/*"
-      ],
-      "@/mocks/*": [
-        "mocks/*"
-      ],
-      "@/redux/*": [
-        "redux/*"
-      ],
-      "@/theme/*": [
-        "theme/*"
-      ],
-      "@/types/*": [
-        "types/*"
-      ],
-      "@/utils/*": [
-        "utils/*"
-      ],
-      "@/vendor/*": [
-        "vendor/*"
-      ],
+      "@/components/*": ["components/*"],
+      "@/contexts/*": ["contexts/*"],
+      "@/hooks/*": ["hooks/*"],
+      "@/layouts/*": ["layouts/*"],
+      "@/mocks/*": ["mocks/*"],
+      "@/redux/*": ["redux/*"],
+      "@/theme/*": ["theme/*"],
+      "@/types/*": ["types/*"],
+      "@/utils/*": ["utils/*"],
+      "@/vendor/*": ["vendor/*"],
       // Files
-      "@/constants": [
-        "constants"
-      ],
-      "@/config": [
-        "config"
-      ],
-      "@/i18n": [
-        "i18n"
-      ],
-      "@/mocks": [
-        "mocks/index"
-      ],
-      "@/theme": [
-        "theme/index"
-      ]
+      "@/constants": ["constants"],
+      "@/config": ["config"],
+      "@/i18n": ["i18n"],
+      "@/mocks": ["mocks/index"],
+      "@/theme": ["theme/index"],
+
+      "@/lib/*": ["lib/*"]
     },
     "plugins": [
       {
@@ -80,11 +46,6 @@
       }
     ]
   },
-  "include": [
-    "src",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

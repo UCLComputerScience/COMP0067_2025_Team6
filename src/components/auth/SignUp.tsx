@@ -28,7 +28,6 @@ const Centered = styled(Typography)`
 
 function SignUp() {
   const router = useRouter();
-  const { signUp } = useAuth();
 
   return (
     <Formik
@@ -50,7 +49,7 @@ function SignUp() {
           .max(255)
           .required("Email is required"),
         password: Yup.string()
-          .min(12, "Must be at least 12 characters")
+          .min(6, "Must be at least 6 characters")
           .max(255)
           .required("Required"),
         confirmPassword: Yup.string().oneOf(
@@ -61,19 +60,23 @@ function SignUp() {
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
-          signUp(
-            values.email,
-            values.password,
-            values.firstName,
-            values.lastName,
-            values.organisation
-          );
+          const response = await fetch("/api/auth/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Signup failed");
+          }
+
+          // Redirect user to login page
           router.push("/auth/sign-in");
         } catch (error: any) {
-          const message = error.message || "Something went wrong";
-
           setStatus({ success: false });
-          setErrors({ submit: message });
+          setErrors({ submit: error.message });
           setSubmitting(false);
         }
       }}

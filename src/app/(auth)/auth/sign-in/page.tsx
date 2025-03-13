@@ -1,5 +1,6 @@
 "use client";
 
+import { Paper } from "@mui/material";
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
@@ -14,7 +15,6 @@ import {
   Box,
   Container,
   Grid,
-  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
@@ -67,10 +67,6 @@ const SignUpButton = styled(Button)`
 `;
 
 const LeftSection = styled(Box)`
-  background-image: url("/sign_in_image.jpg"); // Path to your image
-  background-size: cover; // Cover the entire section
-  background-position: center; // Center the image
-  background-repeat: no-repeat; // Do not repeat the image
   min-height: calc(100vh - 64px); // Adjust to full height minus the top bar
   display: flex;
   flex-direction: column;
@@ -105,7 +101,6 @@ const LeftSectionImage = styled(Box)`
   background-position: center; // Center the image
   background-repeat: no-repeat; // Do not repeat the image
   opacity: 0.2; // 20% opacity
-  z-index: -2; // Make sure it's behind the content
 `;
 
 const ContentWrapper = styled(Box)`

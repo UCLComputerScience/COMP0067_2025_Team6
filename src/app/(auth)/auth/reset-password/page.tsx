@@ -1,25 +1,14 @@
 "use client";
 
-import React from "react";
-import type { ReactElement } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { Typography } from "@mui/material";
+export default function ResetPassword() {
+  const router = useRouter();
 
-import ResetPasswordComponent from "@/components/auth/ResetPassword";
+  useEffect(() => {
+    router.push("/auth/forgot-password");
+  }, []);
 
-function ResetPassword() {
-  return (
-    <React.Fragment>
-      <Typography component="h1" variant="h3" align="center" gutterBottom>
-        Reset Password
-      </Typography>
-      <Typography component="h2" variant="subtitle1" align="center">
-        Enter your email to reset your password
-      </Typography>
-
-      <ResetPasswordComponent />
-    </React.Fragment>
-  );
+  return <p>Redirecting...</p>;
 }
-
-export default ResetPassword;
