@@ -119,10 +119,6 @@ const Lab1 = () => {
     fetchApikeys();
   }, [data]);
 
-  React.useEffect(() => {
-    console.log(apidata); // This will log the updated value of apikeys whenever it changes
-  }, [apidata]); // This effect runs every time apikeys changes
-
   // Function to fetch data based on the selected category
   // const fetchData = async (selectedOption: string) => {
   //     try {
@@ -138,7 +134,6 @@ const Lab1 = () => {
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
     try {
         const url = selectedOption ? `${apikey}` + `${selectedOption}` : apikey;
-        // const url = `${apikey}`;
         const response = await fetch(url);
         const result = await response.json();
         return result;

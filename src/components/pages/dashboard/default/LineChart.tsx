@@ -44,7 +44,7 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, fie
       const response = await fetch(`/api/apikeys/${channel_id}`, { method: "DELETE" });
 
       if (response.ok) {
-        setData("");
+        setData(channel);
       } else {
         console.error("Failed to delete");
       }
