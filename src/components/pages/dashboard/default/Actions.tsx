@@ -8,7 +8,6 @@ import {
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
 import { ActionsProps } from "@/types/devices";
-import { el } from "date-fns/locale";
 
 const Button = styled(MuiButton)(spacing);
 
@@ -24,7 +23,7 @@ const SmallButton = styled(Button)`
 
 const Actions: React.FC<ActionsProps> = ({ selectedOption, setSelectedOption }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [buttonText, setButtonText] = React.useState<string>("Last Year");
+  const [buttonText, setButtonText] = React.useState<string>("All Data");
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);

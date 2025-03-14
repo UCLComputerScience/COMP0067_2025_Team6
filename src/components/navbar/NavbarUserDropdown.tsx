@@ -54,6 +54,16 @@ function NavbarUserDropdown() {
     router.push("/auth/sign-in");
   };
 
+  const handleProfile = () => {
+    router.push("/account/profile");
+    closeMenu();
+  }
+
+  const handleSettings = () => {
+    router.push("/account/settings");
+    closeMenu();
+  }
+
   return (
     <React.Fragment>
       <Tooltip title="Account">
@@ -82,7 +92,7 @@ function NavbarUserDropdown() {
               />
             )}
           </AvatarBadge>
-        </IconButton>
+        </IconButton> 
       </Tooltip>
       <Menu
         id="menu-appbar"
@@ -90,8 +100,8 @@ function NavbarUserDropdown() {
         open={Boolean(anchorMenu)}
         onClose={closeMenu}
       >
-        <MenuItem onClick={closeMenu}>Profile</MenuItem>
-        <MenuItem onClick={closeMenu}>Settings & Privacy</MenuItem>
+        <MenuItem onClick={handleProfile}>Profile</MenuItem>
+        <MenuItem onClick={handleSettings}>Settings & Privacy</MenuItem>
         <Divider />
         <MenuItem onClick={closeMenu}>Help</MenuItem>
         <MenuItem onClick={handleSignOut}>Sign out</MenuItem>

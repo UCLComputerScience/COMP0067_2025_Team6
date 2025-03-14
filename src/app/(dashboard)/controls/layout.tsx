@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 export const metadata = {
-  title: "Tasks",
+  title: "Controls",
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
