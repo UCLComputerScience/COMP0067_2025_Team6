@@ -9,13 +9,13 @@ datasource db {
 }
 
 model alerts {
-  id                 Int                @id @default(autoincrement())
-  serialnumber       Int
-  priority           priority_type?
-  alertdescription   String             @db.VarChar(255)
-  alertstatus        alert_status
-  alertdate          DateTime           @db.Timestamp(6)
-  instrumentspecific instrumentspecific @relation(fields: [serialnumber], references: [serialnumber], onDelete: NoAction, onUpdate: NoAction)
+  id               Int            @id @default(autoincrement())
+  entryid          Int
+  priority         priority_type?
+  alertdescription String         @db.VarChar(255)
+  alertstatus      alert_status
+  alertdate        DateTime       @db.Timestamp(6)
+  feed             feed           @relation(fields: [entryid], references: [entryid], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model apikey {
@@ -24,7 +24,7 @@ model apikey {
 }
 
 model channel {
-  id          Int       @id @default(autoincrement())
+  id          Int       @id
   name        String    @db.VarChar
   latitude    Float
   longitude   Float
@@ -45,6 +45,7 @@ model feed {
   field1    Float?
   field2    Float?
   field3    Float?
+  alerts    alerts[]
   channel   channel  @relation(fields: [channelid], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -78,7 +79,6 @@ model instrumentspecific {
   instrumenttypeid Int
   labid            Int
   instrumentstatus instrument_status?
-  alerts           alerts[]
   instrumentaccess instrumentaccess[]
   instrumentdata   instrumentdata[]
   instrumenttype   instrumenttype     @relation(fields: [instrumenttypeid], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -120,8 +120,8 @@ model projects {
   creatorid          Int
   projectstartdate   DateTime        @db.Timestamp(6)
   projectenddate     DateTime?       @db.Timestamp(6)
+  users              users           @relation(fields: [creatorid], references: [id], onDelete: NoAction, onUpdate: NoAction)
   labs               labs            @relation(fields: [labid], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users              users           @relation(fields: [labid], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "projects_labid_fkey1")
   projectusers       projectusers[]
 }
 
