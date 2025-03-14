@@ -3,6 +3,7 @@
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
+import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import { useTranslation } from "react-i18next";
 
@@ -171,4 +172,4 @@ function Analytics() {
   );
 }
 
-export default Analytics;
+export default withAuth(Analytics,["ADMIN", "SUPER_USER"]);

@@ -12,6 +12,10 @@
     "lint": "next lint --fix",
     "type-check": "tsc"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "type": "module",
   "browserslist": [
     "> 0.5%",
     "last 2 versions",
