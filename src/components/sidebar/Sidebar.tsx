@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import Link from "next/link";
+import { useSession } from "next-auth/react"; // Import useSession
 
 import { green } from "@mui/material/colors";
 
@@ -93,6 +94,54 @@ export interface SidebarProps {
 }
 
 const Sidebar = ({ items, showFooter = true, ...rest }: SidebarProps) => {
+  const { data: session } = useSession();
+  const [filteredItems, setFilteredItems] = useState(items);
+
+  useEffect(() => {
+    const filterItems = () => {
+      let newFilteredItems = [...items]; // Start with all items
+
+      if (session?.user?.user_role) {
+        const userRole = session.user.user_role;
+        console.log("Session User Role:", userRole); // Debugging log to see role
+
+        if (userRole === "TEMPORARY_USER") {
+          // TEMPORARY_USER should only see "User" and "Account" sections
+          newFilteredItems = newFilteredItems.filter(
+            (item) => item.title === "User" || item.title === "Account"
+          );
+          console.log("Filtered Items for TEMPORARY_USER:", newFilteredItems); // Log filtered items
+        } else if (userRole === "ADMIN") {
+          newFilteredItems = items; // Admin sees all items
+        } else if (userRole === "SUPER_USER") {
+          newFilteredItems = newFilteredItems.map((item) => {
+            if (item.title === "Admin") {
+              item.pages = item.pages.filter(
+                (page) => page.title !== "Manage Access"
+              );
+            }
+            return item;
+          });
+        } else if (userRole === "STANDARD_USER") {
+          newFilteredItems = newFilteredItems.map((item) => {
+            if (item.title === "Admin") {
+              item.pages = item.pages.filter((page) => page.title === "Alerts");
+            }
+            return item;
+          });
+        }
+      }
+
+      // Log the final filtered items to ensure it's working
+      console.log("Final Filtered Items:", newFilteredItems);
+
+      // Set the filtered items state to trigger a re-render
+      setFilteredItems(newFilteredItems);
+    };
+
+    filterItems();
+  }, [session, items]); // Trigger re-filtering when session or items change
+
   return (
     <Drawer variant="permanent" {...rest}>
       <Brand component={Link} href="/">
@@ -102,7 +151,7 @@ const Sidebar = ({ items, showFooter = true, ...rest }: SidebarProps) => {
           {/* Mira <BrandChip label="PRO" /> */}
         </Box>
       </Brand>
-      <SidebarNav items={items} />
+      <SidebarNav items={filteredItems} />
       {!!showFooter && <Footer />}
     </Drawer>
   );
