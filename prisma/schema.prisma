@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
+enum UserRole {
   ADMIN
   SUPER_USER
   STANDARD_USER
@@ -38,6 +38,7 @@ model Feed {
 
 model ApiKey {
   id  Int    @id @default(autoincrement())
+  channel_id Int 
   api String @unique
 }
 
@@ -51,5 +52,5 @@ model User {
   avatar         String?
   resetToken     String? 
   resetTokenExpiry DateTime? 
-  role      Role    @default(STANDARD_USER)
+  user_role      UserRole    @default(STANDARD_USER)
 }

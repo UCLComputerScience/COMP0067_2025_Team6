@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "@emotion/styled";
 
 import { spacing } from "@mui/system";
+import { DataProps } from "@/types/devices";
 
 import {
   Button,
@@ -19,11 +20,12 @@ const Card = styled(MuiCard)(spacing);
 
 const Paper = styled(MuiPaper)(spacing);
 
-function FormDialog() {
+const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const [open, setOpen] = React.useState(false);
   const [api, setApi] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [id, setId] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,21 +33,63 @@ function FormDialog() {
     setMessage("");
 
     try {
+      const response = await fetch(api);
+      const data = await response.json();
+    
+      if (!data.channel || !data.channel.id) {
+        throw new Error("Channel number not found in the response");
+      }
+    
+      const channelId = Number(data.channel.id); // Extract value directly
+    
       const res = await fetch("/api/apikeys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api }),
+        body: JSON.stringify({ api, channel_id: channelId }),
       });
-
+    
       if (res.ok) {
         setMessage("API added successfully!");
         setApi("");
+        setData(`${api}`);
       } else {
-        setMessage("Failed to add api.");
+        setMessage("Failed to add API.");
       }
     } catch (error) {
+      console.error("Error:", error);
       setMessage("Something went wrong.");
     }
+    // try {
+    //   const response = await fetch(api);
+    //   const data = await response.json();
+  
+    //   if (data.channel && data.channel.id) {
+    //     setId(data.channel.id);
+    //   } else {
+    //     throw new Error("Channel number not found in the response");
+    //   }
+    // } catch (error) {
+    //   console.error("Error fetching data:", error);
+    //   return null;
+    // }
+
+    // try {
+    //   const res = await fetch("/api/apikeys", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ channel_id: Number(id), api }),
+    //   });
+
+    //   if (res.ok) {
+    //     setMessage("API added successfully!");
+    //     setApi("");
+    //     setData(`${api}`);
+    //   } else {
+    //     setMessage("Failed to add api.");
+    //   }
+    // } catch (error) {
+    //   setMessage("Something went wrong.");
+    // }
 
     setLoading(false);
     setOpen(false)

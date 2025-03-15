@@ -39,13 +39,6 @@ const userSection = [
       },
     ],
   },
-
-  {
-    href: "/projects",
-    icon: Briefcase,
-    title: "Projects",
-    badge: "8",
-  },
   {
     href: "/reports",
     icon: Package,
@@ -56,32 +49,32 @@ const userSection = [
     href: "/controls",
     icon: CheckSquare,
     title: "Controls",
-    badge: "17",
+    // badge: "17",
   },
 
 
 ] as SidebarItemsType[];
 
 const adminSection = [
-  {
-    href: "/admin/dashboard",
-    icon: Sliders,
-    title: "Dashboard",
-    children: [
-      {
-        href: "/admin/dashboard/lab1",
-        title: "Lab 1",
-      },
-      {
-        href: "/admin/dashboard/lab2",
-        title: "Lab 2",
-      },
-      {
-        href: "/admin/dashboard/lab3",
-        title: "Lab 3",
-      },
-    ],
-  },
+  // {
+  //   href: "/admin/dashboard",
+  //   icon: Sliders,
+  //   title: "Dashboard",
+  //   children: [
+  //     {
+  //       href: "/admin/dashboard/lab1",
+  //       title: "Lab 1",
+  //     },
+  //     {
+  //       href: "/admin/dashboard/lab2",
+  //       title: "Lab 2",
+  //     },
+  //     {
+  //       href: "/admin/dashboard/lab3",
+  //       title: "Lab 3",
+  //     },
+  //   ],
+  // },
   {
     href: "/admin/access",
     icon: Package,
@@ -97,11 +90,11 @@ const adminSection = [
     icon: ShoppingCart,
     title: "Usage History",
   },
-  {
-    href: "/admin/settings",
-    icon: ShoppingCart,
-    title: "System Settings",
-  },
+  // {
+  //   href: "/admin/settings",
+  //   icon: ShoppingCart,
+  //   title: "System Settings",
+  // },
   {
     href: "/admin/alerts",
     icon: ShoppingCart,

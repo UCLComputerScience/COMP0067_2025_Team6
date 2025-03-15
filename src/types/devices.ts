@@ -2,10 +2,12 @@ import { Theme } from "@mui/material";
 
 export type DevicePropsTheme = {
   theme: Theme,
+  channel_id: number,
   channel: string,
   field: string,
   DeviceData: Array<number>,
-  DeviceLabels: Array<string>
+  DeviceLabels: Array<string>,
+  setData: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export type ChannelProps = Array<{
@@ -62,4 +64,9 @@ export type DeviceProps = {
   export type ActionsProps = {
     selectedOption: string;
     setSelectedOption: React.Dispatch<React.SetStateAction<string>>;
+  }
+
+  export type DataProps = {
+    data: string;
+    setData: React.Dispatch<React.SetStateAction<string>>;
   }

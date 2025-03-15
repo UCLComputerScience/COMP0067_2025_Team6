@@ -1,5 +1,5 @@
 {
-  "name": "mira",
+  "name": "digital-twin-labs",
   "version": "5.0.1",
   "description": "Mira Pro - React Material UI Admin Dashboard Template",
   "author": "Bootlab <support@bootlab.io>",
@@ -12,6 +12,10 @@
     "lint": "next lint --fix",
     "type-check": "tsc"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "type": "module",
   "browserslist": [
     "> 0.5%",
     "last 2 versions",

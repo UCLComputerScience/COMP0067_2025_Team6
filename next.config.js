@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   transpilePackages: [
     "@fullcalendar/core",
     "@babel/preset-react",

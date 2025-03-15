@@ -145,7 +145,7 @@ const Sidebar = ({ items, showFooter = true, ...rest }: SidebarProps) => {
   return (
     <Drawer variant="permanent" {...rest}>
       <Brand component={Link} href="/">
-        <BrandIcon />{" "}
+        {/* <BrandIcon />{" "} */}
         <Box ml={1}>
           Hilton Labs
           {/* Mira <BrandChip label="PRO" /> */}
