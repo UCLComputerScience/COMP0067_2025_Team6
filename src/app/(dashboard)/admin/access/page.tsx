@@ -102,9 +102,10 @@ function createData(
   firstname: string,
   lastname: string,
   usertype: string,
-  status: string
+  status: string,
+  role: string
 ) {
-  return { id, firstname, lastname, usertype, status };
+  return { id, firstname, lastname, usertype, status, role };
 }
 
 type RowType = {
@@ -114,15 +115,8 @@ type RowType = {
   lastname: string;
   usertype: string;
   status: string;
+  role: string;
 };
-const rows: Array<RowType> = [
-  createData("1", "Jack", "Smith", "Owner", "Active"),
-  createData("2", "Mike", "Bernie", "Standard", "Active"),
-  createData("3", "Linda", "Thompson", "Standard", "Active"),
-  createData("4", "Carlos", "Perez", "Owner", "Active"),
-  createData("5", "Belinda", "Jacobs", "Standard", "Active"),
-  createData("6", "Lucy", "Tillman", "Guest", "Active"),
-];
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
   if (b[orderBy] < a[orderBy]) {
@@ -164,11 +158,13 @@ type HeadCell = {
   width?: string;
 };
 const headCells: Array<HeadCell> = [
-  { id: "firstname", alignment: "left", label: "First Name", width: "20%" },
-  { id: "lastname", alignment: "left", label: "Last Name", width: "20%" },
-  { id: "usertype", alignment: "left", label: "User Type", width: "20%" },
-  { id: "status", alignment: "left", label: "Status", width: "20%" },
+  { id: "firstname", alignment: "left", label: "First Name", width: "15%" },
+  { id: "lastname", alignment: "left", label: "Last Name", width: "15%" },
+  { id: "usertype", alignment: "left", label: "Organisation", width: "15%" },
+  { id: "role", alignment: "left", label: "Role", width: "15%" },
+  { id: "status", alignment: "left", label: "Status", width: "15%" },
 ];
+
 
 type EnhancedTableHeadProps = {
   numSelected: number;
@@ -219,7 +215,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
             </TableSortLabel>
           </TableCell>
         ))}
-        <TableCell style={{ width: "15%" }} /> {/* For action buttons */}
+        <TableCell style={{ width: "15%" }} />
       </TableRow>
     </TableHead>
   );
@@ -267,32 +263,140 @@ function EnhancedTable() {
   const [rowsPerPage, setRowsPerPage] = React.useState(6);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<RowType | null>(null);
+  const [selectedUsers, setSelectedUsers] = React.useState<Array<string>>([]); //keeps selected users for multiple update
   const [currentTab, setCurrentTab] = React.useState(0);
   const [instrumentAccess, setInstrumentAccess] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
   const [regionFilter, setRegionFilter] = React.useState("All");
   const [projectFilter, setProjectFilter] = React.useState("All");
+  const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
+  const [users, setUsers] = React.useState<Array<RowType>>([]);
+  const [loading, setLoading] = React.useState(true);
 
+  const formatRole = (role: string) => {
+    switch (role) {
+      case "ADMIN":
+        return "Admin";
+      case "STANDARD_USER":
+        return "Standard User";
+      case "SUPER_USER":
+        return "Super User";
+      case "TEMPORARY_USER":
+        return "Temporary User";
+      default:
+        return "Unknown Role";
+    }
+  };
+
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("/api/auth/users");
+        if (response.ok) {
+          const data = await response.json();
+          const mappedUsers = data.map((user) => ({
+            id: user.id,
+            firstname: user.firstName,
+            lastname: user.lastName,
+            usertype: user.organisation || "Standard",
+            role: formatRole(user.role),
+            status: "Active",
+          }));
+          setUsers(mappedUsers);
+        } else {
+          console.error("Failed to fetch users");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+  
+  
   const handleEditClick = (row: RowType) => {
     setEditingRow(row);
+    setSelectedUsers([row.id]);
+    const rawRole = getRawRoleValue(row.role);
+    setSelectedRole(rawRole);
     setOpenDialog(true);
   };
 
+  const getRawRoleValue = (formattedRole: string) => {
+    switch (formattedRole) {
+      case "Admin": return "ADMIN";
+      case "Standard User": return "STANDARD_USER";
+      case "Super User": return "SUPER_USER";
+      case "Temporary User": return "TEMPORARY_USER";
+      default: return formattedRole;
+    }
+  };
+
   const handleManageAccess = () => {
+    setSelectedUsers(selected);
+    if (selected.length > 0) {
+      const firstSelectedUser = users.find(user => user.id === selected[0]);
+      if (firstSelectedUser) {
+        const rawRole = getRawRoleValue(firstSelectedUser.role);
+        setSelectedRole(rawRole);
+      } else {
+        setSelectedRole("STANDARD_USER"); //default value
+      }
+    }
+    
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingRow(null);
+    setSelectedUsers([]);
     setCurrentTab(0);
   };
 
-  const handleSaveChanges = () => {
-    // Here you would typically make an API call to update the data
+  const handleSaveChanges = async () => {
+    if (selectedUsers.length > 0) {
+      try {
+        console.log("Updating roles for selected users:", selectedUsers, selectedRole);
+
+        const response = await fetch("/api/auth/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userIds: selectedUsers,
+            role: selectedRole, 
+          }),
+        });
+
+        const result = await response.json();
+        console.log("API response:", result);
+
+        if (response.ok) {
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              selectedUsers.includes(user.id)
+                ? { ...user, role: formatRole(selectedRole) }
+                : user
+            )
+          );
+          
+          setSelected([]);
+        } else {
+          console.error("Failed to update roles:", result.error);
+        }
+      } catch (error) {
+        console.error("Error updating roles:", error);
+      }
+    }
     handleCloseDialog();
   };
+  
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
@@ -306,7 +410,7 @@ function EnhancedTable() {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id);
+      const newSelecteds: Array<string> = users.map((n: RowType) => n.id);
       setSelected(newSelecteds);
       return;
     }
@@ -352,8 +456,22 @@ function EnhancedTable() {
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
+  const filteredUsers = users.filter(user => {
+    const matchesSearch =
+      searchTerm === "" || 
+      user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastname.toLowerCase().includes(searchTerm.toLowerCase());
+  
+    const matchesUserType =
+      userTypeFilter === "All" || 
+      getRawRoleValue(user.role) === userTypeFilter; 
+  
+    return matchesSearch && matchesUserType;
+  });
+  
+
   const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
+    rowsPerPage - Math.min(rowsPerPage, users.length - page * rowsPerPage);
 
   return (
     <div>
@@ -370,16 +488,17 @@ function EnhancedTable() {
           sx={{ minWidth: 300 }}
         />
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>User Type</InputLabel>
+          <InputLabel>Role</InputLabel>
           <Select
             value={userTypeFilter}
-            label="User Type"
+            label="Role"
             onChange={(e) => setUserTypeFilter(e.target.value)}
           >
             <MenuItem value="All">All</MenuItem>
-            <MenuItem value="Owner">Owner</MenuItem>
-            <MenuItem value="Standard">Standard</MenuItem>
-            <MenuItem value="Guest">Guest</MenuItem>
+            <MenuItem value="ADMIN">Admin</MenuItem>
+            <MenuItem value="SUPER_USER">Super User</MenuItem>
+            <MenuItem value="STANDARD_USER">Standard User</MenuItem>
+            <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -390,7 +509,7 @@ function EnhancedTable() {
             onChange={(e) => setRegionFilter(e.target.value)}
           >
             <MenuItem value="All">All</MenuItem>
-            {/* Add your region options here */}
+            {/* Add region options */}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -401,7 +520,7 @@ function EnhancedTable() {
             onChange={(e) => setProjectFilter(e.target.value)}
           >
             <MenuItem value="All">All</MenuItem>
-            {/* Add your project options here */}
+            {/* Add project options */}
           </Select>
         </FormControl>
         <Button variant="contained" color="primary">
@@ -426,10 +545,10 @@ function EnhancedTable() {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={rows.length}
+              rowCount={users.length}
             />
             <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
+              {stableSort(filteredUsers, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row: RowType, index: number) => {
                   const isItemSelected = isSelected(row.id);
@@ -460,16 +579,10 @@ function EnhancedTable() {
                           </Box>
                         </Customer>
                       </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.lastname}</Typography>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.usertype}</Typography>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.status}</Typography>
-                      </TableCell>
-
+                      <TableCell align="left"><Typography variant="body1">{row.lastname}</Typography></TableCell>
+                      <TableCell align="left"><Typography variant="body1">{row.usertype}</Typography></TableCell>
+                      <TableCell align="left"><Typography variant="body1">{row.role}</Typography></TableCell>
+                      <TableCell align="left"><Typography variant="body1">{row.status}</Typography></TableCell>
                       <TableCell align="right">
                         <IconButton
                           color="primary"
@@ -492,7 +605,7 @@ function EnhancedTable() {
         <TablePagination
           rowsPerPageOptions={[6, 12, 18]}
           component="div"
-          count={rows.length}
+          count={filteredUsers.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -501,9 +614,14 @@ function EnhancedTable() {
       </Paper>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Edit Access</DialogTitle>
+        <DialogTitle>
+          {selectedUsers.length > 1 
+            ? `Edit Access (${selectedUsers.length} users selected)` 
+            : "Edit Access"}
+        </DialogTitle>
         <DialogContent>
           <Tabs value={currentTab} onChange={handleTabChange}>
+            <Tab label="User Role" />
             <Tab label="Instrument Access" />
             <Tab label="Dashboard Access" />
             <Tab label="Control Access" />
@@ -511,6 +629,27 @@ function EnhancedTable() {
 
           {currentTab === 0 && (
             <Box sx={{ mt: 2 }}>
+              {/* User Role Selection */}
+              <FormControl fullWidth margin="dense">
+                <InputLabel>User Role</InputLabel>
+                <Select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  label="User Role"
+                >
+                  <MenuItem value="ADMIN">Admin</MenuItem>
+                  <MenuItem value="STANDARD_USER">Standard User</MenuItem>
+                  <MenuItem value="SUPER_USER">Super User</MenuItem>
+                  <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+
+          {currentTab === 1 && (
+            <Box sx={{ mt: 2 }}>
+
+              {/* Instrument Access */}
               <FormControl fullWidth margin="dense">
                 <InputLabel>Instrument Access</InputLabel>
                 <Select
@@ -526,14 +665,15 @@ function EnhancedTable() {
             </Box>
           )}
 
-          {currentTab === 1 && (
+
+          {currentTab === 2 && (
             <Box sx={{ mt: 2 }}>
-              {/* Dashboard Access fields will go here */}
+              {/* Add Dashboard Access fields here */}
             </Box>
           )}
 
-          {currentTab === 2 && (
-            <Box sx={{ mt: 2 }}>{/* Control Access fields will go here */}</Box>
+          {currentTab === 3 && (
+            <Box sx={{ mt: 2 }}>{/* Control Access fields here */}</Box>
           )}
         </DialogContent>
         <DialogActions>
