@@ -7,6 +7,9 @@ import {
 const useAuth = () => {
   const { data: session, status } = useSession();
 
+  // Log session data to ensure it's populated
+  console.log("Session Data:", session);
+
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn("credentials", {
       redirect: false,
@@ -38,6 +41,10 @@ const useAuth = () => {
     return data;
   };
 
+  // Return firstName and lastName for easier access
+  const firstName = session?.user?.firstName || "";
+  const lastName = session?.user?.lastName || "";
+
   return {
     signIn,
     signOut,
@@ -45,6 +52,8 @@ const useAuth = () => {
     session,
     isAuthenticated: !!session,
     status,
+    firstName,
+    lastName,
     userName: session?.user?.name || "",
   };
 };

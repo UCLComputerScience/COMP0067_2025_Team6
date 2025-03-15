@@ -37,7 +37,15 @@ const FooterBadge = styled(Badge)`
 `;
 
 const SidebarFooter: React.FC = ({ ...rest }) => {
-  const { user } = useAuth();
+  const { firstName, lastName, session } = useAuth();
+
+  // Construct the display name
+  const displayName =
+    firstName && lastName
+      ? `${firstName} ${lastName}`
+      : session?.user?.name || "Stephen Hilton"; // Fallback to the full name if first/last name is missing
+
+  const avatarSrc = session?.user?.avatar || "/static/img/avatars/avatar-1.jpg"; // Default avatar if not set
 
   return (
     <Footer {...rest}>
@@ -51,23 +59,14 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
             }}
             variant="dot"
           >
-            {!!user && <Avatar alt={user.displayName} src={user.avatar} />}
-            {/* Demo data */}
-            {!user && (
-              <Avatar
-                alt="Lucy Lavender"
-                src="/static/img/avatars/avatar-1.jpg"
-              />
-            )}
+            <Avatar alt={displayName} src={avatarSrc} />
           </FooterBadge>
         </Grid>
         <Grid>
-          {!!user && (
-            <FooterText variant="body2">{user.displayName}</FooterText>
-          )}
-          {/* Demo data */}
-          {!user && <FooterText variant="body2">Stephen Hilton</FooterText>}
-          <FooterSubText variant="caption">UCL School of Pharmacy</FooterSubText>
+          <FooterText variant="body2">{displayName}</FooterText>
+          <FooterSubText variant="caption">
+            UCL School of Pharmacy
+          </FooterSubText>
         </Grid>
       </Grid>
     </Footer>
