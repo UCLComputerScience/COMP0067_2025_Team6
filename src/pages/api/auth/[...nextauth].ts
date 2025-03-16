@@ -2,6 +2,24 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma"; // Prisma client
 
+// Define UserRole as an enum type based on your Prisma schema
+enum UserRole {
+  STANDARD_USER = "STANDARD_USER",
+  ADMIN = "ADMIN",
+  SUPER_USER = "SUPER_USER",
+  TEMPORARY_USER = "TEMPORARY_USER",
+}
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  organisation: string | null;
+  avatar: string | null;
+  user_role: UserRole; // Define the role type as an enum
+}
+
 export default NextAuth({
   providers: [
     CredentialsProvider({
@@ -10,7 +28,7 @@ export default NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      
+
       async authorize(credentials) {
         // Check if email and password are provided
         if (!credentials?.email || !credentials?.password) {
@@ -22,7 +40,7 @@ export default NextAuth({
           where: { email: credentials.email },
         });
 
-        // Check if user exists and password matches (hash your passwords in production)
+        // Check if user exists and password matches (hash passwords in production)
         if (user && credentials.password === user.password) {
           // Return user object with necessary fields
           return {
@@ -32,7 +50,7 @@ export default NextAuth({
             lastName: user.lastName || "",
             organisation: user.organisation || "",
             avatar: user.avatar || "",
-            role: user.role,
+            user_role: user.user_role,
           };
         }
 
@@ -54,14 +72,14 @@ export default NextAuth({
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
-        token.lastName = (user as any).lastName;
-        token.organisation = (user as any).organisation;
-        token.avatar = (user as any).avatar;
-        token.role = (user as any).role;
+        token.lastName = user.lastName;
+        token.organisation = user.organisation;
+        token.avatar = user.avatar;
+        token.user_role = user.user_role; // Use the user_role directly
       }
       return token; // Return the token with added information
     },
-    
+
     async session({ session, token }) {
       // Add user details from JWT token to the session
       session.user.id = token.id;
@@ -70,7 +88,7 @@ export default NextAuth({
       session.user.lastName = token.lastName;
       session.user.organisation = token.organisation;
       session.user.avatar = token.avatar;
-      session.user.role = token.role;
+      session.user.user_role = token.user_role; // Ensure user_role is correctly added to the session
       return session;
     },
   },

@@ -1,9 +1,8 @@
 import React from "react";
 import styled from "@emotion/styled";
 import { List } from "@mui/material";
-
-import { SidebarItemsType } from "@/types/sidebar";
 import SidebarNavSection from "./SidebarNavSection";
+import { SidebarItemsType } from "@/types/sidebar";
 
 const Wrapper = styled.div`
   background-color: ${(props) => props.theme.sidebar.background};
@@ -24,6 +23,8 @@ interface SidebarNavProps {
 }
 
 const SidebarNav = ({ items }: SidebarNavProps) => {
+  console.log("Sidebar Items passed to SidebarNav: ", items); // Log passed items
+
   return (
     <Wrapper>
       <List disablePadding>

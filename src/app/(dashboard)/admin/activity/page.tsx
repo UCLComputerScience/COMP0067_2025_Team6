@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Select, MenuItem, FormControl, InputLabel, TextField } from "@mui/material";
 import { useState} from "react";
+import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -594,4 +595,4 @@ function ActivityLogs() {
   );
 }
 
-export default ActivityLogs;
+export default withAuth(ActivityLogs, ["ADMIN", "SUPER_USER"]); 

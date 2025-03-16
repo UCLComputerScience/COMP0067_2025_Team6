@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 export const metadata = {
-  title: "Orders",
+  title: "Usage History",
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

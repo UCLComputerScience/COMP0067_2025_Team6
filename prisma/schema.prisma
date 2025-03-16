@@ -18,9 +18,11 @@ model alerts {
   feed             feed           @relation(fields: [entryid], references: [entryid], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model apikey {
-  id  Int    @id @default(autoincrement())
-  api String @unique @db.VarChar
+enum UserRole {
+  ADMIN
+  SUPER_USER
+  STANDARD_USER
+  TEMPORARY_USER
 }
 
 model channel {
@@ -68,7 +70,7 @@ model labs {
 
 model users {
   id                 Int       @id @default(autoincrement())
-  role               user_role @default(STANDARD_USER)
+  user_role          UserRole  @default(STANDARD_USER)
   email              String    @unique @db.VarChar(100)
   password           String    @db.VarChar(255)
   first_name         String    @db.VarChar(50)
@@ -93,9 +95,9 @@ enum priority_type {
   low
 }
 
-enum user_role {
-  ADMIN
-  SUPER_USER
-  STANDARD_USER
-  TEMPORARY_USER
+model ApiKey {
+  id  Int    @id @default(autoincrement())
+  channel_id Int 
+  api String @unique
 }
+

@@ -4,6 +4,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import React from "react";
 import { useState, useEffect } from "react";
 import styled from "@emotion/styled";
+import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 import NextLink from "next/link";
 import {
   Avatar as MuiAvatar,
@@ -406,5 +407,5 @@ const ProfilePage = () => {
     </>
   );
 };
-export default ProfilePage;
+export default withAuth(ProfilePage);
 
