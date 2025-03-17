@@ -6,6 +6,7 @@ import styled from "@emotion/styled";
 import { useRouter } from "next/navigation"; // Import useRouter for redirect
 import { useTranslation } from "react-i18next";
 import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+import { useSession } from "next-auth/react"; // Import useSession
 
 import {
   Grid2 as Grid,
@@ -274,7 +275,7 @@ const Lab1 = () => {
   //     </div>
   //   );
   // }
-  
+  const { data: session } = useSession();
   console.log(session?.user);
 
   return (
