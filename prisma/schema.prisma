@@ -11,9 +11,9 @@ datasource db {
 model Alerts {
   id               Int           @id @default(autoincrement())
   entryId          Int
-  priority         priorityType?
+  priority         PriorityType?
   alertDescription String        @db.VarChar(255)
-  alertStatus      alertStatus
+  alertStatus      AlertStatus
   alertDate        DateTime      @db.Timestamp(6)
   feed             Feed          @relation(fields: [entryId], references: [entryId], onDelete: NoAction, onUpdate: NoAction)
 }
@@ -65,7 +65,7 @@ model Labs {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model User {
   id                       Int        @id @default(autoincrement())
-  userRole                 role       @default(STANDARD_USER)
+  userRole                 Role       @default(STANDARD_USER)
   email                    String     @unique @db.VarChar(100)
   password                 String     @db.VarChar(255)
   firstName                String     @db.VarChar(50)
@@ -92,7 +92,7 @@ model User {
   organisationCity         String?    @db.VarChar(100)
   organisationCounty       String?    @db.VarChar(100)
   organisationPostcode     String?    @db.VarChar(20)
-  status                   userStatus
+  status                   UserStatus
   labs                     Labs[]
 }
 
@@ -103,25 +103,25 @@ model ApiKey {
   channel   Channel? @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-enum alertStatus {
+enum AlertStatus {
   RESOLVED
   UNRESOLVED
 }
 
-enum priorityType {
+enum PriorityType {
   HIGH
   MODERATE
   LOW
 }
 
-enum role {
+enum Role {
   ADMIN
   SUPER_USER
   STANDARD_USER
   TEMPORARY_USER
 }
 
-enum userStatus {
+enum UserStatus {
   ACTIVE
   INACTIVE
 }
