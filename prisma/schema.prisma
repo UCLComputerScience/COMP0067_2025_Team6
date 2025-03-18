@@ -59,11 +59,11 @@ model labs {
   id          Int    @id @default(autoincrement())
   lablocation String @db.VarChar(100)
   managerid   Int
-  users       users  @relation(fields: [managerid], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       Users  @relation(fields: [managerid], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model users {
+model Users {
   id                          Int         @id @default(autoincrement())
   user_role                   role        @default(STANDARD_USER)
   email                       String      @unique @db.VarChar(100)
