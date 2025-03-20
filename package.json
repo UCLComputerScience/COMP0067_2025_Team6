@@ -53,7 +53,7 @@
     "amazon-cognito-identity-js": "5.2.14",
     "animate.css": "4.1.1",
     "apexcharts": "3.53.0",
-    "axios": "0.28.1",
+    "axios": "^0.28.1",
     "axios-mock-adapter": "1.22.0",
     "bcryptjs": "^3.0.2",
     "chart.js": "4.4.4",
