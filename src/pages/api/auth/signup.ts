@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     //check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.User.findUnique({
       where: { email },
     });
 
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     //create new user in database
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.User.create({
         data: {
             email,
             password,
@@ -50,11 +50,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             lastName,
             organisation,
             avatar: avatar || "https://example.com/default-avatar.png", //default avatar
-            user_role: "STANDARD_USER",
+            userRole: "STANDARD_USER",
+            status: "ACTIVE",
           },
         });
 
-    return res.status(201).json({ message: "User created successfully", user: newUser });
+    return res.status(201).json({ message: "User created successfully", User: newUser });
   } catch (error) {
     console.error("Signup Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
