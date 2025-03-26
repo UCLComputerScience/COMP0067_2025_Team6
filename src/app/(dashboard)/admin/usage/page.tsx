@@ -4,7 +4,7 @@ import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -478,4 +478,4 @@ function OrderList() {
     </React.Fragment>
   );
 }
-export default withAuth(OrderList, ["ADMIN", "SUPER_USER"]);
+export default OrderList;
