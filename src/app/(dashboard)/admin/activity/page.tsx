@@ -6,9 +6,15 @@ import styled from "@emotion/styled";
 import NextLink from "next/link";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Select, MenuItem, FormControl, InputLabel, TextField } from "@mui/material";
-import { useState} from "react";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+import {
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  TextField,
+} from "@mui/material";
+import { useState } from "react";
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -70,7 +76,15 @@ function createData(
   status: string,
   additionalDetails: string
 ) {
-  return { id, timestamp, userSystem, action, location, status, additionalDetails };
+  return {
+    id,
+    timestamp,
+    userSystem,
+    action,
+    location,
+    status,
+    additionalDetails,
+  };
 }
 
 type RowType = {
@@ -274,9 +288,20 @@ type EnhancedTableToolbarProps = {
   setFilters: React.Dispatch<React.SetStateAction<any>>;
 };
 
-const EnhancedTableToolbar = ({ numSelected, filters, setFilters }: EnhancedTableToolbarProps) => {
+const EnhancedTableToolbar = ({
+  numSelected,
+  filters,
+  setFilters,
+}: EnhancedTableToolbarProps) => {
   return (
-    <Toolbar style={{ display: "flex", justifyContent: "flex-start", gap: "20px", flexWrap: "wrap" }}>
+    <Toolbar
+      style={{
+        display: "flex",
+        justifyContent: "flex-start",
+        gap: "20px",
+        flexWrap: "wrap",
+      }}
+    >
       <TextField
         label="Search User/System"
         variant="outlined"
@@ -292,7 +317,9 @@ const EnhancedTableToolbar = ({ numSelected, filters, setFilters }: EnhancedTabl
       />
 
       <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
-        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>Activity Type</InputLabel>
+        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>
+          Activity Type
+        </InputLabel>
         <Select
           value={filters.activity}
           displayEmpty
@@ -311,14 +338,16 @@ const EnhancedTableToolbar = ({ numSelected, filters, setFilters }: EnhancedTabl
       </FormControl>
 
       <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
-        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>Status</InputLabel>
+        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>
+          Status
+        </InputLabel>
         <Select
           value={filters.status}
           displayEmpty
           onChange={(e) =>
             setFilters((prev: typeof filters) => ({
               ...prev,
-              status: e.target.value, 
+              status: e.target.value,
             }))
           }
         >
@@ -348,12 +377,16 @@ const EnhancedTableToolbar = ({ numSelected, filters, setFilters }: EnhancedTabl
   );
 };
 
-function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowType>, filters: any) => void }) {
+function EnhancedTable({
+  onDataFiltered,
+}: {
+  onDataFiltered: (data: Array<RowType>, filters: any) => void;
+}) {
   const [order, setOrder] = React.useState<"desc" | "asc">("asc");
   const [orderBy, setOrderBy] = React.useState("timestamp");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(6);
-  
+
   const [filters, setFilters] = useState({
     user: "",
     activity: "",
@@ -371,7 +404,8 @@ function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowTyp
     return rows.filter((row) => {
       const rowDate = formatDate(row.timestamp);
       return (
-        (filters.user === "" || row.userSystem.toLowerCase().includes(filters.user.toLowerCase())) &&
+        (filters.user === "" ||
+          row.userSystem.toLowerCase().includes(filters.user.toLowerCase())) &&
         (filters.activity === "" || row.action === filters.activity) &&
         (filters.status === "" || row.status === filters.status) &&
         (filters.date === "" || rowDate === filters.date)
@@ -393,11 +427,16 @@ function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowTyp
     setOrderBy(property);
   };
 
-  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value));
     setPage(0);
   };
@@ -412,9 +451,9 @@ function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowTyp
     <div>
       <Paper>
         <EnhancedTableToolbar
-          numSelected={0} 
-          filters={filters} 
-          setFilters={setFilters} 
+          numSelected={0}
+          filters={filters}
+          setFilters={setFilters}
         />
         <TableContainer>
           <Table
@@ -446,11 +485,7 @@ function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowTyp
               {stableSort(filteredRows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row: RowType, index: number) => (
-                  <TableRow
-                    hover
-                    tabIndex={-1}
-                    key={`${row.id}-${index}`}
-                  >
+                  <TableRow hover tabIndex={-1} key={`${row.id}-${index}`}>
                     <TableCell>{row.timestamp}</TableCell>
                     <TableCell>{row.userSystem}</TableCell>
                     <TableCell>{row.action}</TableCell>
@@ -472,11 +507,13 @@ function EnhancedTable({ onDataFiltered }: { onDataFiltered: (data: Array<RowTyp
           rowsPerPageOptions={[6, 12, 18]}
           count={filteredRows.length}
           rowsPerPage={rowsPerPage}
-          page={filteredRows.length <= page * rowsPerPage && page > 0 ? 0 : page}
+          page={
+            filteredRows.length <= page * rowsPerPage && page > 0 ? 0 : page
+          }
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           SelectProps={{
-            native: false
+            native: false,
           }}
         />
       </Paper>
@@ -500,41 +537,44 @@ function ActivityLogs() {
 
   const handleExport = () => {
     const doc = new jsPDF();
-    
+
     const columns = [
-      { header: 'Timestamp', dataKey: 'timestamp' },
-      { header: 'User/System', dataKey: 'userSystem' },
-      { header: 'Action', dataKey: 'action' },
-      { header: 'Location', dataKey: 'location' },
-      { header: 'Status', dataKey: 'status' },
-      { header: 'Additional Details', dataKey: 'additionalDetails' }
+      { header: "Timestamp", dataKey: "timestamp" },
+      { header: "User/System", dataKey: "userSystem" },
+      { header: "Action", dataKey: "action" },
+      { header: "Location", dataKey: "location" },
+      { header: "Status", dataKey: "status" },
+      { header: "Additional Details", dataKey: "additionalDetails" },
     ];
 
-    const data = filteredData.map(row => ({
+    const data = filteredData.map((row) => ({
       timestamp: row.timestamp,
       userSystem: row.userSystem,
       action: row.action,
       location: row.location,
       status: row.status,
-      additionalDetails: row.additionalDetails
+      additionalDetails: row.additionalDetails,
     }));
 
     doc.setFontSize(16);
-    doc.text('Activity Logs Report', 14, 15);
+    doc.text("Activity Logs Report", 14, 15);
     doc.setFontSize(12);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 25);
 
     let yPosition = 35;
     const activeFilters = [];
-    
-    if (currentFilters.user) activeFilters.push(`User Search: "${currentFilters.user}"`);
-    if (currentFilters.activity) activeFilters.push(`Activity Type: ${currentFilters.activity}`);
-    if (currentFilters.status) activeFilters.push(`Status: ${currentFilters.status}`);
+
+    if (currentFilters.user)
+      activeFilters.push(`User Search: "${currentFilters.user}"`);
+    if (currentFilters.activity)
+      activeFilters.push(`Activity Type: ${currentFilters.activity}`);
+    if (currentFilters.status)
+      activeFilters.push(`Status: ${currentFilters.status}`);
     if (currentFilters.date) activeFilters.push(`Date: ${currentFilters.date}`);
 
     if (activeFilters.length > 0) {
       doc.setFontSize(10);
-      doc.text('Applied Filters:', 14, yPosition);
+      doc.text("Applied Filters:", 14, yPosition);
       activeFilters.forEach((filter, index) => {
         yPosition += 5;
         doc.text(`• ${filter}`, 16, yPosition);
@@ -551,10 +591,10 @@ function ActivityLogs() {
       styles: { fontSize: 8 },
       headStyles: { fillColor: [71, 117, 163] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
-      margin: { top: 30 }
+      margin: { top: 30 },
     });
-    
-    doc.save('activity-logs.pdf');
+
+    doc.save("activity-logs.pdf");
   };
 
   return (
@@ -574,11 +614,7 @@ function ActivityLogs() {
         </Grid>
         <Grid>
           <div>
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={handleExport}
-            >
+            <Button variant="contained" color="primary" onClick={handleExport}>
               <AddIcon />
               Export
             </Button>
@@ -595,4 +631,4 @@ function ActivityLogs() {
   );
 }
 
-export default withAuth(ActivityLogs, ["ADMIN", "SUPER_USER"]); 
+export default ActivityLogs;

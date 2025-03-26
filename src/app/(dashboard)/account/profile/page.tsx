@@ -4,7 +4,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import React from "react";
 import { useState, useEffect } from "react";
 import styled from "@emotion/styled";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 import NextLink from "next/link";
 import {
   Avatar as MuiAvatar,
@@ -14,7 +14,7 @@ import {
   Card as MuiCard,
   CardContent,
   Divider as MuiDivider,
- // Grid as MuiGrid,
+  // Grid as MuiGrid,
   Typography as MuiTypography,
   TextField,
   Chip as MuiChip,
@@ -56,78 +56,95 @@ const Chip = styled(MuiChip)`
 `;
 
 const ProfileCompletion = () => {
-    const loadSavedData = () => {
-      const savedData = localStorage.getItem("personalInfo");
-      return savedData
-        ? JSON.parse(savedData)
-        : {
-            firstName: "",
-            lastName: "",
-            email: "",
-            phoneNumber: "",
-            address1: "",
-            address2: "",
-            city: "",
-            county: "",
-            postcode: "",
-          };
+  const loadSavedData = () => {
+    const savedData = localStorage.getItem("personalInfo");
+    return savedData
+      ? JSON.parse(savedData)
+      : {
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          address1: "",
+          address2: "",
+          city: "",
+          county: "",
+          postcode: "",
+        };
+  };
+
+  const [profileData, setProfileData] = useState(loadSavedData);
+  const [skills, setSkills] = useState<string[]>(() => {
+    const savedSkills = localStorage.getItem("userSkills");
+    return savedSkills ? JSON.parse(savedSkills) : [];
+  });
+  const [description, setDescription] = useState(() => {
+    const savedDescription = localStorage.getItem("userDescription");
+    return savedDescription || "";
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setProfileData(loadSavedData());
+      setSkills(JSON.parse(localStorage.getItem("userSkills") || "[]"));
+      setDescription(localStorage.getItem("userDescription") || "");
     };
-  
-    const [profileData, setProfileData] = useState(loadSavedData);
-    const [skills, setSkills] = useState<string[]>(() => {
-      const savedSkills = localStorage.getItem("userSkills");
-      return savedSkills ? JSON.parse(savedSkills) : [];
-    });
-    const [description, setDescription] = useState(() => {
-      const savedDescription = localStorage.getItem("userDescription");
-      return savedDescription || "";
-    });
-  
-    useEffect(() => {
-      const handleStorageChange = () => {
-        setProfileData(loadSavedData());
-        setSkills(JSON.parse(localStorage.getItem("userSkills") || "[]"));
-        setDescription(localStorage.getItem("userDescription") || "");
-      };
-  
-      window.addEventListener("storage", handleStorageChange);
-      return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
-  
-    const calculateCompletion = () => {
-      const filledFields = Object.values(profileData).filter((value) => value !== "").length;
-      const totalFields = Object.keys(profileData).length;
-      const skillsCompleted = skills.length > 0 ? 1 : 0; 
-      const descriptionCompleted = description.trim() !== "" ? 1 : 0;
-  
-      return Math.round(((filledFields + skillsCompleted + descriptionCompleted) / (totalFields + 2)) * 100);
-    };
-  
-    const completionPercentage = calculateCompletion();
-  
-    if (completionPercentage === 100) return null;
-  
-    return (
-      <Card>
-        <CardContent style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Box>
-            <Typography variant="h6" color="primary">
-              Complete Your Profile ({completionPercentage}%)
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Please update your profile details to reach 100% completion.
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const calculateCompletion = () => {
+    const filledFields = Object.values(profileData).filter(
+      (value) => value !== ""
+    ).length;
+    const totalFields = Object.keys(profileData).length;
+    const skillsCompleted = skills.length > 0 ? 1 : 0;
+    const descriptionCompleted = description.trim() !== "" ? 1 : 0;
+
+    return Math.round(
+      ((filledFields + skillsCompleted + descriptionCompleted) /
+        (totalFields + 2)) *
+        100
     );
   };
-  
 
+  const completionPercentage = calculateCompletion();
+
+  if (completionPercentage === 100) return null;
+
+  return (
+    <Card>
+      <CardContent
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box>
+          <Typography variant="h6" color="primary">
+            Complete Your Profile ({completionPercentage}%)
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Please update your profile details to reach 100% completion.
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
 
 const ProfileDetails = () => (
   <Card>
-    <CardContent style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <CardContent
+      style={{
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <Avatar alt="User Profile" src="/static/img/avatar.jpg" />
       <Typography variant="h5">Jerome Hansel</Typography>
       <Typography variant="subtitle1" color="textSecondary" mb={2}>
@@ -140,7 +157,12 @@ const ProfileDetails = () => (
             variant="outlined"
             color="primary"
             fullWidth
-            sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}
+            sx={{
+              display: "flex",
+              justifyContent: "flex-start",
+              gap: 1,
+              py: 1.5,
+            }}
           >
             <PersonIcon />
             Personal Information
@@ -152,7 +174,13 @@ const ProfileDetails = () => (
             variant="outlined"
             color="primary"
             fullWidth
-            sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}
+            sx={{
+              display: "flex",
+              justifyContent: "flex-start",
+              gap: 1,
+              py: 1.5,
+              mt: 1,
+            }}
           >
             <BusinessIcon />
             Organisation Information
@@ -211,10 +239,24 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="First Name" name="firstName" fullWidth variant="outlined" value={formData.firstName} onChange={handleInputChange} />
+              <TextField
+                label="First Name"
+                name="firstName"
+                fullWidth
+                variant="outlined"
+                value={formData.firstName}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Last Name" name="lastName" fullWidth variant="outlined" value={formData.lastName} onChange={handleInputChange} />
+              <TextField
+                label="Last Name"
+                name="lastName"
+                fullWidth
+                variant="outlined"
+                value={formData.lastName}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -222,10 +264,24 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="Email" name="email" fullWidth variant="outlined" value={formData.email} onChange={handleInputChange} />
+              <TextField
+                label="Email"
+                name="email"
+                fullWidth
+                variant="outlined"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Phone Number" name="phoneNumber" fullWidth variant="outlined" value={formData.phoneNumber} onChange={handleInputChange} />
+              <TextField
+                label="Phone Number"
+                name="phoneNumber"
+                fullWidth
+                variant="outlined"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -233,7 +289,14 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <TextField label="Address Line 1" name="address1" fullWidth variant="outlined" value={formData.address1} onChange={handleInputChange} />
+              <TextField
+                label="Address Line 1"
+                name="address1"
+                fullWidth
+                variant="outlined"
+                value={formData.address1}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -241,7 +304,14 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <TextField label="Address Line 2" name="address2" fullWidth variant="outlined" value={formData.address2} onChange={handleInputChange} />
+              <TextField
+                label="Address Line 2"
+                name="address2"
+                fullWidth
+                variant="outlined"
+                value={formData.address2}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -249,19 +319,44 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="City" name="city" fullWidth variant="outlined" value={formData.city} onChange={handleInputChange} />
+              <TextField
+                label="City"
+                name="city"
+                fullWidth
+                variant="outlined"
+                value={formData.city}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField label="County" name="county" fullWidth variant="outlined" value={formData.county} onChange={handleInputChange} />
+              <TextField
+                label="County"
+                name="county"
+                fullWidth
+                variant="outlined"
+                value={formData.county}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField label="Postcode" name="postcode" fullWidth variant="outlined" value={formData.postcode} onChange={handleInputChange} />
+              <TextField
+                label="Postcode"
+                name="postcode"
+                fullWidth
+                variant="outlined"
+                value={formData.postcode}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
 
         <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-          <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveChanges}
+          >
             Save Changes
           </Button>
           <Button variant="contained" color="secondary" onClick={handleCancel}>
@@ -276,7 +371,9 @@ const PersonalInformation = () => {
 const Skills = () => {
   const loadSavedSkills = (): string[] => {
     const savedSkills = localStorage.getItem("userSkills");
-    return savedSkills ? JSON.parse(savedSkills) : ["Pharmaceutical Science", "Chemistry"];
+    return savedSkills
+      ? JSON.parse(savedSkills)
+      : ["Pharmaceutical Science", "Chemistry"];
   };
 
   const [skills, setSkills] = useState<string[]>(loadSavedSkills);
@@ -285,7 +382,7 @@ const Skills = () => {
   useEffect(() => {
     localStorage.setItem("userSkills", JSON.stringify(skills));
   }, [skills]);
- 
+
   const handleAddSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -294,7 +391,9 @@ const Skills = () => {
   };
 
   const handleDeleteSkill = (skillToDelete: string) => {
-    setSkills((prevSkills) => prevSkills.filter((skill) => skill !== skillToDelete));
+    setSkills((prevSkills) =>
+      prevSkills.filter((skill) => skill !== skillToDelete)
+    );
   };
 
   return (
@@ -305,12 +404,19 @@ const Skills = () => {
           <Box display="flex" alignItems="center" gap={1}>
             <TextField
               value={newSkill}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSkill(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewSkill(e.target.value)
+              }
               placeholder="Add a skill"
               size="small"
               variant="outlined"
             />
-            <Button variant="contained" color="primary" onClick={handleAddSkill} disabled={!newSkill.trim()}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddSkill}
+              disabled={!newSkill.trim()}
+            >
               Add
             </Button>
           </Box>
@@ -318,7 +424,12 @@ const Skills = () => {
         <Divider sx={{ my: 2 }} />
         <Box display="flex" flexWrap="wrap" gap={1}>
           {skills.map((skill: string, index: number) => (
-            <Chip key={index} label={skill} color="primary" onDelete={() => handleDeleteSkill(skill)} />
+            <Chip
+              key={index}
+              label={skill}
+              color="primary"
+              onDelete={() => handleDeleteSkill(skill)}
+            />
           ))}
         </Box>
       </CardContent>
@@ -333,7 +444,8 @@ const Description = () => {
   };
 
   const [description, setDescription] = useState(loadSavedDescription);
-  const [lastSavedDescription, setLastSavedDescription] = useState(loadSavedDescription);
+  const [lastSavedDescription, setLastSavedDescription] =
+    useState(loadSavedDescription);
 
   useEffect(() => {
     localStorage.setItem("userDescription", description);
@@ -368,7 +480,11 @@ const Description = () => {
           onChange={handleDescriptionChange}
         />
         <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
-          <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveChanges}
+          >
             Save Changes
           </Button>
           <Button variant="contained" color="secondary" onClick={handleCancel}>
@@ -379,7 +495,6 @@ const Description = () => {
     </Card>
   );
 };
-
 
 const ProfilePage = () => {
   return (
@@ -407,5 +522,4 @@ const ProfilePage = () => {
     </>
   );
 };
-export default withAuth(ProfilePage);
-
+export default ProfilePage;

@@ -35,70 +35,28 @@ const Divider = styled(MuiDivider)(spacing);
 
 const Typography = styled(MuiTypography)(spacing);
 
-
 const Lab1 = () => {
   const [selectedOption, setSelectedOption] = React.useState<string>("");
   // const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
   // const [channel_db, setChannel_db] = React.useState<ChannelProps>({} as ChannelProps);  // Channel data from db
   // const [feeds_db, setFeeds_db] = React.useState<FeedPropsDb[]>([]);  // Feeds data from db
-  const [apikeys, setApikeys] = React.useState<string[]>([]);  // Apikeys data from db
-  const [apidata, setApidata] = React.useState<DeviceProps[]>([]);  // Data fetched from the API
+  const [apikeys, setApikeys] = React.useState<string[]>([]); // Apikeys data from db
+  const [apidata, setApidata] = React.useState<DeviceProps[]>([]); // Data fetched from the API
   const [data, setData] = React.useState<string>("");
 
-  // Function to fetch channel data from the db
+  const { data: session, status } = useSession();
 
-  // React.useEffect(() => {
-  //   async function fetchChannels() {
-  //     try {
-  //       const response = await fetch("/api/channel", {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       });
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
 
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`);
-  //       }
+  if (status === "unauthenticated") {
+    return <div>You need to sign in to access this page.</div>;
+  }
 
-  //       const data = await response.json();
-  //       setChannel_db(data);
-  //     } catch (error) {
-  //       console.error("Error fetching channels:", error);
-  //     }
-  //   }
-
-  //   fetchChannels();
-  // }, []);
-
-  // Function to fetch feed data from the db
-
-  // React.useEffect(() => {
-  //   async function fetchFeeds() {
-  //     try {
-  //       const response = await fetch("/api/feed", {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       });
-
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! Status: ${response.status}`);
-  //       }
-
-  //       const data = await response.json();
-
-  //       setFeeds_db(data);
-  //     } catch (error) {
-  //       console.error("Error fetching feeds:", error);
-  //     }
-  //   }
-
-  //   fetchFeeds();
-  // }, []);
-
-  // Function to fetch apikeys data from the db
+  if (!session || !session.user) {
+    return <div>No session found. Redirecting...</div>;
+  }
 
   React.useEffect(() => {
     async function fetchApikeys() {
@@ -115,7 +73,9 @@ const Lab1 = () => {
         }
 
         const data = await response.json();
-        const apiArray: string[] = data.map((item: { api: string }) => item.api); // Extract only the "api" values
+        const apiArray: string[] = data.map(
+          (item: { api: string }) => item.api
+        ); // Extract only the "api" values
 
         setApikeys(apiArray);
       } catch (error) {
@@ -124,24 +84,26 @@ const Lab1 = () => {
     }
 
     fetchApikeys();
-  }, [data]);
+  }, []);
 
   // Function to fetch data based on the selected category and apikey
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
     try {
-        const url = selectedOption ? `${apikey}` + `${selectedOption}` : apikey;
-        const response = await fetch(url);
-        const result = await response.json();
-        return result;
+      const url = selectedOption ? `${apikey}` + `${selectedOption}` : apikey;
+      const response = await fetch(url);
+      const result = await response.json();
+      return result;
     } catch (error) {
-        console.error("Error fetching data:", error);
-        return null; // Return null if the fetch fails
+      console.error("Error fetching data:", error);
+      return null; // Return null if the fetch fails
     }
   };
 
-  useEffect(() => {    
+  useEffect(() => {
     const fetchAllData = async () => {
-      const results = await Promise.all(apikeys.map((key) => fetchDataFromApi(selectedOption, key)));
+      const results = await Promise.all(
+        apikeys.map((key) => fetchDataFromApi(selectedOption, key))
+      );
       setApidata(results.filter(Boolean)); // Remove null values from failed fetches
     };
 
@@ -150,43 +112,9 @@ const Lab1 = () => {
 
   const { t } = useTranslation();
 
-  // Safely accessing the data with optional chaining
-
-  // const channel_db_name = channel_db[0]?.name || "N/A";
-  // const field1_db = channel_db[0]?.field1 || "N/A";
-  // const field2_db = channel_db[0]?.field2 || "N/A";
-  // const field3_db = channel_db[0]?.field3 || "N/A";
-
-  // // Mapping feeds for temperature, humidity, and pressure
-  // const temperature_db: number[] = feeds_db.map((feed) => +feed.field1) || [];
-  // const humidity_db: number[] = feeds_db.map((feed) => +feed.field2) || [];
-  // const pressure_db: number[] = feeds_db.map((feed) => +feed.field3) || [];
-
-  // // Safely accessing the data with optional chaining
-  // const channel = data?.channel?.name || "N/A";
-  // const field1 = data?.channel?.field1 || "N/A";
-  // const field2 = data?.channel?.field2 || "N/A";
-  // const field3 = data?.channel?.field3 || "N/A";
-
-  // // Mapping feeds for temperature, humidity, and pressure
-  // const rdata = data?.feeds || [];
-  // const temperature: number[] = rdata.map((feed) => +feed.field1) || [];
-  // const humidity: number[] = rdata.map((feed) => +feed.field2) || [];
-  // const pressure: number[] = rdata.map((feed) => +feed.field3) || [];
-
   function extractTimestamps(data: FeedProps[]): string[] {
     return data.map((feed) => feed.created_at);
   }
-
-  // Example usage
-  // const DeviceLabels = extractTimestamps(rdata);
-  // const DeviceLabels_db = extractTimestamps_db(feeds_db);
-
-  // UseEffect to fetch data whenever the category state changes
-
-  // React.useEffect(() => {
-  //   fetchData(selectedOption);
-  // }, [selectedOption]);  // Dependency array ensures the fetch runs only when category changes
 
   const devicesApi = apidata.map((item) => {
     const channel = item?.channel?.name || "N/A";
@@ -194,58 +122,66 @@ const Lab1 = () => {
     const field1 = item?.channel?.field1 || "N/A";
     const field2 = item?.channel?.field2 || "N/A";
     const field3 = item?.channel?.field3 || "N/A";
-  
+
     // Ensure feeds array exists
     const rdata = item?.feeds || [];
-  
+
     // Extract numerical values safely
     const temperature = rdata.map((feed) => Number(feed?.field1) || 0);
     const humidity = rdata.map((feed) => Number(feed?.field2) || 0);
     const pressure = rdata.map((feed) => Number(feed?.field3) || 0);
-  
+
     // Extract timestamps (assuming extractTimestamps is correctly implemented)
     const DeviceLabels = extractTimestamps(rdata);
-  
-    return [{
-      channel_id: channel_id,
-      channel: channel,
-      field: field1,
-      DeviceData: temperature,
-      DeviceLabels: DeviceLabels,
-    },
-    {
-      channel_id: channel_id,
-      channel: channel,
-      field: field2,
-      DeviceData: humidity,
-      DeviceLabels: DeviceLabels,
-    },
-    {
-      channel_id: channel_id,
-      channel: channel,
-      field: field3,
-      DeviceData: pressure,
-      DeviceLabels: DeviceLabels
-    }
-  ];
+
+    return [
+      {
+        channel_id: channel_id,
+        channel: channel,
+        field: field1,
+        DeviceData: temperature,
+        DeviceLabels: DeviceLabels,
+      },
+      {
+        channel_id: channel_id,
+        channel: channel,
+        field: field2,
+        DeviceData: humidity,
+        DeviceLabels: DeviceLabels,
+      },
+      {
+        channel_id: channel_id,
+        channel: channel,
+        field: field3,
+        DeviceData: pressure,
+        DeviceLabels: DeviceLabels,
+      },
+    ];
   });
-  
+
   const DevicesGridApi = () => {
     return (
       <Grid container spacing={6}>
         {devicesApi.flat().map((device) => (
-          <Grid key={`${device.channel}-${device.field}`} // Change index key to id
+          <Grid
+            key={`${device.channel}-${device.field}`} // Change index key to id
             size={{
               xs: 12,
               lg: 12,
             }}
           >
-            <LineChart channel_id={device.channel_id} channel={device.channel} field={device.field} DeviceData={device.DeviceData} DeviceLabels={device.DeviceLabels} setData={setData} />
+            <LineChart
+              channel_id={device.channel_id}
+              channel={device.channel}
+              field={device.field}
+              DeviceData={device.DeviceData}
+              DeviceLabels={device.DeviceLabels}
+              setData={setData}
+            />
           </Grid>
         ))}
       </Grid>
     );
-
   };
 
   // // Get session data using the useSession hook
@@ -279,6 +215,8 @@ const Lab1 = () => {
   console.log(session?.user);
 
   return (
+    // <AuthGuard>
+    //   {" "}
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={6}>
         <Grid>
@@ -313,99 +251,11 @@ const Lab1 = () => {
         </Grid>
       </Grid>
       <Divider my={6} />
-      {/* <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 12,
-            md: 6,
-            lg: 3,
-            xl: "grow",
-          }}
-        >
-          <Stats
-            title="Average Temperature"
-            amount="41 C"
-            chip="Today"
-            percentagetext="+26%"
-            percentagecolor={green[500]}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 12,
-            md: 6,
-            lg: 3,
-            xl: "grow",
-          }}
-        >
-          <Stats
-            title="Average Pressure"
-            amount="1.1 bar"
-            chip="Today"
-            percentagetext="-14%"
-            percentagecolor={red[500]}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 12,
-            md: 6,
-            lg: 3,
-            xl: "grow",
-          }}
-        >
-          <Stats
-            title="Average Humidity"
-            amount="70%"
-            chip="Today"
-            percentagetext="+18%"
-            percentagecolor={green[500]}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 12,
-            md: 6,
-            lg: 3,
-            xl: "grow",
-          }}
-        >
-          <Stats
-            title="Pending Orders"
-            amount="45"
-            chip="Yearly"
-            percentagetext="-9%"
-            percentagecolor={red[500]}
-            illustration="/static/img/illustrations/waiting.png"
-          />
-        </Grid>
-      </Grid> */}
-      {/* <Grid container spacing={6}>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6,
-          }}
-        >
-          <DoughnutChart />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            lg: 6,
-          }}
-        >
-          <Table />
-        </Grid>
-      </Grid> */}
 
       <DevicesGridApi />
     </React.Fragment>
+    // </AuthGuard>
   );
 };
 
-export default withAuth(Lab1);
+export default Lab1;
