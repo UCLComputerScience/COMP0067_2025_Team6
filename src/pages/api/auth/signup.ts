@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     //create new user in database
-    const newUser = await prisma.User.create({
+    const newUser = await prisma.user.create({
         data: {
             email,
             password,
