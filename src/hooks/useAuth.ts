@@ -1,11 +1,8 @@
-import {
-  useSession,
-  signIn as nextAuthSignIn,
-  signOut as nextAuthSignOut,
-} from "next-auth/react";
+import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from "next-auth/react";
 
 const useAuth = () => {
   const { data: session, status } = useSession();
+  const isInitialized = status !== "loading"; // Check if the session is initialized
 
   // Log session data to ensure it's populated
   console.log("Session Data:", session);
@@ -18,6 +15,7 @@ const useAuth = () => {
     });
 
     if (result?.error) {
+      console.error("Sign-in error:", result.error); // Log the error for debugging
       throw new Error(result.error);
     }
 
@@ -29,34 +27,45 @@ const useAuth = () => {
   };
 
   const resetPassword = async (email: string) => {
-    const response = await fetch("/api/auth/reset-request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const response = await fetch("/api/auth/reset-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Password reset request failed");
+      }
 
-    return data;
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      throw error;
+    }
   };
 
-  // Return firstName and lastName for easier access
+  // User details and role
   const firstName = session?.user?.firstName || "";
   const lastName = session?.user?.lastName || "";
+  const userName = session?.user?.name || "";
+  const userRole = session?.user?.userRole || "STANDARD_USER"; // Default to "STANDARD_USER"
 
   return {
     signIn,
     signOut,
     resetPassword,
     session,
-    isAuthenticated: !!session,
+    isAuthenticated: !!session, // true if authenticated
+    isInitialized, // Provide the `isInitialized` state
     status,
     firstName,
     lastName,
-    userName: session?.user?.name || "",
+    userName,
+    userRole, // Provide the user role
   };
 };
 
 export default useAuth;
-

@@ -5,6 +5,7 @@ import PasswordIcon from '@mui/icons-material/Password';
 import React from "react";
 import { useState, useEffect } from "react";
 import styled from "@emotion/styled";
+
 import NextLink from "next/link";
 import {
   Avatar as MuiAvatar,
@@ -14,7 +15,7 @@ import {
   Card as MuiCard,
   CardContent,
   Divider as MuiDivider,
- // Grid as MuiGrid,
+  // Grid as MuiGrid,
   Typography as MuiTypography,
   TextField,
   Chip as MuiChip,
@@ -265,8 +266,32 @@ const ProfileCompletion = () => {
       </Card>
     );
   };
-  
 
+  const completionPercentage = calculateCompletion();
+
+  if (completionPercentage === 100) return null;
+
+  return (
+    <Card>
+      <CardContent
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box>
+          <Typography variant="h6" color="primary">
+            Complete Your Profile ({completionPercentage}%)
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Please update your profile details to reach 100% completion.
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
 
 const PersonalInformation = () => {
   const [formData, setFormData] = useState({
@@ -360,10 +385,24 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="First Name" name="firstName" fullWidth variant="outlined" value={formData.firstName} onChange={handleInputChange} />
+              <TextField
+                label="First Name"
+                name="firstName"
+                fullWidth
+                variant="outlined"
+                value={formData.firstName}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Last Name" name="lastName" fullWidth variant="outlined" value={formData.lastName} onChange={handleInputChange} />
+              <TextField
+                label="Last Name"
+                name="lastName"
+                fullWidth
+                variant="outlined"
+                value={formData.lastName}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -371,10 +410,24 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="Email" name="email" fullWidth variant="outlined" value={formData.email} onChange={handleInputChange} />
+              <TextField
+                label="Email"
+                name="email"
+                fullWidth
+                variant="outlined"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField label="Phone Number" name="phoneNumber" fullWidth variant="outlined" value={formData.phoneNumber} onChange={handleInputChange} />
+              <TextField
+                label="Phone Number"
+                name="phoneNumber"
+                fullWidth
+                variant="outlined"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -398,19 +451,44 @@ const PersonalInformation = () => {
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField label="City" name="city" fullWidth variant="outlined" value={formData.city} onChange={handleInputChange} />
+              <TextField
+                label="City"
+                name="city"
+                fullWidth
+                variant="outlined"
+                value={formData.city}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField label="County" name="county" fullWidth variant="outlined" value={formData.county} onChange={handleInputChange} />
+              <TextField
+                label="County"
+                name="county"
+                fullWidth
+                variant="outlined"
+                value={formData.county}
+                onChange={handleInputChange}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField label="Postcode" name="postcode" fullWidth variant="outlined" value={formData.postcode} onChange={handleInputChange} />
+              <TextField
+                label="Postcode"
+                name="postcode"
+                fullWidth
+                variant="outlined"
+                value={formData.postcode}
+                onChange={handleInputChange}
+              />
             </Grid>
           </Grid>
         </Box>
 
         <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-          <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveChanges}
+          >
             Save Changes
           </Button>
           <Button variant="contained" color="secondary" onClick={handleCancel}>
@@ -510,12 +588,19 @@ const Skills = () => {
           <Box display="flex" alignItems="center" gap={1}>
             <TextField
               value={newSkill}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSkill(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewSkill(e.target.value)
+              }
               placeholder="Add a skill"
               size="small"
               variant="outlined"
             />
-            <Button variant="contained" color="primary" onClick={handleAddSkill} disabled={!newSkill.trim()}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddSkill}
+              disabled={!newSkill.trim()}
+            >
               Add
             </Button>
           </Box>
@@ -691,4 +776,3 @@ const ProfilePage = () => {
   );
 };
 export default ProfilePage;
-

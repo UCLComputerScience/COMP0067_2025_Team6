@@ -3,7 +3,7 @@
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import { useTranslation } from "react-i18next";
 
@@ -160,4 +160,4 @@ function Default() {
   );
 }
 
-export default withAuth(Default, ["ADMIN", "SUPER_USER"]);
+export default Default;
