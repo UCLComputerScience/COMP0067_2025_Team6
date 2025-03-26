@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           firstName: true,
           lastName: true,
           organisation: true,
-          role: true,
+          userRole: true,
         },
       });
 
