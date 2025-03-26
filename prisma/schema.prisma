@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Alerts {
@@ -56,10 +55,11 @@ model Feed {
 }
 
 model Labs {
-  id          Int    @id @default(autoincrement())
-  labLocation String @db.VarChar(100)
+  id          Int      @id @default(autoincrement())
+  labLocation String   @db.VarChar(100)
   managerId   Int
-  user        User   @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user        User     @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ApiKey      ApiKey[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -100,7 +100,9 @@ model ApiKey {
   id        Int      @id @default(autoincrement())
   channelId Int?
   api       String   @unique @db.VarChar
+  labId     Int?
   channel   Channel? @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lab       Labs?    @relation(fields: [labId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum AlertStatus {

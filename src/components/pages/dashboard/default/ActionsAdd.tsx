@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState } from "react";
 import styled from "@emotion/styled";
+import { usePathname } from "next/navigation";
 
 import { spacing } from "@mui/system";
 import { DataProps } from "@/types/devices";
@@ -27,6 +30,12 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const [message, setMessage] = useState("");
   const [id, setId] = useState<number | null>(null);
 
+  const pathname = usePathname();
+  const pathSegments = pathname.split("/");
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  let lab = Number(lastSegment.split("")[lastSegment.length - 1]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -45,7 +54,7 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       const res = await fetch("/api/apikeys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api, channel_id: channelId }),
+        body: JSON.stringify({ api, channelId }),
       });
     
       if (res.ok) {

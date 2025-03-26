@@ -11,7 +11,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     await prisma.apiKey.deleteMany({
-      where: { channel_id: Number(id) }
+      where: { channelId: Number(id) }
     });
 
     return NextResponse.json({ message: "Deleted successfully" }, { status: 200 });
