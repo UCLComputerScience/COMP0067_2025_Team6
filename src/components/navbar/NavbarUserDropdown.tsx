@@ -39,7 +39,7 @@ const AvatarBadge = styled(Badge)`
 function NavbarUserDropdown() {
   const [anchorMenu, setAnchorMenu] = React.useState<any>(null);
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { session, signOut } = useAuth();
 
   const toggleMenu = (event: React.SyntheticEvent) => {
     setAnchorMenu(event.currentTarget);
@@ -83,9 +83,9 @@ function NavbarUserDropdown() {
             }}
             variant="dot"
           >
-            {!!user && <Avatar alt={user.displayName} src={user.avatar} />}
+            {!!session?.user && <Avatar alt={session?.user.displayName} src={session?.user.avatar} />}
             {/* Demo data */}
-            {!user && (
+            {!session?.user && (
               <Avatar
                 alt="Lucy Lavender"
                 src="/static/img/avatars/avatar-1.jpg"

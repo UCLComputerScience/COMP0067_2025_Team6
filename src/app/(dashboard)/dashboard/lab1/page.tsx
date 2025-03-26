@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import { useRouter } from "next/navigation"; // Import useRouter for redirect
 import { useTranslation } from "react-i18next";
-// import withAuth from "@/lib/withAuth";
+import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+import { useSession } from "next-auth/react"; // Import useSession
 
 import {
   Grid2 as Grid,
@@ -184,6 +184,34 @@ const Lab1 = () => {
     );
   };
 
+  // // Get session data using the useSession hook
+  // const { data: session, status } = useSession();
+  // const router = useRouter();
+
+  // // State for controlling loading or redirection state
+  // const [loading, setLoading] = useState(true);
+
+  // // Check if the user is authenticated and redirect if needed
+  // useEffect(() => {
+  //   if (status === "unauthenticated") {
+  //     setLoading(false); // Stop loading when we know the user is unauthenticated
+  //     router.push("/auth/sign-in"); // Redirect to login page if not authenticated
+  //   } else if (status === "authenticated") {
+  //     setLoading(false); // Stop loading when user is authenticated
+  //   }
+  // }, [status, router]);
+
+  // // Show a loading state or "Please log in" message while checking session
+  // if (loading) {
+  //   return (
+  //     <div>
+  //       <Typography variant="h5" gutterBottom>
+  //         {t("Please log in to view this page.")}
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
+  const { data: session } = useSession();
   console.log(session?.user);
 
   return (
