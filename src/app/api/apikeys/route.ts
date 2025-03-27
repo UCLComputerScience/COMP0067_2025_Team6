@@ -4,16 +4,16 @@ import prisma from "../../../lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { api, channel_id } = await req.json();
+    const { api, channelId } = await req.json();
 
-    if (!channel_id || !api) {
+    if (!channelId || !api) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    console.log("Received Data:", { api, channel_id });
+    console.log("Received Data:", { api, channelId });
 
     const newApi = await prisma.apiKey.create({
-      data: { api, channel_id: Number(channel_id) },
+      data: { api, channelId: Number(channelId) },
     });
 
     return NextResponse.json(newApi, { status: 201 });

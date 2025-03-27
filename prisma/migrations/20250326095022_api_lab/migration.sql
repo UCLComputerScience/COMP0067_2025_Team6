@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "ApiKey" ADD COLUMN     "labId" INTEGER;
+
+-- AddForeignKey
+ALTER TABLE "ApiKey" ADD CONSTRAINT "ApiKey_labId_fkey" FOREIGN KEY ("labId") REFERENCES "Labs"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;

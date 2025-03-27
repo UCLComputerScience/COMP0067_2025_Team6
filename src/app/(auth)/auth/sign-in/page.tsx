@@ -162,7 +162,7 @@ function SignIn() {
                 Welcome!
               </Typography>
               <Typography
-                variant="headline-small"
+                variant="h6"
                 component="p"
                 align="center"
                 sx={{
