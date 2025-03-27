@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
@@ -41,9 +41,7 @@ import {
 import { spacing, SpacingProps } from "@mui/system";
 
 const Divider = styled(MuiDivider)(spacing);
-
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
-
 const Paper = styled(MuiPaper)(spacing);
 
 interface PriorityChipProps extends SpacingProps {
@@ -82,66 +80,42 @@ const ToolbarTitle = styled.div`
   min-width: 150px;
 `;
 
-function createData(
-  id: number,
-  location: string,
-  equipment: string,
-  priority: string,
-  desc: string,
-  status: string,
-  date: string
-) {
-  return { id, location, equipment, priority, desc, status, date };
-}
+type AlertType = {
+  alertId: number;
+  location: [number, number];
+  channelId: number;
+  priority: string;
+  alertDescription: string;
+  status: string;
+  date: string;
+};
+
 
 type RowType = {
-  [key: string]: string | number;
   id: number;
-  location: string;
-  equipment: string;
+  location: string; // Convert [lat, lon] to string
+  equipment: string; // Placeholder, not in API yet
   priority: string;
   desc: string;
   status: string;
   date: string;
 };
-const rows: Array<RowType> = [
-  createData(
-    1,
-    "247",
-    "Box 7",
-    "High",
-    "Temperature levels has exceeded the threshold",
-    "Resolved",
-    "12/12/2022"
-  ),
-  createData(
-    2,
-    "247",
-    "Box 19",
-    "High",
-    "Temperature levels has exceeded the threshold",
-    "Unresolved",
-    "12/12/2022"
-  ),
-  createData(
-    3,
-    "247",
-    "Box 17",
-    "Moderate",
-    "Pressure levels has exceeded the threshold",
-    "Resolved",
-    "12/12/2022"
-  ),
-  createData(
-    4,
-    "249",
-    "Box 27",
-    "Low",
-    "Humity levels has exceeded the threshold",
-    "Unresolved",
-    "12/12/2022"
-  ),
-];
+
+
+function createRowFromAlert(alert: AlertType): RowType {
+  console.log('Processing alert:', alert);
+  return {
+    id: alert.alertId, // Use alertId, not channel id
+    location: alert.location && Array.isArray(alert.location) && alert.location.length >= 2
+      ? `${alert.location[0]}, ${alert.location[1]}`
+      : 'Unknown',
+    equipment: alert.channelId ? `Channel ${alert.channelId}` : 'Unknown',
+    priority: alert.priority || 'LOW',
+    desc: alert.alertDescription || 'No description',
+    status: alert.status || 'UNRESOLVED',
+    date: alert.date ? new Date(alert.date).toLocaleDateString() : 'Unknown',
+  };
+}
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
   if (b[orderBy] < a[orderBy]) {
@@ -288,6 +262,30 @@ function EnhancedTable() {
   const [selected, setSelected] = React.useState<Array<string>>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rows, setRows] = React.useState<RowType[]>([]); // State for dynamic data
+  const [loading, setLoading] = React.useState(true);
+
+  // Fetch data from API on mount
+  useEffect(() => {
+    async function fetchAlerts() {
+      try {
+        console.log('Fetching from /admin/alerts/api/channel...');
+        const response = await fetch('/admin/alerts/api/channel'); // Fix URL
+        console.log('Response status:', response.status);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data: AlertType[] = await response.json();
+        console.log('Raw API data:', data);
+        const formattedRows = data.map(createRowFromAlert);
+        console.log('Formatted rows:', formattedRows);
+        setRows(formattedRows);
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAlerts();
+  }, []);
 
   const handleRequestSort = (event: any, property: string) => {
     const isAsc = orderBy === property && order === "asc";
@@ -348,6 +346,13 @@ function EnhancedTable() {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
+  // CHANGE: Added loading and empty state checks before rendering table
+  if (loading) return <Typography>Loading alerts...</Typography>;
+  if (!loading && rows.length === 0) return <Typography>No alerts found.</Typography>;
+
+  // CHANGE: Added debug log before rendering
+  console.log('Rendering table with rows:', rows);
+
   return (
     <div>
       <Paper>
@@ -370,7 +375,7 @@ function EnhancedTable() {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.id.toString());
+                  const isItemSelected = row.id ? isSelected(row.id.toString()) : false;
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -379,7 +384,7 @@ function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id}-${index}`}
+                      key={`${row.id || 'unknown'}-${index}`} //originally: key={`${row.id}-${index}`}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">
@@ -395,7 +400,7 @@ function EnhancedTable() {
                       <TableCell align="center">{row.location}</TableCell>
                       <TableCell align="left">{row.equipment}</TableCell>
                       <TableCell align="left">
-                        {row.priority === "High" && (
+                        {row.priority === "HIGH" && (
                           <PriorityChip
                             size="small"
                             mr={1}
@@ -404,7 +409,7 @@ function EnhancedTable() {
                             priority="High"
                           />
                         )}
-                        {row.priority === "Moderate" && (
+                        {row.priority === "MODERATE" && (
                           <PriorityChip
                             size="small"
                             mr={1}
@@ -413,7 +418,7 @@ function EnhancedTable() {
                             priority="Moderate"
                           />
                         )}
-                        {row.priority === "Low" && (
+                        {row.priority === "LOW" && (
                           <PriorityChip
                             size="small"
                             mr={1}
@@ -425,7 +430,7 @@ function EnhancedTable() {
                       </TableCell>
                       <TableCell align="left">{row.desc}</TableCell>
                       <TableCell>
-                        {row.status === "Resolved" && (
+                        {row.status === "RESOLVED" && (
                           <StatusChip
                             size="small"
                             mr={1}
@@ -434,7 +439,7 @@ function EnhancedTable() {
                             status="Resolved" // Pass status prop to style it
                           />
                         )}
-                        {row.status === "Unresolved" && (
+                        {row.status === "UNRESOLVED" && (
                           <StatusChip
                             size="small"
                             mr={1}
