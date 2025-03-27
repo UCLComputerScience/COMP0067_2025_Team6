@@ -50,7 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             lastName,
             organisation,
             avatar: avatar || "https://example.com/default-avatar.png", //default avatar
-            user_role: "STANDARD_USER",
+            userRole: "STANDARD_USER",
+            status: "ACTIVE", // default status
           },
         });
 

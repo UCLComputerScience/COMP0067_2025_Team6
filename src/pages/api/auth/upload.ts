@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ message: "Error processing upload" });
     }
 
-    const userId = parseInt(fields.userId as string);
+    const userId = Array.isArray(fields.userId) ? parseInt(fields.userId[0]) : parseInt(fields.userId || "");
     if (!userId || !files.avatar) {
       return res.status(400).json({ message: "User ID and avatar file are required" });
     }

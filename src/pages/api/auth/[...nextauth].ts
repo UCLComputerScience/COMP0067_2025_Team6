@@ -80,11 +80,15 @@ export default NextAuth({
         token.id = user.id;
         token.email = user.email;
         token.firstName = user.firstName;
-        token.lastName = user.lastName;
-        token.organisation = user.organisation;
-        token.avatar = user.avatar;
-        token.userRole = user.userRole;
-        token.status = user.status;
+        token.lastName = "lastName" in user ? user.lastName : null;
+        token.organisation = "organisation" in user ? user.organisation : null;
+        token.avatar = "avatar" in user ? user.avatar : null;
+        if ("userRole" in user) {
+          token.userRole = user.userRole;
+        }
+        if ("status" in user) {
+          token.status = user.status;
+        }
       }
       return token; // Return the token with added information
     },

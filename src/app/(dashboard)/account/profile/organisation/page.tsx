@@ -115,7 +115,13 @@ const ProfileDetails = () => {
   const [user, setUser] = useState({ firstName: "", lastName: "", userRole: "STANDARD_USER" });
   const [avatar, setAvatar] = useState("/static/img/avatar.jpg");
 
-  const formatRole = (role) => {
+  interface User {
+    firstName: string;
+    lastName: string;
+    userRole: string;
+  }
+
+  const formatRole = (role: string): string => {
     if (!role) return "User";
     return role
       .toLowerCase()

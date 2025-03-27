@@ -295,7 +295,24 @@ function EnhancedTable() {
         const response = await fetch("/api/auth/users");
         if (response.ok) {
           const data = await response.json();
-          const mappedUsers = data.map((user) => ({
+          interface UserApiResponse {
+            id: string;
+            firstName: string;
+            lastName: string;
+            organisation?: string;
+            role: string;
+          }
+
+          interface MappedUser extends RowType {
+            id: string;
+            firstname: string;
+            lastname: string;
+            usertype: string;
+            role: string;
+            status: string;
+          }
+
+          const mappedUsers: MappedUser[] = data.map((user: UserApiResponse) => ({
             id: user.id,
             firstname: user.firstName,
             lastname: user.lastName,
