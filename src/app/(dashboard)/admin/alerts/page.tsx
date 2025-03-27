@@ -28,6 +28,8 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { green, orange, red, blue, grey } from "@mui/material/colors";
 import {
@@ -90,7 +92,6 @@ type AlertType = {
   date: string;
 };
 
-
 type RowType = {
   id: number;
   location: string; // Convert [lat, lon] to string
@@ -101,19 +102,21 @@ type RowType = {
   date: string;
 };
 
-
 function createRowFromAlert(alert: AlertType): RowType {
-  console.log('Processing alert:', alert);
+  console.log("Processing alert:", alert);
   return {
     id: alert.alertId, // Use alertId, not channel id
-    location: alert.location && Array.isArray(alert.location) && alert.location.length >= 2
-      ? `${alert.location[0]}, ${alert.location[1]}`
-      : 'Unknown',
-    equipment: alert.channelId ? `Channel ${alert.channelId}` : 'Unknown',
-    priority: alert.priority || 'LOW',
-    desc: alert.alertDescription || 'No description',
-    status: alert.status || 'UNRESOLVED',
-    date: alert.date ? new Date(alert.date).toLocaleDateString() : 'Unknown',
+    location:
+      alert.location &&
+      Array.isArray(alert.location) &&
+      alert.location.length >= 2
+        ? `${alert.location[0]}, ${alert.location[1]}`
+        : "Unknown",
+    equipment: alert.channelId ? `Channel ${alert.channelId}` : "Unknown",
+    priority: alert.priority || "LOW",
+    desc: alert.alertDescription || "No description",
+    status: alert.status || "UNRESOLVED",
+    date: alert.date ? new Date(alert.date).toLocaleDateString() : "Unknown",
   };
 }
 
@@ -269,17 +272,18 @@ function EnhancedTable() {
   useEffect(() => {
     async function fetchAlerts() {
       try {
-        console.log('Fetching from /admin/alerts/api/channel...');
-        const response = await fetch('/admin/alerts/api/channel'); // Fix URL
-        console.log('Response status:', response.status);
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        console.log("Fetching from /admin/alerts/api/channel...");
+        const response = await fetch("/admin/alerts/api/channel"); // Fix URL
+        console.log("Response status:", response.status);
+        if (!response.ok)
+          throw new Error(`HTTP error! Status: ${response.status}`);
         const data: AlertType[] = await response.json();
-        console.log('Raw API data:', data);
+        console.log("Raw API data:", data);
         const formattedRows = data.map(createRowFromAlert);
-        console.log('Formatted rows:', formattedRows);
+        console.log("Formatted rows:", formattedRows);
         setRows(formattedRows);
       } catch (error) {
-        console.error('Failed to fetch alerts:', error);
+        console.error("Failed to fetch alerts:", error);
       } finally {
         setLoading(false);
       }
@@ -348,10 +352,11 @@ function EnhancedTable() {
 
   // CHANGE: Added loading and empty state checks before rendering table
   if (loading) return <Typography>Loading alerts...</Typography>;
-  if (!loading && rows.length === 0) return <Typography>No alerts found.</Typography>;
+  if (!loading && rows.length === 0)
+    return <Typography>No alerts found.</Typography>;
 
   // CHANGE: Added debug log before rendering
-  console.log('Rendering table with rows:', rows);
+  console.log("Rendering table with rows:", rows);
 
   return (
     <div>
@@ -375,7 +380,9 @@ function EnhancedTable() {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = row.id ? isSelected(row.id.toString()) : false;
+                  const isItemSelected = row.id
+                    ? isSelected(row.id.toString())
+                    : false;
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -384,7 +391,7 @@ function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id || 'unknown'}-${index}`} //originally: key={`${row.id}-${index}`}
+                      key={`${row.id || "unknown"}-${index}`} //originally: key={`${row.id}-${index}`}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">
@@ -486,6 +493,30 @@ function EnhancedTable() {
 }
 
 function OrderList() {
+  // State for managing the menu
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  // Handlers for opening and closing the menu
+  const handleManageAlertsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Placeholder functions for button actions (to be defined later)
+  const handleDelete = () => {
+    console.log("Delete button clicked - functionality TBD");
+    handleMenuClose(); // Close menu after action
+  };
+
+  const handleMarkAsResolved = () => {
+    console.log("Mark as Resolved button clicked - functionality TBD");
+    handleMenuClose(); // Close menu after action
+  };
+
   return (
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={10}>
@@ -506,9 +537,33 @@ function OrderList() {
         </Grid>
         <Grid>
           <div>
-            <Button variant="contained" color="primary">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleManageAlertsClick}
+              aria-controls={open ? "manage-alerts-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? "true" : undefined}
+            >
               Manage Alerts
             </Button>
+            <Menu
+              id="manage-alerts-menu"
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem onClick={handleDelete}>
+                <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                Delete
+              </MenuItem>
+              <MenuItem onClick={handleMarkAsResolved}>
+                <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
+                Mark as Resolved
+              </MenuItem>
+            </Menu>
           </div>
         </Grid>
       </Grid>
