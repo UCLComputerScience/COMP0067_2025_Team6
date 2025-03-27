@@ -1,5 +1,5 @@
 {
-  "name": "mira",
+  "name": "digital-twin-labs",
   "version": "5.0.1",
   "description": "Mira Pro - React Material UI Admin Dashboard Template",
   "author": "Bootlab <support@bootlab.io>",
@@ -12,6 +12,8 @@
     "lint": "next lint --fix",
     "type-check": "tsc"
   },
+  "prisma": {},
+  "type": "module",
   "browserslist": [
     "> 0.5%",
     "last 2 versions",
@@ -41,7 +43,7 @@
     "@mui/system": "6.1.4",
     "@mui/x-data-grid": "7.21.0",
     "@mui/x-date-pickers": "7.21.0",
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.5.0",
     "@react-jvectormap/core": "1.0.4",
     "@react-jvectormap/unitedstates": "1.0.1",
     "@react-jvectormap/world": "1.1.2",
@@ -61,6 +63,7 @@
     "date-fns": "2.30.0",
     "deepmerge": "4.3.1",
     "firebase": "8.10.1",
+    "formidable": "^3.5.2",
     "formik": "2.4.6",
     "glob": "^11.0.1",
     "google-map-react": "2.2.1",
@@ -96,10 +99,12 @@
     "@eslint/config-array": "^0.19.2",
     "@eslint/object-schema": "^2.1.6",
     "@types/cors": "^2.8.17",
+    "@types/formidable": "^3.4.5",
     "@types/google-map-react": "2.1.10",
     "@types/jsonwebtoken": "8.5.9",
     "@types/next-auth": "^3.13.0",
-    "@types/node": "22.13.9",
+    "@types/node": "^22.13.10",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "18.3.8",
     "@types/react-dom": "18.3.0",
     "@types/react-helmet": "6.1.11",
@@ -113,7 +118,7 @@
     "prettier": "2.8.8",
     "prisma": "^6.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.8.2"
   },
   "resolutions": {
     "jss": "10.9.2"

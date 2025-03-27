@@ -1,9 +1,16 @@
 import { ReactNode } from "react";
+import AuthGuard from "@/components/guards/AuthGuard"; // Import your AuthGuard
 
 export const metadata = {
-  title: "Products",
+  title: "Manage Access",
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <AuthGuard requiredRoles={["ADMIN"]}>
+      {" "}
+      {/* Restrict to only Admin */}
+      {children}
+    </AuthGuard>
+  );
 }

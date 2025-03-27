@@ -3,8 +3,8 @@ import Presentation from "@/layouts/Presentation";
 
 export const metadata = {
   title: {
-    template: "%s | Mira",
-    default: "Mira - React Material UI Admin Dashboard",
+    template: "%s | Digital Twin Labs",
+    default: "Digital Twin Labs",
   },
   description:
     "A professional package that comes with plenty of UI components, forms, tables, charts, dashboards, pages and svg icons. Each one is fully customizable, responsive and easy to use.",
