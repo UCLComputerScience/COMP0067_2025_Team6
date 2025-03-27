@@ -210,7 +210,7 @@ const ProfileCompletion = () => {
           <label htmlFor="avatar-upload">
             <Button
               variant="outlined"
-              component="span"
+              // component="span"
               color="primary"
               startIcon={<CloudUploadIcon />}
               sx={{ mt: 1, mb: 2 }}
@@ -267,31 +267,31 @@ const ProfileCompletion = () => {
     );
   };
 
-  const completionPercentage = calculateCompletion();
+//   const completionPercentage = calculateCompletion();
 
-  if (completionPercentage === 100) return null;
+//   if (completionPercentage === 100) return null;
 
-  return (
-    <Card>
-      <CardContent
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box>
-          <Typography variant="h6" color="primary">
-            Complete Your Profile ({completionPercentage}%)
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Please update your profile details to reach 100% completion.
-          </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
+//   return (
+//     <Card>
+//       <CardContent
+//         style={{
+//           display: "flex",
+//           justifyContent: "space-between",
+//           alignItems: "center",
+//         }}
+//       >
+//         <Box>
+//           <Typography variant="h6" color="primary">
+//             Complete Your Profile ({completionPercentage}%)
+//           </Typography>
+//           <Typography variant="body2" color="textSecondary">
+//             Please update your profile details to reach 100% completion.
+//           </Typography>
+//         </Box>
+//       </CardContent>
+//     </Card>
+//   );
+// };
 
 const PersonalInformation = () => {
   const [formData, setFormData] = useState({
@@ -306,7 +306,17 @@ const PersonalInformation = () => {
     postcode: "",
   });
 
-  const [lastSavedData, setLastSavedData] = useState(null); 
+  const [lastSavedData, setLastSavedData] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    county: string;
+    postcode: string;
+  } | null>(null);
 
   useEffect(() => {
     const storedData = localStorage.getItem("personalInfo");
@@ -336,8 +346,21 @@ const PersonalInformation = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const updatedData = { ...formData, [e.target.name]: e.target.value };
+  interface FormData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    county: string;
+    postcode: string;
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const updatedData: FormData = { ...formData, [e.target.name]: e.target.value };
     setFormData(updatedData);
     localStorage.setItem("personalInfo", JSON.stringify(updatedData));
   };
@@ -364,7 +387,8 @@ const PersonalInformation = () => {
       localStorage.setItem("personalInfo", JSON.stringify(formData));
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert(`Error saving profile: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      alert(`Error saving profile: ${errorMessage}`);
     }
   };
   
@@ -574,7 +598,8 @@ const Skills = () => {
       localStorage.setItem("userSkills", JSON.stringify(skills));
     } catch (error) {
       console.error("Error saving skills:", error);
-      alert(`Error saving skills: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      alert(`Error saving skills: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
