@@ -63,6 +63,7 @@
     "date-fns": "2.30.0",
     "deepmerge": "4.3.1",
     "firebase": "8.10.1",
+    "formidable": "^3.5.2",
     "formik": "2.4.6",
     "glob": "^11.0.1",
     "google-map-react": "2.2.1",
@@ -98,6 +99,7 @@
     "@eslint/config-array": "^0.19.2",
     "@eslint/object-schema": "^2.1.6",
     "@types/cors": "^2.8.17",
+    "@types/formidable": "^3.4.5",
     "@types/google-map-react": "2.1.10",
     "@types/jsonwebtoken": "8.5.9",
     "@types/next-auth": "^3.13.0",
@@ -116,7 +118,7 @@
     "prettier": "2.8.8",
     "prisma": "^6.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.8.2"
   },
   "resolutions": {
     "jss": "10.9.2"

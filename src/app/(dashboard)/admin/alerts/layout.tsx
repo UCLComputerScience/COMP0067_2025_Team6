@@ -1,9 +1,21 @@
-import { ReactNode } from "react";
+import AuthGuard from "@/components/guards/AuthGuard"; // Import your AuthGuard
 
-export const metadata = {
-  title: "Alerts",
+const Alerts = () => {
+  console.log("Alerts Page - Required Roles:", [
+    "ADMIN",
+    "STANDARD_USER",
+    "SUPER_USER",
+  ]);
+
+  return (
+    <AuthGuard requiredRoles={["ADMIN", "STANDARD_USER", "SUPER_USER"]}>
+      {" "}
+      {/* Allow Admin, Standard User, and Super User */}
+      <div>
+        <h2>Alerts</h2>
+      </div>
+    </AuthGuard>
+  );
 };
 
-export default function Layout({ children }: { children: ReactNode }) {
-  return children;
-}
+export default Alerts;

@@ -4,7 +4,7 @@ import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -166,7 +166,6 @@ const headCells: Array<HeadCell> = [
   { id: "status", alignment: "left", label: "Status", width: "15%" },
 ];
 
-
 type EnhancedTableHeadProps = {
   numSelected: number;
   order: "desc" | "asc";
@@ -296,7 +295,24 @@ function EnhancedTable() {
         const response = await fetch("/api/auth/users");
         if (response.ok) {
           const data = await response.json();
-          const mappedUsers = data.map((user) => ({
+          interface UserApiResponse {
+            id: string;
+            firstName: string;
+            lastName: string;
+            organisation?: string;
+            role: string;
+          }
+
+          interface MappedUser extends RowType {
+            id: string;
+            firstname: string;
+            lastname: string;
+            usertype: string;
+            role: string;
+            status: string;
+          }
+
+          const mappedUsers: MappedUser[] = data.map((user: UserApiResponse) => ({
             id: user.id,
             firstname: user.firstName,
             lastname: user.lastName,
@@ -317,8 +333,7 @@ function EnhancedTable() {
 
     fetchUsers();
   }, []);
-  
-  
+
   const handleEditClick = (row: RowType) => {
     setEditingRow(row);
     setSelectedUsers([row.id]);
@@ -329,18 +344,23 @@ function EnhancedTable() {
 
   const getRawRoleValue = (formattedRole: string) => {
     switch (formattedRole) {
-      case "Admin": return "ADMIN";
-      case "Standard User": return "STANDARD_USER";
-      case "Super User": return "SUPER_USER";
-      case "Temporary User": return "TEMPORARY_USER";
-      default: return formattedRole;
+      case "Admin":
+        return "ADMIN";
+      case "Standard User":
+        return "STANDARD_USER";
+      case "Super User":
+        return "SUPER_USER";
+      case "Temporary User":
+        return "TEMPORARY_USER";
+      default:
+        return formattedRole;
     }
   };
 
   const handleManageAccess = () => {
     setSelectedUsers(selected);
     if (selected.length > 0) {
-      const firstSelectedUser = users.find(user => user.id === selected[0]);
+      const firstSelectedUser = users.find((user) => user.id === selected[0]);
       if (firstSelectedUser) {
         const rawRole = getRawRoleValue(firstSelectedUser.role);
         setSelectedRole(rawRole);
@@ -348,7 +368,7 @@ function EnhancedTable() {
         setSelectedRole("STANDARD_USER"); //default value
       }
     }
-    
+
     setOpenDialog(true);
   };
 
@@ -362,7 +382,11 @@ function EnhancedTable() {
   const handleSaveChanges = async () => {
     if (selectedUsers.length > 0) {
       try {
-        console.log("Updating roles for selected users:", selectedUsers, selectedRole);
+        console.log(
+          "Updating roles for selected users:",
+          selectedUsers,
+          selectedRole
+        );
 
         const response = await fetch("/api/auth/users", {
           method: "POST",
@@ -371,7 +395,7 @@ function EnhancedTable() {
           },
           body: JSON.stringify({
             userIds: selectedUsers,
-            role: selectedRole, 
+            role: selectedRole,
           }),
         });
 
@@ -386,7 +410,7 @@ function EnhancedTable() {
                 : user
             )
           );
-          
+
           setSelected([]);
         } else {
           console.error("Failed to update roles:", result.error);
@@ -397,7 +421,6 @@ function EnhancedTable() {
     }
     handleCloseDialog();
   };
-  
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
@@ -457,19 +480,17 @@ function EnhancedTable() {
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      searchTerm === "" || 
+      searchTerm === "" ||
       user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastname.toLowerCase().includes(searchTerm.toLowerCase());
-  
+
     const matchesUserType =
-      userTypeFilter === "All" || 
-      getRawRoleValue(user.role) === userTypeFilter; 
-  
+      userTypeFilter === "All" || getRawRoleValue(user.role) === userTypeFilter;
+
     return matchesSearch && matchesUserType;
   });
-  
 
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, users.length - page * rowsPerPage);
@@ -580,10 +601,18 @@ function EnhancedTable() {
                           </Box>
                         </Customer>
                       </TableCell>
-                      <TableCell align="left"><Typography variant="body1">{row.lastname}</Typography></TableCell>
-                      <TableCell align="left"><Typography variant="body1">{row.usertype}</Typography></TableCell>
-                      <TableCell align="left"><Typography variant="body1">{row.role}</Typography></TableCell>
-                      <TableCell align="left"><Typography variant="body1">{row.status}</Typography></TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.lastname}</Typography>
+                      </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.usertype}</Typography>
+                      </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.role}</Typography>
+                      </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1">{row.status}</Typography>
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton
                           color="primary"
@@ -616,8 +645,8 @@ function EnhancedTable() {
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
-          {selectedUsers.length > 1 
-            ? `Edit Access (${selectedUsers.length} users selected)` 
+          {selectedUsers.length > 1
+            ? `Edit Access (${selectedUsers.length} users selected)`
             : "Edit Access"}
         </DialogTitle>
         <DialogContent>
@@ -649,7 +678,6 @@ function EnhancedTable() {
 
           {currentTab === 1 && (
             <Box sx={{ mt: 2 }}>
-
               {/* Instrument Access */}
               <FormControl fullWidth margin="dense">
                 <InputLabel>Instrument Access</InputLabel>
@@ -666,11 +694,8 @@ function EnhancedTable() {
             </Box>
           )}
 
-
           {currentTab === 2 && (
-            <Box sx={{ mt: 2 }}>
-              {/* Add Dashboard Access fields here */}
-            </Box>
+            <Box sx={{ mt: 2 }}>{/* Add Dashboard Access fields here */}</Box>
           )}
 
           {currentTab === 3 && (
@@ -718,4 +743,4 @@ function Products() {
   );
 }
 
-export default withAuth(Products, ["ADMIN"]);
+export default Products;

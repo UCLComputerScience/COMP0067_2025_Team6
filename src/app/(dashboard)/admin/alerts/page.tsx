@@ -4,7 +4,7 @@ import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -297,7 +297,9 @@ function EnhancedTable() {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds: Array<string> = rows.map((n: RowType) => n.id.toString());
+      const newSelecteds: Array<string> = rows.map((n: RowType) =>
+        n.id.toString()
+      );
       setSelected(newSelecteds);
       return;
     }
@@ -384,7 +386,9 @@ function EnhancedTable() {
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id.toString())}
+                          onClick={(event) =>
+                            handleClick(event, row.id.toString())
+                          }
                         />
                       </TableCell>
 
@@ -513,4 +517,4 @@ function OrderList() {
   );
 }
 
-export default withAuth(OrderList, ["ADMIN", "SUPER_USER", "STANDARD_USER"]);
+export default OrderList;

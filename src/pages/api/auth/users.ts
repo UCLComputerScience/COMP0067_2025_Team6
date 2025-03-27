@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           firstName: true,
           lastName: true,
           organisation: true,
-          role: true,
+          userRole: true,
         },
       });
 
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
-      return res.status(500).json({ error: "Internal server error", details: error.message });
+      return res.status(500).json({ error: "Internal server error", details: (error instanceof Error ? error.message : "Unknown error") });
     }
   } 
   
@@ -42,14 +42,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await prisma.user.updateMany({
         where: { id: { in: userIds } },
-        data: { role },
+        data: { userRole: role },
       });
 
       console.log(`Updated ${userIds.length} users to role: ${role}`);
       return res.status(200).json({ message: `Updated ${userIds.length} users successfully` });
     } catch (error) {
       console.error("Error updating user roles:", error);
-      return res.status(500).json({ error: "Failed to update roles", details: error.message });
+      return res.status(500).json({ 
+        error: "Failed to update roles", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   } 
   

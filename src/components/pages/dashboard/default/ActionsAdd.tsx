@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState } from "react";
 import styled from "@emotion/styled";
+import { usePathname } from "next/navigation";
 
 import { spacing } from "@mui/system";
 import { DataProps } from "@/types/devices";
@@ -27,11 +30,17 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const [message, setMessage] = useState("");
   const [id, setId] = useState<number | null>(null);
 
+  const pathname = usePathname();
+  const pathSegments = pathname.split("/");
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  let lab = Number(lastSegment.split("")[lastSegment.length - 1]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
+  
     try {
       const response = await fetch(api);
       const data = await response.json();
@@ -40,12 +49,35 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
         throw new Error("Channel number not found in the response");
       }
     
-      const channelId = Number(data.channel.id); // Extract value directly
+
+      // Extract the relevant fields from the data
+      const channelId = Number(data.channel.id); // Ensure the channel ID is a number
+      const name = data.channel.name || "Unnamed Channel"; // Default value if name is missing
+      const latitude = parseFloat(data.channel.latitude) || 0; // Default to 0 if latitude is missing
+      const longitude = parseFloat(data.channel.longitude) || 0; // Default to 0 if longitude is missing
+      const field1 = data.channel.field1 || null; // Default to null if field1 is missing
+      const field2 = data.channel.field2 || null; // Default to null if field2 is missing
+      const field3 = data.channel.field3 || null; // Default to null if field3 is missing
+      const field4 = data.channel.field4 || null; // Default to null if field4 is missing
+      const field5 = data.channel.field5 || null; // Default to null if field5 is missing
+      const field6 = data.channel.field6 || null; // Default to null if field6 is missing
+      const field7 = data.channel.field7 || null; // Default to null if field7 is missing
+      const field8 = data.channel.field8 || null; // Default to null if field8 is missing
+      const created_at = new Date(data.channel.created_at) || new Date(); // Use current date if created_at is missing
+      const updated_at = new Date(data.channel.updated_at) || new Date(); // Use current date if updated_at is missing
+      const last_entry_id = Number(data.channel.last_entry_id) || 0; // Default to 0 if last_entry_id is missing
+
+
+      const channelres = await fetch("/api/channel_add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId, name, latitude, longitude, field1, field2, field3, field4, field5, field6, field7, field8, created_at, updated_at, last_entry_id}),
+      })
     
       const res = await fetch("/api/apikeys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api, channel_id: channelId }),
+        body: JSON.stringify({ api, channelId }),
       });
     
       if (res.ok) {
@@ -59,37 +91,6 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       console.error("Error:", error);
       setMessage("Something went wrong.");
     }
-    // try {
-    //   const response = await fetch(api);
-    //   const data = await response.json();
-  
-    //   if (data.channel && data.channel.id) {
-    //     setId(data.channel.id);
-    //   } else {
-    //     throw new Error("Channel number not found in the response");
-    //   }
-    // } catch (error) {
-    //   console.error("Error fetching data:", error);
-    //   return null;
-    // }
-
-    // try {
-    //   const res = await fetch("/api/apikeys", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ channel_id: Number(id), api }),
-    //   });
-
-    //   if (res.ok) {
-    //     setMessage("API added successfully!");
-    //     setApi("");
-    //     setData(`${api}`);
-    //   } else {
-    //     setMessage("Failed to add api.");
-    //   }
-    // } catch (error) {
-    //   setMessage("Something went wrong.");
-    // }
 
     setLoading(false);
     setOpen(false)
