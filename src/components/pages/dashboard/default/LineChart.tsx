@@ -9,11 +9,16 @@ import {
   CardContent,
   CardHeader,
   IconButton,
+  Box, 
+  Menu, 
+  MenuItem
 } from "@mui/material";
 import { spacing } from "@mui/system";
 import { alpha } from "@mui/material/styles";
 
-import { ThemeProps } from "@/types/theme";
+// import { ThemeProps } from "@/types/theme";
+import { DevicePropsTheme } from "@/types/devices";
+import { Theme } from "@mui/material";
 
 const Card = styled(MuiCard)(spacing);
 
@@ -21,37 +26,38 @@ const ChartWrapper = styled.div`
   height: 378px;
 `;
 
-function LineChart({ theme }: ThemeProps) {
+const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, field, DeviceData, DeviceLabels, setData }) => {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDelete = async () => {
+    handleClose();
+    try {
+      const response = await fetch(`/api/apikeys/${channel_id}`, { method: "DELETE" });
+
+      if (response.ok) {
+        setData(channel);
+      } else {
+        console.error("Failed to delete");
+      }
+    } catch (error) {
+      console.error("Error deleting record:", error);
+    }
+  };
+
   const data = {
-    labels: [
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-      "14",
-      "15",
-      "16",
-      "17",
-      "18",
-      "19",
-      "20",
-      "21",
-      "22",
-      "23",
-    ],
+    labels: DeviceLabels,
     datasets: [
       {
-        label: "Sales ($)",
+        label: "",
         fill: true,
         backgroundColor: function (context: any) {
           const chart = context.chart;
@@ -69,10 +75,13 @@ function LineChart({ theme }: ThemeProps) {
         },
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
-        data: [
-          41, 43, 38, 45, 42, 45, 40, 47, 44, 38, 31, 36, 33, 31, 35, 41, 46, 43, 52, 54, 47, 50, 48, 52,
-        ],
-      },
+        data: DeviceData,
+        pointRadius: 0,
+        // pointRadius: 2, // Show points on the line with a radius of 5.
+        // pointBackgroundColor: theme.palette.secondary.main, // Color of the point's fill (the circle).
+        // pointBorderColor: theme.palette.primary.main, // Color of the point's border.
+        // pointBorderWidth: 2, // The width of the point's border.      
+        },
       // {
       //   label: "Orders",
       //   fill: true,
@@ -93,9 +102,24 @@ function LineChart({ theme }: ThemeProps) {
       legend: {
         display: false,
       },
+      tooltip: {
+        enabled: true,  // Enable tooltips
+        mode: 'nearest' as 'nearest' | 'x' | 'y' | 'index' | 'dataset' | 'point' | undefined, // Show the nearest point
+        intersect: false, // Allow tooltips to appear when hovering near the line
+        // callbacks: {
+        //   label: function (context) {
+        //     // Customize the tooltip label based on the hovered point
+        //     const datasetLabel = context.dataset.label || '';
+        //     const value = context.raw; // Access the value at the hovered point
+        //     return `${datasetLabel}: ${value}`;
+        //   },
+        },
     },
     scales: {
       x: {
+        ticks: {
+          display: false, // Hide x-axis labels but keep the scale
+        },        
         grid: {
           color: "rgba(0,0,0,0.0)",
         },
@@ -113,11 +137,16 @@ function LineChart({ theme }: ThemeProps) {
     <Card mb={6}>
       <CardHeader
         action={
-          <IconButton aria-label="settings" size="large">
+        <>
+          <IconButton aria-label="settings" size="large" onClick={handleClick}>
             <MoreVertical />
           </IconButton>
+          <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+            <MenuItem onClick={handleDelete}>Delete</MenuItem>
+          </Menu>
+        </>
         }
-        title="Digibox 1 Temperature"
+        title={channel + " - " + field}
       />
       <CardContent>
         <ChartWrapper>

@@ -1,4 +1,13 @@
-module.exports = {
+export default {
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/dashboard/lab1",
+        permanent: true,
+      },
+    ];
+  },
   transpilePackages: [
     "@fullcalendar/core",
     "@babel/preset-react",

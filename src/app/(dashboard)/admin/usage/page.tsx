@@ -4,7 +4,7 @@ import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-import { useTranslation } from "react-i18next";
+// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
@@ -156,5 +156,4 @@ function OrderList() {
     </React.Fragment>
   );
 }
-
-export default Default;
+export default OrderList;

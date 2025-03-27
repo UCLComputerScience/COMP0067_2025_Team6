@@ -39,7 +39,7 @@ const AvatarBadge = styled(Badge)`
 function NavbarUserDropdown() {
   const [anchorMenu, setAnchorMenu] = React.useState<any>(null);
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { session, signOut } = useAuth();
 
   const toggleMenu = (event: React.SyntheticEvent) => {
     setAnchorMenu(event.currentTarget);
@@ -53,6 +53,16 @@ function NavbarUserDropdown() {
     await signOut();
     router.push("/auth/sign-in");
   };
+
+  const handleProfile = () => {
+    router.push("/account/profile");
+    closeMenu();
+  }
+
+  const handleSettings = () => {
+    router.push("/account/settings");
+    closeMenu();
+  }
 
   return (
     <React.Fragment>
@@ -73,16 +83,16 @@ function NavbarUserDropdown() {
             }}
             variant="dot"
           >
-            {!!user && <Avatar alt={user.displayName} src={user.avatar} />}
+            {!!session?.user && <Avatar alt={session?.user.displayName} src={session?.user.avatar} />}
             {/* Demo data */}
-            {!user && (
+            {!session?.user && (
               <Avatar
                 alt="Lucy Lavender"
                 src="/static/img/avatars/avatar-1.jpg"
               />
             )}
           </AvatarBadge>
-        </IconButton>
+        </IconButton> 
       </Tooltip>
       <Menu
         id="menu-appbar"
@@ -90,8 +100,8 @@ function NavbarUserDropdown() {
         open={Boolean(anchorMenu)}
         onClose={closeMenu}
       >
-        <MenuItem onClick={closeMenu}>Profile</MenuItem>
-        <MenuItem onClick={closeMenu}>Settings & Privacy</MenuItem>
+        <MenuItem onClick={handleProfile}>Profile</MenuItem>
+        <MenuItem onClick={handleSettings}>Settings & Privacy</MenuItem>
         <Divider />
         <MenuItem onClick={closeMenu}>Help</MenuItem>
         <MenuItem onClick={handleSignOut}>Sign out</MenuItem>

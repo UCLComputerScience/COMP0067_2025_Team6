@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import styled from "@emotion/styled";
 import * as Yup from "yup";
@@ -47,8 +49,8 @@ function SignIn() {
   return (
     <Formik
       initialValues={{
-        email: "demo@bootlab.io",
-        password: "unsafepassword",
+        email: "abc@gmail.com",
+        password: "abcdef",
         submit: false,
       }}
       validationSchema={Yup.object().shape({
@@ -60,9 +62,15 @@ function SignIn() {
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
         try {
-          await signIn(values.email, values.password);
+          // Use the signIn function from the useAuth hook to authenticate
+          const result = await signIn(values.email, values.password);
 
-          router.push("/dashboard/analytics");
+          if (result?.error) {
+            throw new Error(result.error); // Handle error if there's an issue
+          }
+
+          // Redirect on successful login
+          router.push("/dashboard/lab1");
         } catch (error: any) {
           const message = error.message || "Something went wrong";
 
@@ -82,10 +90,10 @@ function SignIn() {
         values,
       }) => (
         <form noValidate onSubmit={handleSubmit}>
-          <Alert mt={3} mb={3} severity="info">
+          {/* <Alert mt={3} mb={3} severity="info">
             Use <strong>demo@bootlab.io</strong> and{" "}
             <strong>unsafepassword</strong> to sign in
-          </Alert>
+          </Alert> */}
           {errors.submit && (
             <Alert mt={2} mb={3} severity="warning">
               {errors.submit}
@@ -115,6 +123,7 @@ function SignIn() {
             onChange={handleChange}
             my={2}
           />
+
           <Typography as="div" mb={2} variant="caption">
             <Link href="reset-password" component={NextLink}>
               Forgot password?

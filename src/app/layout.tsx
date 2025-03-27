@@ -7,6 +7,7 @@ import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Provider } from "react-redux";
+import { SessionProvider } from "next-auth/react"; // Import SessionProvider from NextAuth.js
 
 import createTheme from "@/theme";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -44,7 +45,8 @@ function RootLayout({ children }: { children: React.ReactNode }) {
           <Provider store={store}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <MuiThemeProvider theme={createTheme(theme)}>
-                <AuthProvider>{children}</AuthProvider>
+                {/* Add the SessionProvider here to provide session context to the entire app */}
+                <SessionProvider>{children}</SessionProvider>
               </MuiThemeProvider>
             </LocalizationProvider>
           </Provider>
