@@ -101,8 +101,8 @@ const Sidebar = ({ items, showFooter = true, ...rest }: SidebarProps) => {
     const filterItems = () => {
       let newFilteredItems = [...items]; // Start with all items
 
-      if (session?.user?.user_role) {
-        const userRole = session.user.user_role;
+      if (session?.user?.userRole) {
+        const userRole = session.user.userRole;
         console.log("Session User Role:", userRole); // Debugging log to see role
 
         if (userRole === "TEMPORARY_USER") {
