@@ -84,7 +84,7 @@ const Lab1 = () => {
     }
 
     fetchApikeys();
-  }, []);
+  }, [data]);
 
   // Function to fetch data based on the selected category and apikey
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
