@@ -211,7 +211,7 @@ const Lab1 = () => {
   //     </div>
   //   );
   // }
-  const { data: session } = useSession();
+  // const { data: session } = useSession(); //to be removed for login to work
   console.log(session?.user);
 
   return (

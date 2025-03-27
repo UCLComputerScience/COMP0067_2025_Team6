@@ -90,56 +90,6 @@ type AlertType = {
   date: string;
 };
 
-// function createData(
-//   id: number,
-//   location: string,
-//   equipment: string,
-//   priority: string,
-//   desc: string,
-//   status: string,
-//   date: string
-// ) {
-//   return { id, location, equipment, priority, desc, status, date };
-// }
-
-// const rows: Array<RowType> = [
-//   createData(
-//     1,
-//     "247",
-//     "Box 7",
-//     "High",
-//     "Temperature levels has exceeded the threshold",
-//     "Resolved",
-//     "12/12/2022"
-//   ),
-//   createData(
-//     2,
-//     "247",
-//     "Box 19",
-//     "High",
-//     "Temperature levels has exceeded the threshold",
-//     "Unresolved",
-//     "12/12/2022"
-//   ),
-//   createData(
-//     3,
-//     "247",
-//     "Box 17",
-//     "Moderate",
-//     "Pressure levels has exceeded the threshold",
-//     "Resolved",
-//     "12/12/2022"
-//   ),
-//   createData(
-//     4,
-//     "249",
-//     "Box 27",
-//     "Low",
-//     "Humity levels has exceeded the threshold",
-//     "Unresolved",
-//     "12/12/2022"
-//   ),
-// ];
 
 type RowType = {
   id: number;
@@ -151,15 +101,19 @@ type RowType = {
   date: string;
 };
 
+
 function createRowFromAlert(alert: AlertType): RowType {
+  console.log('Processing alert:', alert);
   return {
-    id: alert.alertId,
-    location: `${alert.location[0]}, ${alert.location[1]}`, // Convert [lat, lon] to string
-    equipment: `Channel ${alert.channelId}`, // Use channelId as equipment placeholder
-    priority: alert.priority,
-    desc: alert.alertDescription,
-    status: alert.status,
-    date: new Date(alert.date).toLocaleDateString(), // Format date
+    id: alert.alertId, // Use alertId, not channel id
+    location: alert.location && Array.isArray(alert.location) && alert.location.length >= 2
+      ? `${alert.location[0]}, ${alert.location[1]}`
+      : 'Unknown',
+    equipment: alert.channelId ? `Channel ${alert.channelId}` : 'Unknown',
+    priority: alert.priority || 'LOW',
+    desc: alert.alertDescription || 'No description',
+    status: alert.status || 'UNRESOLVED',
+    date: alert.date ? new Date(alert.date).toLocaleDateString() : 'Unknown',
   };
 }
 
@@ -315,12 +269,17 @@ function EnhancedTable() {
   useEffect(() => {
     async function fetchAlerts() {
       try {
-        const response = await fetch("/api/channel"); // Adjust the endpoint as needed
+        console.log('Fetching from /admin/alerts/api/channel...');
+        const response = await fetch('/admin/alerts/api/channel'); // Fix URL
+        console.log('Response status:', response.status);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data: AlertType[] = await response.json();
+        console.log('Raw API data:', data);
         const formattedRows = data.map(createRowFromAlert);
+        console.log('Formatted rows:', formattedRows);
         setRows(formattedRows);
       } catch (error) {
-        console.error("Failed to fetch alerts:", error);
+        console.error('Failed to fetch alerts:', error);
       } finally {
         setLoading(false);
       }
@@ -387,6 +346,13 @@ function EnhancedTable() {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
+  // CHANGE: Added loading and empty state checks before rendering table
+  if (loading) return <Typography>Loading alerts...</Typography>;
+  if (!loading && rows.length === 0) return <Typography>No alerts found.</Typography>;
+
+  // CHANGE: Added debug log before rendering
+  console.log('Rendering table with rows:', rows);
+
   return (
     <div>
       <Paper>
@@ -409,7 +375,7 @@ function EnhancedTable() {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.id.toString());
+                  const isItemSelected = row.id ? isSelected(row.id.toString()) : false;
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -418,7 +384,7 @@ function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id}-${index}`}
+                      key={`${row.id || 'unknown'}-${index}`} //originally: key={`${row.id}-${index}`}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">
