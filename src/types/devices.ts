@@ -70,3 +70,10 @@ export type DeviceProps = {
     data: string;
     setData: React.Dispatch<React.SetStateAction<string>>;
   }
+
+  export type DeviceNameProps = {
+    data: string;
+    setData: React.Dispatch<React.SetStateAction<string>>;
+    device: string;
+    setDevice: React.Dispatch<React.SetStateAction<string>>;
+  }
