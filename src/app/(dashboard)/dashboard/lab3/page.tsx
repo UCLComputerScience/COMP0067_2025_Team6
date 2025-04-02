@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"; // Import useRouter for redirect
 import { useTranslation } from "react-i18next";
 import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 import { useSession } from "next-auth/react"; // Import useSession
+import { usePathname } from "next/navigation";
 
 import {
   Grid2 as Grid,
@@ -43,8 +44,15 @@ const Lab3 = () => {
   const [apikeys, setApikeys] = React.useState<string[]>([]); // Apikeys data from db
   const [apidata, setApidata] = React.useState<DeviceProps[]>([]); // Data fetched from the API
   const [data, setData] = React.useState<string>("");
+  const [device, setDevice] = React.useState<string>("All");
 
   const { data: session, status } = useSession();
+
+  const pathname = usePathname();
+  const pathSegments = pathname.split("/");
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  let lab = Number(lastSegment.split("")[lastSegment.length - 1]);
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -61,7 +69,7 @@ const Lab3 = () => {
   React.useEffect(() => {
     async function fetchApikeys() {
       try {
-        const response = await fetch("/api/apikeys_get", {
+        const response = await fetch(`/api/apikeys_get?labId=${lab}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -84,7 +92,7 @@ const Lab3 = () => {
     }
 
     fetchApikeys();
-  }, []);
+  }, [data]);
 
   // Function to fetch data based on the selected category and apikey
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
@@ -108,6 +116,9 @@ const Lab3 = () => {
     };
 
     fetchAllData();
+    const interval = setInterval(fetchAllData, 60000); // Poll every 5 sec
+
+    return () => clearInterval(interval); // Cleanup
   }, [selectedOption, apikeys]);
 
   const { t } = useTranslation();
@@ -117,47 +128,96 @@ const Lab3 = () => {
   }
 
   const devicesApi = apidata.map((item) => {
-    const channel = item?.channel?.name || "N/A";
-    const channel_id = item?.channel?.id || 0;
-    const field1 = item?.channel?.field1 || "N/A";
-    const field2 = item?.channel?.field2 || "N/A";
-    const field3 = item?.channel?.field3 || "N/A";
+  const channel = item?.channel?.name || "N/A";
+  if (device !== "All" && channel !== device) {
+    return [];
+  }
 
-    // Ensure feeds array exists
-    const rdata = item?.feeds || [];
+  const channel_id = item?.channel?.id || 0;
+  const field1 = item?.channel?.field1 || "N/A";
+  const field2 = item?.channel?.field2 || "N/A";
+  const field3 = item?.channel?.field3 || "N/A";
 
-    // Extract numerical values safely
-    const temperature = rdata.map((feed) => Number(feed?.field1) || 0);
-    const humidity = rdata.map((feed) => Number(feed?.field2) || 0);
-    const pressure = rdata.map((feed) => Number(feed?.field3) || 0);
+  // Ensure feeds array exists
+  const rdata = item?.feeds || [];
 
-    // Extract timestamps (assuming extractTimestamps is correctly implemented)
-    const DeviceLabels = extractTimestamps(rdata);
+  // Extract numerical values safely
+  const temperature = rdata.map((feed) => Number(feed?.field1) || 0);
+  const humidity = rdata.map((feed) => Number(feed?.field2) || 0);
+  const pressure = rdata.map((feed) => Number(feed?.field3) || 0);
 
-    return [
-      {
-        channel_id: channel_id,
-        channel: channel,
-        field: field1,
-        DeviceData: temperature,
-        DeviceLabels: DeviceLabels,
-      },
-      {
-        channel_id: channel_id,
-        channel: channel,
-        field: field2,
-        DeviceData: humidity,
-        DeviceLabels: DeviceLabels,
-      },
-      {
-        channel_id: channel_id,
-        channel: channel,
-        field: field3,
-        DeviceData: pressure,
-        DeviceLabels: DeviceLabels,
-      },
-    ];
-  });
+  // Extract timestamps (assuming extractTimestamps is correctly implemented)
+  const DeviceLabels = extractTimestamps(rdata);
+
+  return [
+    {
+      channel_id: channel_id,
+      channel: channel,
+      field: field1,
+      DeviceData: temperature,
+      DeviceLabels: DeviceLabels,
+    },
+    {
+      channel_id: channel_id,
+      channel: channel,
+      field: field2,
+      DeviceData: humidity,
+      DeviceLabels: DeviceLabels,
+    },
+    {
+      channel_id: channel_id,
+      channel: channel,
+      field: field3,
+      DeviceData: pressure,
+      DeviceLabels: DeviceLabels,
+    },
+  ];
+});
+
+  // const devicesApi = apidata.map((item) => {
+  //   const channel = item?.channel?.name || "N/A";
+  //   if (device !== "All" && channel === device) {}
+
+  //   const channel_id = item?.channel?.id || 0;
+  //   const field1 = item?.channel?.field1 || "N/A";
+  //   const field2 = item?.channel?.field2 || "N/A";
+  //   const field3 = item?.channel?.field3 || "N/A";
+
+  //   // Ensure feeds array exists
+  //   const rdata = item?.feeds || [];
+
+  //   // Extract numerical values safely
+  //   const temperature = rdata.map((feed) => Number(feed?.field1) || 0);
+  //   const humidity = rdata.map((feed) => Number(feed?.field2) || 0);
+  //   const pressure = rdata.map((feed) => Number(feed?.field3) || 0);
+
+  //   // Extract timestamps (assuming extractTimestamps is correctly implemented)
+  //   const DeviceLabels = extractTimestamps(rdata);
+
+  //   return [
+  //     {
+  //       channel_id: channel_id,
+  //       channel: channel,
+  //       field: field1,
+  //       DeviceData: temperature,
+  //       DeviceLabels: DeviceLabels,
+  //     },
+  //     {
+  //       channel_id: channel_id,
+  //       channel: channel,
+  //       field: field2,
+  //       DeviceData: humidity,
+  //       DeviceLabels: DeviceLabels,
+  //     },
+  //     {
+  //       channel_id: channel_id,
+  //       channel: channel,
+  //       field: field3,
+  //       DeviceData: pressure,
+  //       DeviceLabels: DeviceLabels,
+  //     },
+  //   ];
+  // });
 
   const DevicesGridApi = () => {
     return (
@@ -221,7 +281,7 @@ const Lab3 = () => {
       <Grid justifyContent="space-between" container spacing={6}>
         <Grid>
           <Typography variant="h3" gutterBottom>
-            Lab 1
+            Lab 3
           </Typography>
           <Typography variant="subtitle1">
             {t("Welcome back")}, {session?.user?.firstName || "Stephen"}!{" "}
@@ -240,10 +300,7 @@ const Lab3 = () => {
             />
           </Grid>
           <Grid>
-            <ActionsFilter
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-            />
+            <ActionsFilter data={data} setData={setData} device={device} setDevice={setDevice} />
           </Grid>
           <Grid>
             <ActionsAdd data={data} setData={setData} />
