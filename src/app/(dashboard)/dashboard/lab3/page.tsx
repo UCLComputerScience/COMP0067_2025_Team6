@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"; // Import useRouter for redirect
 import { useTranslation } from "react-i18next";
 import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 import { useSession } from "next-auth/react"; // Import useSession
+import { usePathname } from "next/navigation";
 
 import {
   Grid2 as Grid,
@@ -46,6 +47,12 @@ const Lab3 = () => {
 
   const { data: session, status } = useSession();
 
+  const pathname = usePathname();
+  const pathSegments = pathname.split("/");
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  let lab = Number(lastSegment.split("")[lastSegment.length - 1]);
+
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -61,7 +68,7 @@ const Lab3 = () => {
   React.useEffect(() => {
     async function fetchApikeys() {
       try {
-        const response = await fetch("/api/apikeys_get", {
+        const response = await fetch(`/api/apikeys_get?labId=${lab}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -84,7 +91,7 @@ const Lab3 = () => {
     }
 
     fetchApikeys();
-  }, []);
+  }, [data]);
 
   // Function to fetch data based on the selected category and apikey
   const fetchDataFromApi = async (selectedOption: string, apikey: string) => {
@@ -221,7 +228,7 @@ const Lab3 = () => {
       <Grid justifyContent="space-between" container spacing={6}>
         <Grid>
           <Typography variant="h3" gutterBottom>
-            Lab 1
+            Lab 3
           </Typography>
           <Typography variant="subtitle1">
             {t("Welcome back")}, {session?.user?.firstName || "Stephen"}!{" "}
