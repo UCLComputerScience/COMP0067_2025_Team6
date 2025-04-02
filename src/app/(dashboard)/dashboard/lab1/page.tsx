@@ -116,6 +116,9 @@ const Lab1 = () => {
     };
 
     fetchAllData();
+    const interval = setInterval(fetchAllData, 60000); // Poll every 5 sec
+
+    return () => clearInterval(interval); // Cleanup
   }, [selectedOption, apikeys]);
 
   const { t } = useTranslation();
