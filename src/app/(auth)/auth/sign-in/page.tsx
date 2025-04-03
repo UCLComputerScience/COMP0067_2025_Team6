@@ -4,6 +4,7 @@ import { Paper } from "@mui/material";
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
+import NextLink from "next/link";
 
 import {
   Avatar,
@@ -134,11 +135,22 @@ function SignIn() {
           </SearchWrapper>
           <Button
             variant="contained"
+            component={NextLink}
+            href="/auth/sign-in"
             sx={{ backgroundColor: "white", color: "black", mr: 1 }}
           >
             Sign In
           </Button>
-          <SignUpButton variant="contained">Sign Up</SignUpButton>
+
+          <Button
+            variant="contained"
+            component={NextLink}
+            href="/auth/sign-up"
+            color="primary"
+            sx={{ color: "white", mr: 1 }}
+          >
+            Sign Up
+          </Button>
         </Toolbar>
       </TopBar>
 

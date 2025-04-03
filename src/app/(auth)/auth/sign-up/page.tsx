@@ -3,6 +3,7 @@
 import React from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
+import NextLink from "next/link";
 
 import {
   Paper,
@@ -120,12 +121,23 @@ function SignUp() {
             <SearchIcon sx={{ color: "white" }} />
             <SearchInput placeholder="Search..." />
           </SearchWrapper>
-          {/* Remove the SignUp button, keeping the same structure as the SignIn page */}
           <Button
             variant="contained"
+            component={NextLink}
+            href="/auth/sign-in"
             sx={{ backgroundColor: "white", color: "black", mr: 1 }}
           >
             Sign In
+          </Button>
+
+          <Button
+            variant="contained"
+            component={NextLink}
+            href="/auth/sign-up"
+            color="primary"
+            sx={{ color: "white", mr: 1 }}
+          >
+            Sign Up
           </Button>
         </Toolbar>
       </TopBar>

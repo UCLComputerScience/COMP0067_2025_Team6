@@ -250,7 +250,7 @@ const ProfileCompletion = () => {
               </Button>
             </NextLink>
   
-            <NextLink href="/auth/reset-password" passHref>
+            <NextLink href="/account/profile/changePassword" passHref>
               <Button
                 variant="outlined"
                 color="primary"
