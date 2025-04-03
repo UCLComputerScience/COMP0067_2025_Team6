@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Alerts {
@@ -82,7 +83,7 @@ model User {
   city                     String?    @db.VarChar(100)
   county                   String?    @db.VarChar(100)
   postcode                 String?    @db.VarChar(20)
-  specialisation           String?    @db.VarChar(255)
+  specialisation           String[]   @default([])
   description              String?    @db.VarChar(255)
   organisationRole         String?    @db.VarChar(50)
   organisationEmail        String?    @db.VarChar(100)
