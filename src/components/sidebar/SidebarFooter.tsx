@@ -41,7 +41,6 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
 
   const [avatarSrc, setAvatarSrc] = useState<string>("/static/img/avatars/avatar-1.jpg");
 
-  // ✅ Load avatar from localStorage + listen for profileUpdated
   const loadAvatar = () => {
     const storedData = typeof window !== "undefined" ? localStorage.getItem("personalInfo") : null;
     if (storedData) {
