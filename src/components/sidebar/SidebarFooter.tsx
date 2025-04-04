@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 
 import { Badge, Grid2 as Grid, Avatar, Typography } from "@mui/material";
@@ -39,13 +39,39 @@ const FooterBadge = styled(Badge)`
 const SidebarFooter: React.FC = ({ ...rest }) => {
   const { firstName, lastName, session } = useAuth();
 
-  // Construct the display name
+  const [avatarSrc, setAvatarSrc] = useState<string>("/static/img/avatars/avatar-1.jpg");
+
+  // ✅ Load avatar from localStorage + listen for profileUpdated
+  const loadAvatar = () => {
+    const storedData = typeof window !== "undefined" ? localStorage.getItem("personalInfo") : null;
+    if (storedData) {
+      const parsed = JSON.parse(storedData);
+      if (parsed.avatar) {
+        setAvatarSrc(parsed.avatar);
+        return;
+      }
+    }
+    setAvatarSrc(session?.user?.avatar || "/static/img/avatars/avatar-1.jpg");
+  };
+
+  useEffect(() => {
+    loadAvatar(); // Load once when mounted
+
+    const handleProfileUpdate = () => {
+      loadAvatar(); // Reload when profile is updated
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, [session]); // re-run if session changes too
+
   const displayName =
     firstName && lastName
       ? `${firstName} ${lastName}`
-      : session?.user?.name || "Stephen Hilton"; // Fallback to the full name if first/last name is missing
-
-  const avatarSrc = session?.user?.avatar || "/static/img/avatars/avatar-1.jpg"; // Default avatar if not set
+      : session?.user?.name || "Stephen Hilton";
 
   return (
     <Footer {...rest}>
