@@ -28,7 +28,11 @@ const Breadcrumbs = styled(MuiBreadcrumbs)`
   margin-bottom: 16px;
 `;
 
-const Button = styled(MuiButton)`
+interface StyledButtonProps {
+  component?: React.ElementType;
+}
+
+const Button = styled(MuiButton)<StyledButtonProps>`
   margin-right: 8px;
 `;
 
@@ -124,6 +128,7 @@ const ProfileCompletion = () => {
       </Card>
     );
   };
+
   const ProfileDetails = () => {
     const [user, setUser] = useState({
       firstName: "",
@@ -134,7 +139,7 @@ const ProfileCompletion = () => {
   
     const [preview, setPreview] = useState<string | null>(null);
   
-    useEffect(() => {
+    const loadUserData = () => {
       const storedData = localStorage.getItem("personalInfo");
       if (storedData) {
         const data = JSON.parse(storedData);
@@ -146,6 +151,20 @@ const ProfileCompletion = () => {
         });
         setPreview(data.avatar || "");
       }
+    };
+  
+    useEffect(() => {
+      loadUserData();
+  
+      const handleProfileUpdate = () => {
+        loadUserData();
+      };
+  
+      window.addEventListener("profileUpdated", handleProfileUpdate);
+  
+      return () => {
+        window.removeEventListener("profileUpdated", handleProfileUpdate);
+      };
     }, []);
   
     const formatRole = (role: string) => {
@@ -160,34 +179,44 @@ const ProfileCompletion = () => {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-  
+    
+      const localUrl = URL.createObjectURL(file);
+      setPreview(localUrl);
+    
+      const storedData = localStorage.getItem("personalInfo");
+      const updatedUser = storedData ? JSON.parse(storedData) : {};
+      updatedUser.avatar = localUrl;
+      localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
+    
+      window.dispatchEvent(new Event("profileUpdated"));
       const formData = new FormData();
       formData.append("avatar", file);
       formData.append("userId", "1");
-  
+    
       try {
         const res = await fetch("/api/auth/upload", {
           method: "POST",
           body: formData,
         });
-  
+    
         if (!res.ok) {
           throw new Error("Failed to upload image");
         }
-  
+    
         const data = await res.json();
         const avatarUrl = data.avatarPath;
-  
-        setPreview(avatarUrl);
-  
-        const updatedUser = { ...user, avatar: avatarUrl };
-        setUser(updatedUser);
+    
+        updatedUser.avatar = avatarUrl;
         localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
+        setPreview(avatarUrl);
+    
+        window.dispatchEvent(new Event("profileUpdated"));
       } catch (error) {
         console.error("Upload error:", error);
         alert("Failed to upload avatar.");
       }
     };
+    
   
     return (
       <Card>
@@ -200,6 +229,7 @@ const ProfileCompletion = () => {
           }}
         >
           <Avatar alt="User Profile" src={preview || "/static/img/avatar.jpg"} />
+  
           <input
             type="file"
             accept="image/*"
@@ -207,10 +237,11 @@ const ProfileCompletion = () => {
             id="avatar-upload"
             onChange={handleFileChange}
           />
+  
           <label htmlFor="avatar-upload">
             <Button
+              component="span" 
               variant="outlined"
-              // component="span"
               color="primary"
               startIcon={<CloudUploadIcon />}
               sx={{ mt: 1, mb: 2 }}
@@ -225,40 +256,21 @@ const ProfileCompletion = () => {
           <Typography variant="subtitle1" color="textSecondary" mb={2}>
             {formatRole(user.userRole)}
           </Typography>
+  
           <Box width="100%" mt={2}>
             <NextLink href="/account/profile" passHref>
-              <Button
-                variant="outlined"
-                color="primary"
-                fullWidth
-                sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}
-              >
-                <PersonIcon />
-                Personal Information
+              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}>
+                <PersonIcon /> Personal Information
               </Button>
             </NextLink>
-  
             <NextLink href="/account/profile/organisation" passHref>
-              <Button
-                variant="outlined"
-                color="primary"
-                fullWidth
-                sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}
-              >
-                <BusinessIcon />
-                Organisation Information
+              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
+                <BusinessIcon /> Organisation Information
               </Button>
             </NextLink>
-  
             <NextLink href="/account/profile/changePassword" passHref>
-              <Button
-                variant="outlined"
-                color="primary"
-                fullWidth
-                sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}
-              >
-                <PasswordIcon />
-                Change Password
+              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
+                <PasswordIcon /> Change Password
               </Button>
             </NextLink>
           </Box>
@@ -266,33 +278,7 @@ const ProfileCompletion = () => {
       </Card>
     );
   };
-
-//   const completionPercentage = calculateCompletion();
-
-//   if (completionPercentage === 100) return null;
-
-//   return (
-//     <Card>
-//       <CardContent
-//         style={{
-//           display: "flex",
-//           justifyContent: "space-between",
-//           alignItems: "center",
-//         }}
-//       >
-//         <Box>
-//           <Typography variant="h6" color="primary">
-//             Complete Your Profile ({completionPercentage}%)
-//           </Typography>
-//           <Typography variant="body2" color="textSecondary">
-//             Please update your profile details to reach 100% completion.
-//           </Typography>
-//         </Box>
-//       </CardContent>
-//     </Card>
-//   );
-// };
-
+  
 const PersonalInformation = () => {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -381,10 +367,15 @@ const PersonalInformation = () => {
       }
   
       const data = await response.json();
-      console.log("Success response:", data);
       alert("Profile information saved!");
       setLastSavedData(formData);
       localStorage.setItem("personalInfo", JSON.stringify(formData));
+      
+      window.dispatchEvent(new Event("profileUpdated"));
+      
+      const tempKey = "temp-" + new Date().getTime();
+      localStorage.setItem(tempKey, "temp");
+      localStorage.removeItem(tempKey);
     } catch (error) {
       console.error("Error updating profile:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";

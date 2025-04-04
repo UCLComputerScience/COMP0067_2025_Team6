@@ -1,4 +1,5 @@
 import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 const useAuth = () => {
   const { data: session, status } = useSession();
@@ -6,6 +7,37 @@ const useAuth = () => {
 
   // Log session data to ensure it's populated
   console.log("Session Data:", session);
+
+  const [firstName, setFirstName] = useState(session?.user?.firstName || "");
+  const [lastName, setLastName] = useState(session?.user?.lastName || "");
+  const [userName, setUserName] = useState(session?.user?.name || "");
+  const [userRole, setUserRole] = useState(session?.user?.userRole || "STANDARD_USER");
+
+  const refreshUserData = () => {
+    const storedData = localStorage.getItem("personalInfo");
+    if (storedData) {
+      const parsed = JSON.parse(storedData);
+      if (parsed.firstName) setFirstName(parsed.firstName);
+      if (parsed.lastName) setLastName(parsed.lastName);
+      if (parsed.firstName && parsed.lastName) setUserName(`${parsed.firstName} ${parsed.lastName}`);
+    }
+  };
+
+  useEffect(() => {
+    refreshUserData(); // Load once when mounting
+
+    const handleProfileUpdate = () => {
+      console.log("Profile updated event received in useAuth");
+      refreshUserData(); // Load again when "profileUpdated" event fires
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, [session]); // Refresh if session changes
+
 
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn("credentials", {
@@ -46,12 +78,6 @@ const useAuth = () => {
       throw error;
     }
   };
-
-  // User details and role
-  const firstName = session?.user?.firstName || "";
-  const lastName = session?.user?.lastName || "";
-  const userName = session?.user?.name || "";
-  const userRole = session?.user?.userRole || "STANDARD_USER"; // Default to "STANDARD_USER"
 
   return {
     signIn,
