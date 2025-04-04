@@ -56,25 +56,6 @@ const userSection = [
 ] as SidebarItemsType[];
 
 const adminSection = [
-  // {
-  //   href: "/admin/dashboard",
-  //   icon: Sliders,
-  //   title: "Dashboard",
-  //   children: [
-  //     {
-  //       href: "/admin/dashboard/lab1",
-  //       title: "Lab 1",
-  //     },
-  //     {
-  //       href: "/admin/dashboard/lab2",
-  //       title: "Lab 2",
-  //     },
-  //     {
-  //       href: "/admin/dashboard/lab3",
-  //       title: "Lab 3",
-  //     },
-  //   ],
-  // },
   {
     href: "/admin/access",
     icon: Package,
@@ -90,11 +71,6 @@ const adminSection = [
     icon: ShoppingCart,
     title: "Usage History",
   },
-  // {
-  //   href: "/admin/settings",
-  //   icon: ShoppingCart,
-  //   title: "System Settings",
-  // },
   {
     href: "/admin/alerts",
     icon: ShoppingCart,
@@ -105,21 +81,10 @@ const adminSection = [
 
 const accountSection = [
   {
-    href: "/account/notifications",
-    icon: ShoppingCart,
-    title: "Notifications",
-  },
-  {
     href: "/account/profile",
     icon: ShoppingCart,
     title: "Profile",
   },
-  {
-    href: "/account/settings",
-    icon: ShoppingCart,
-    title: "Settings",
-  },
-
 ] as SidebarItemsType[];
 
 const navItems = [
