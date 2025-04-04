@@ -118,7 +118,7 @@
     "prettier": "2.8.8",
     "prisma": "^6.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "5.8.2"
   },
   "resolutions": {
     "jss": "10.9.2"

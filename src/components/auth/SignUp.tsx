@@ -11,15 +11,14 @@ import {
   TextField as MuiTextField,
   Typography,
   Link,
+  Box,
 } from "@mui/material";
 import { spacing } from "@mui/system";
 
 import useAuth from "@/hooks/useAuth";
 
 const Alert = styled(MuiAlert)(spacing);
-
 const TextField = styled(MuiTextField)(spacing);
-
 const Button = styled(MuiButton)(spacing);
 
 const Centered = styled(Typography)`
@@ -53,7 +52,6 @@ function SignUp() {
           .max(255)
           .required("Required"),
         confirmPassword: Yup.string().oneOf(
-          // @ts-ignore
           [Yup.ref("password"), null],
           "Passwords must match"
         ),
@@ -72,7 +70,6 @@ function SignUp() {
             throw new Error(data.message || "Signup failed");
           }
 
-          // Redirect user to login page
           router.push("/auth/sign-in");
         } catch (error: any) {
           setStatus({ success: false });
@@ -90,7 +87,7 @@ function SignUp() {
         touched,
         values,
       }) => (
-        <form noValidate onSubmit={handleSubmit}>
+        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ maxWidth: 400, width: "100%" }}>
           {errors.submit && (
             <Alert mt={2} mb={1} severity="warning">
               {errors.submit}
@@ -106,7 +103,7 @@ function SignUp() {
             helperText={touched.firstName && errors.firstName}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <TextField
             type="text"
@@ -118,7 +115,7 @@ function SignUp() {
             helperText={touched.lastName && errors.lastName}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <TextField
             type="text"
@@ -130,7 +127,7 @@ function SignUp() {
             helperText={touched.organisation && errors.organisation}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <TextField
             type="email"
@@ -142,7 +139,7 @@ function SignUp() {
             helperText={touched.email && errors.email}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <TextField
             type="password"
@@ -154,7 +151,7 @@ function SignUp() {
             helperText={touched.password && errors.password}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <TextField
             type="password"
@@ -166,7 +163,7 @@ function SignUp() {
             helperText={touched.confirmPassword && errors.confirmPassword}
             onBlur={handleBlur}
             onChange={handleChange}
-            my={3}
+            my={2}
           />
           <Button
             type="submit"
@@ -180,11 +177,11 @@ function SignUp() {
           </Button>
           <Centered>
             Already have an account?{" "}
-            <Link href="sign-in" component={NextLink}>
+            <Link href="/auth/sign-in" component={NextLink}>
               Log in
             </Link>
           </Centered>
-        </form>
+        </Box>
       )}
     </Formik>
   );
