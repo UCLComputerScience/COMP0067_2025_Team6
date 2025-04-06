@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 import { useSession } from "next-auth/react"; // Import useSession
 import { usePathname } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
 
 import {
   Grid2 as Grid,
@@ -46,7 +47,7 @@ const Lab1 = () => {
   const [data, setData] = React.useState<string>("");
   const [device, setDevice] = React.useState<string>("All");
 
-  const { data: session, status } = useSession();
+  const { firstName, session, status } = useAuth();
 
   const pathname = usePathname();
   const pathSegments = pathname.split("/");
@@ -284,7 +285,7 @@ const Lab1 = () => {
             Lab 1
           </Typography>
           <Typography variant="subtitle1">
-            {t("Welcome back")}, {session?.user?.firstName || "Stephen"}!{" "}
+            {t("Welcome back")}, {firstName || "Stephen"}!{" "}
             {t("We've missed you")}.{" "}
             <span role="img" aria-label="Waving Hand Sign">
               👋
