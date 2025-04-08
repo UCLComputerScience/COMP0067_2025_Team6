@@ -105,7 +105,7 @@ type RowType = {
 function createRowFromAlert(alert: AlertType): RowType {
   console.log("Processing alert:", alert);
   return {
-    id: alert.alertId, // Use alertId, not channel id
+    id: alert.alertId,
     location:
       alert.location &&
       Array.isArray(alert.location) &&
@@ -350,6 +350,52 @@ function EnhancedTable() {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await fetch(`/admin/alerts/api/${id}/delete`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setRows(rows.filter((row) => row.id !== id));
+        setSelected(selected.filter((selectedId) => selectedId !== id.toString()));
+        console.log(`Alert ${id} deleted successfully`);
+        alert(`Alert ${id} deleted successfully`);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete alert:", errorData.error);
+        alert(`Failed to delete alert: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      alert("An error occurred while deleting the alert");
+    }
+  };
+
+  const handleMarkAsResolved = async (id: number) => {
+    try {
+      const response = await fetch(`/admin/alerts/api/${id}/update`, {
+        method: "PATCH",
+      });
+      if (response.ok) {
+        const updatedAlert = await response.json();
+        setRows(
+          rows.map((row) =>
+            row.id === id ? { ...row, status: updatedAlert.alertStatus } : row
+          )
+        );
+        console.log(`Alert ${id} marked as resolved`);
+        alert(`Alert ${id} marked as resolved`);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to mark alert as resolved:", errorData.error);
+        alert(`Failed to update alert: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error marking alert as resolved:", error);
+      alert("An error occurred while updating the alert");
+    }
+  };
+
   // CHANGE: Added loading and empty state checks before rendering table
   if (loading) return <Typography>Loading alerts...</Typography>;
   if (!loading && rows.length === 0)
@@ -459,10 +505,18 @@ function EnhancedTable() {
                       <TableCell align="left">{row.date}</TableCell>
                       <TableCell padding="none" align="right">
                         <Box mr={2}>
-                          <IconButton aria-label="delete" size="large">
+                          <IconButton
+                            aria-label="delete"
+                            size="large"
+                            onClick={() => handleDelete(row.id)}
+                          >
                             <DeleteIcon />
                           </IconButton>
-                          <IconButton aria-label="details" size="large">
+                          <IconButton
+                            aria-label="details"
+                            size="large"
+                            onClick={() => handleMarkAsResolved(row.id)}
+                          >
                             <CheckCircleIcon />
                           </IconButton>
                         </Box>
@@ -498,7 +552,9 @@ function OrderList() {
   const open = Boolean(anchorEl);
 
   // Handlers for opening and closing the menu
-  const handleManageAlertsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleManageAlertsClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -506,16 +562,11 @@ function OrderList() {
     setAnchorEl(null);
   };
 
-  // Placeholder functions for button actions (to be defined later)
-  const handleDelete = () => {
-    console.log("Delete button clicked - functionality TBD");
-    handleMenuClose(); // Close menu after action
-  };
+  // Handler for deleting a single alert
+  const handleDelete = async (id: number) => {};
 
-  const handleMarkAsResolved = () => {
-    console.log("Mark as Resolved button clicked - functionality TBD");
-    handleMenuClose(); // Close menu after action
-  };
+  // Handler for marking a single alert as resolved
+  const handleMarkAsResolved = async (id: number) => {};
 
   return (
     <React.Fragment>

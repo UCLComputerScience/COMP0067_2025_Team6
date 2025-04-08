@@ -12,7 +12,6 @@ const Alerts = ({ children }: { children: ReactNode }) => {
       {" "}
       {/* Allow Admin, Standard User, and Super User */}
       <div>
-        <h2>Alerts</h2>
         {children}
       </div>
     </AuthGuard>
