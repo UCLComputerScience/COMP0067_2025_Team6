@@ -41,6 +41,37 @@ function NavbarUserDropdown() {
   const router = useRouter();
   const { session, signOut } = useAuth();
 
+  const [avatarSrc, setAvatarSrc] = React.useState("/static/img/avatars/avatar-1.jpg");
+
+  React.useEffect(() => {
+    const loadAvatar = () => {
+      const storedData = typeof window !== "undefined" ? localStorage.getItem("personalInfo") : null;
+      if (storedData) {
+        const parsed = JSON.parse(storedData);
+        if (parsed.avatar) {
+          setAvatarSrc(parsed.avatar);
+        } else if (session?.user?.avatar) {
+          setAvatarSrc(session.user.avatar);
+        } else {
+          setAvatarSrc("/static/img/avatars/avatar-1.jpg");
+        }
+      }
+    };
+  
+    loadAvatar(); // Load initially
+  
+    const handleProfileUpdate = () => {
+      loadAvatar(); // Refresh when profile is updated
+    };
+  
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+  
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
+  }, [session]);
+  
+
   const toggleMenu = (event: React.SyntheticEvent) => {
     setAnchorMenu(event.currentTarget);
   };
@@ -83,14 +114,7 @@ function NavbarUserDropdown() {
             }}
             variant="dot"
           >
-            {!!session?.user && <Avatar alt={session?.user.displayName} src={session?.user.avatar} />}
-            {/* Demo data */}
-            {!session?.user && (
-              <Avatar
-                alt="Lucy Lavender"
-                src="/static/img/avatars/avatar-1.jpg"
-              />
-            )}
+            <Avatar alt={session?.user?.displayName || "User"} src={avatarSrc} />
           </AvatarBadge>
         </IconButton> 
       </Tooltip>
@@ -108,6 +132,7 @@ function NavbarUserDropdown() {
       </Menu>
     </React.Fragment>
   );
+  
 }
 
 export default NavbarUserDropdown;
