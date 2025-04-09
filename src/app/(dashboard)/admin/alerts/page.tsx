@@ -53,6 +53,9 @@ import {
 } from "@mui/icons-material";
 import { spacing, SpacingProps } from "@mui/system";
 import { Rosario } from "next/font/google";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
@@ -135,7 +138,7 @@ function createRowFromAlert(alert: AlertType): RowType {
     priority: alert.priority || "LOW",
     desc: alert.alertDescription || "No description",
     status: alert.status || "UNRESOLVED",
-    date: alert.date ? new Date(alert.date).toLocaleDateString() : "Unknown",
+    date: alert.date || "Unknown",
   };
 }
 
@@ -332,8 +335,13 @@ function EnhancedTable() {
   const [bulkResolveDialogOpen, setBulkResolveDialogOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");              
   const [priorityFilter, setPriorityFilter] = React.useState("All");   
-  const [statusFilter, setStatusFilter] = React.useState("All");       
+  const [statusFilter, setStatusFilter] = React.useState("All");    
   const [reloadAlerts, setReloadAlerts] = React.useState(false);
+  const [startDate, setStartDate] = React.useState<Date | null>(null);
+  const [endDate, setEndDate] = React.useState<Date | null>(null);
+  const [dateFilterAnchorEl, setDateFilterAnchorEl] = React.useState(null);
+  const [dateDialogOpen, setDateDialogOpen] = React.useState(false);
+  const [selectedRange, setSelectedRange] = React.useState('all');
 
   const fetchAlerts = async () => {
     try {
@@ -420,16 +428,124 @@ function EnhancedTable() {
     setPage(0);
   };
 
-  const isSelected = (id: string) => selected.indexOf(id) !== -1;
+  const DateFilterMenu = () => {
+    const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+      setDateFilterAnchorEl(event.currentTarget);
+    };
 
+    const handleDateFilterClose = () => {
+      setDateFilterAnchorEl(null);
+    };
+
+    const handleRangeSelect = (range: string) => {
+      setSelectedRange(range);
+      let newStartDate = null;
+      let newEndDate = new Date();
+      
+      switch(range) {
+        case '7days':
+          newStartDate = new Date();
+          newStartDate.setDate(newStartDate.getDate() - 7);
+          break;
+        case '30days':
+          newStartDate = new Date();
+          newStartDate.setDate(newStartDate.getDate() - 30);
+          break;
+        case 'year':
+          newStartDate = new Date();
+          newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+          break;
+        case 'all':
+          newStartDate = null;
+          newEndDate = null;
+          break;
+        case 'custom':
+          setDateDialogOpen(true);
+          handleDateFilterClose();
+          return;
+      }
+      
+      setStartDate(newStartDate);
+      setEndDate(newEndDate);
+      handleDateFilterClose();
+    };
+
+    return (
+      <>
+        <Button
+          variant="outlined"
+          onClick={handleDateFilterClick}
+          endIcon={<FilterListIcon />}
+        >
+          {selectedRange === '7days' ? 'Last 7 Days' :
+           selectedRange === '30days' ? 'Last 30 Days' :
+           selectedRange === 'year' ? 'Last Year' :
+           selectedRange === 'custom' ? 'Custom Range' : 'All Time'}
+        </Button>
+        
+        <Menu
+          anchorEl={dateFilterAnchorEl}
+          open={Boolean(dateFilterAnchorEl)}
+          onClose={handleDateFilterClose}
+        >
+          <MenuItem onClick={() => handleRangeSelect('7days')}>Last 7 Days</MenuItem>
+          <MenuItem onClick={() => handleRangeSelect('30days')}>Last 30 Days</MenuItem>
+          <MenuItem onClick={() => handleRangeSelect('year')}>Last Year</MenuItem>
+          <MenuItem onClick={() => handleRangeSelect('all')}>All Time</MenuItem>
+          <MenuItem onClick={() => handleRangeSelect('custom')}>Custom Range</MenuItem>
+        </Menu>
+
+        <Dialog open={dateDialogOpen} onClose={() => setDateDialogOpen(false)}>
+          <DialogTitle>Select Date Range</DialogTitle>
+          <DialogContent>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <DatePicker
+                  label="Start Date"
+                  value={startDate}
+                  onChange={(newValue) => setStartDate(newValue)}
+                  slotProps={{ textField: { size: 'small' } }}
+                  format="MM/dd/yyyy"
+                />
+                <DatePicker
+                  label="End Date"
+                  value={endDate}
+                  onChange={(newValue) => setEndDate(newValue)}
+                  slotProps={{ textField: { size: 'small' } }}
+                  format="MM/dd/yyyy"
+                />
+              </Box>
+            </LocalizationProvider>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              setDateDialogOpen(false);
+              setSelectedRange('custom');
+            }}>
+              Apply
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  };
+
+  const isSelected = (id: string) => selected.indexOf(id) !== -1;
+  
   const filteredRows = rows.filter((row) => {
     const matchesSearch =
       searchTerm === "" ||
       row.desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.equipment.toLowerCase().includes(searchTerm.toLowerCase());
+      row.equipment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPriority = priorityFilter === "All" || row.priority === priorityFilter;
     const matchesStatus = statusFilter === "All" || row.status === statusFilter;
-    return matchesSearch && matchesPriority && matchesStatus;
+    const rowDate = new Date(row.date);
+    const matchesDate =
+      (!startDate || rowDate >= startDate) &&
+      (!endDate || rowDate <= endDate);
+    return matchesSearch && matchesPriority && matchesStatus && matchesDate;
   });
 
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, filteredRows.length - page * rowsPerPage);
@@ -655,19 +771,17 @@ function EnhancedTable() {
     }
   };
 
-  // CHANGE: Added loading and empty state checks before rendering table
   if (loading) return <Typography>Loading alerts...</Typography>;
   if (!loading && rows.length === 0)
     return <Typography>No alerts found.</Typography>;
 
-  // CHANGE: Added debug log before rendering
   console.log("Rendering table with rows:", rows);
 
   return (
     <div>
-            <SearchContainer>
+      <SearchContainer>
         <TextField
-          placeholder="Search by description or equipment"
+          placeholder="Search by description, equipment or location"
           variant="outlined"
           size="small"
           value={searchTerm}
@@ -703,6 +817,7 @@ function EnhancedTable() {
         <Button variant="contained" color="primary">
           Go
         </Button>
+        <DateFilterMenu />
         <Button
           variant="outlined"
           onClick={handleRefreshData}
