@@ -34,11 +34,12 @@ import {
   Typography,
   Menu,
   MenuItem,
-  TextField,          
-  FormControl,        
-  InputLabel,         
-  Select,             
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
   CircularProgress,
+  Popover,
 } from "@mui/material";
 import { green, orange, red, blue, grey } from "@mui/material/colors";
 import {
@@ -48,7 +49,7 @@ import {
   RemoveRedEye as RemoveRedEyeIcon,
   Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
-  Search as SearchIcon, 
+  Search as SearchIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing, SpacingProps } from "@mui/system";
@@ -56,6 +57,7 @@ import { Rosario } from "next/font/google";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { format, startOfDay, endOfDay } from "date-fns";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
@@ -108,6 +110,7 @@ type AlertType = {
   alertId: number;
   location: [number, number];
   channelId: number;
+  channelName: string;
   priority: string;
   alertDescription: string;
   status: string;
@@ -117,7 +120,8 @@ type AlertType = {
 type RowType = {
   id: number;
   location: string; // Convert [lat, lon] to string
-  equipment: string; // Placeholder, not in API yet
+  channelId: number;
+  channel: string;
   priority: string;
   desc: string;
   status: string;
@@ -134,7 +138,8 @@ function createRowFromAlert(alert: AlertType): RowType {
       alert.location.length >= 2
         ? `${alert.location[0]}, ${alert.location[1]}`
         : "Unknown",
-    equipment: alert.channelId ? `${alert.channelId}` : "Unknown",
+    channelId: alert.channelId,
+    channel: alert.channelName || "Unknown",
     priority: alert.priority || "LOW",
     desc: alert.alertDescription || "No description",
     status: alert.status || "UNRESOLVED",
@@ -181,13 +186,13 @@ type HeadCell = {
   disablePadding?: boolean;
 };
 const headCells: Array<HeadCell> = [
-  { id: "location", alignment: "left", label: "Location" },
-  { id: "equipment", alignment: "left", label: "Equipment" },
+  { id: "channelId", alignment: "left", label: "Channel ID" },
+  { id: "channel", alignment: "left", label: "Channel Name" },
   { id: "priority", alignment: "left", label: "Priority" },
   { id: "desc", alignment: "left", label: "Description" },
   { id: "status", alignment: "left", label: "Status" },
-  { id: "date", alignment: "left", label: "Date" },
-  { id: "actions", alignment: "right", label: "Actions" },
+  { id: "date", alignment: "left", label: "Date & Time" },
+  { id: "actions", alignment: "left", label: "Actions" },
 ];
 
 type EnhancedTableHeadProps = {
@@ -332,30 +337,33 @@ function EnhancedTable() {
   const [resolveDialogOpen, setResolveDialogOpen] = React.useState(false);
   const [resolveId, setResolveId] = React.useState<number | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
-  const [bulkResolveDialogOpen, setBulkResolveDialogOpen] = React.useState(false);
-  const [searchTerm, setSearchTerm] = React.useState("");              
-  const [priorityFilter, setPriorityFilter] = React.useState("All");   
-  const [statusFilter, setStatusFilter] = React.useState("All");    
+  const [bulkResolveDialogOpen, setBulkResolveDialogOpen] =
+    React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [priorityFilter, setPriorityFilter] = React.useState("All");
+  const [statusFilter, setStatusFilter] = React.useState("All");
   const [reloadAlerts, setReloadAlerts] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
-  const [dateFilterAnchorEl, setDateFilterAnchorEl] = React.useState(null);
-  const [dateDialogOpen, setDateDialogOpen] = React.useState(false);
-  const [selectedRange, setSelectedRange] = React.useState('all');
+  const [selectedRange, setSelectedRange] = React.useState("all");
 
   const fetchAlerts = async () => {
     try {
       setLoading(true);
       const timestamp = new Date().getTime();
-      const response = await fetch(`/admin/alerts/api/channel?_t=${timestamp}`, {
-        cache: "no-store",
-        headers: {
-          "pragma": "no-cache",
-          "cache-control": "no-cache",
-        },
-      });
+      const response = await fetch(
+        `/admin/alerts/api/channel?_t=${timestamp}`,
+        {
+          cache: "no-store",
+          headers: {
+            pragma: "no-cache",
+            "cache-control": "no-cache",
+          },
+        }
+      );
       console.log("Response status:", response.status);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
       const data: AlertType[] = await response.json();
       console.log("Raw API data:", data);
       const formattedRows = data.map(createRowFromAlert);
@@ -385,7 +393,9 @@ function EnhancedTable() {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds: Array<string> = filteredRows.map((n: RowType) => n.id.toString());
+      const newSelecteds: Array<string> = filteredRows.map((n: RowType) =>
+        n.id.toString()
+      );
       setSelected(newSelecteds);
       return;
     }
@@ -429,45 +439,73 @@ function EnhancedTable() {
   };
 
   const DateFilterMenu = () => {
+    const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(
+      null
+    );
+    const [popoverAnchorEl, setPopoverAnchorEl] =
+      React.useState<HTMLElement | null>(null);
+
     const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
-      setDateFilterAnchorEl(event.currentTarget);
+      console.log("Anchor element:", event.currentTarget);
+      setMenuAnchorEl(event.currentTarget);
     };
 
-    const handleDateFilterClose = () => {
-      setDateFilterAnchorEl(null);
+    const handleMenuClose = () => {
+      setMenuAnchorEl(null);
     };
 
-    const handleRangeSelect = (range: string) => {
+    const handleRangeSelect = (
+      range: string,
+      event?: React.MouseEvent<HTMLElement>
+    ) => {
       setSelectedRange(range);
       let newStartDate = null;
       let newEndDate = new Date();
-      
-      switch(range) {
-        case '7days':
+
+      switch (range) {
+        case "7days":
           newStartDate = new Date();
           newStartDate.setDate(newStartDate.getDate() - 7);
+          newStartDate = startOfDay(newStartDate); // Start of day
+          newEndDate = endOfDay(newEndDate); // End of current day
           break;
-        case '30days':
+        case "30days":
           newStartDate = new Date();
           newStartDate.setDate(newStartDate.getDate() - 30);
+          newStartDate = startOfDay(newStartDate);
+          newEndDate = endOfDay(newEndDate);
           break;
-        case 'year':
+        case "year":
           newStartDate = new Date();
           newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+          newStartDate = startOfDay(newStartDate);
+          newEndDate = endOfDay(newEndDate);
           break;
-        case 'all':
+        case "all":
           newStartDate = null;
           newEndDate = null;
           break;
-        case 'custom':
-          setDateDialogOpen(true);
-          handleDateFilterClose();
+        case "custom":
+          if (event) {
+            setPopoverAnchorEl(event.currentTarget);
+          }
           return;
       }
-      
+
       setStartDate(newStartDate);
       setEndDate(newEndDate);
-      handleDateFilterClose();
+      setMenuAnchorEl(null);
+    };
+
+    const handlePopoverClose = () => {
+      setPopoverAnchorEl(null);
+    };
+
+    const handleApplyCustomRange = () => {
+      setSelectedRange("custom");
+      if (startDate) setStartDate(startOfDay(startDate));
+      if (endDate) setEndDate(endOfDay(endDate));
+      setPopoverAnchorEl(null);
     };
 
     return (
@@ -475,84 +513,116 @@ function EnhancedTable() {
         <Button
           variant="outlined"
           onClick={handleDateFilterClick}
-          endIcon={<FilterListIcon />}
+          startIcon={<FilterListIcon />}
         >
-          {selectedRange === '7days' ? 'Last 7 Days' :
-           selectedRange === '30days' ? 'Last 30 Days' :
-           selectedRange === 'year' ? 'Last Year' :
-           selectedRange === 'custom' ? 'Custom Range' : 'All Time'}
+          {selectedRange === "7days"
+            ? "Last 7 Days"
+            : selectedRange === "30days"
+            ? "Last 30 Days"
+            : selectedRange === "year"
+            ? "Last Year"
+            : selectedRange === "custom"
+            ? "Custom Range"
+            : "All Time"}
         </Button>
-        
+
         <Menu
-          anchorEl={dateFilterAnchorEl}
-          open={Boolean(dateFilterAnchorEl)}
-          onClose={handleDateFilterClose}
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl)}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
         >
-          <MenuItem onClick={() => handleRangeSelect('7days')}>Last 7 Days</MenuItem>
-          <MenuItem onClick={() => handleRangeSelect('30days')}>Last 30 Days</MenuItem>
-          <MenuItem onClick={() => handleRangeSelect('year')}>Last Year</MenuItem>
-          <MenuItem onClick={() => handleRangeSelect('all')}>All Time</MenuItem>
-          <MenuItem onClick={() => handleRangeSelect('custom')}>Custom Range</MenuItem>
+          <MenuItem onClick={() => handleRangeSelect("7days")}>
+            Last 7 Days
+          </MenuItem>
+          <MenuItem onClick={() => handleRangeSelect("30days")}>
+            Last 30 Days
+          </MenuItem>
+          <MenuItem onClick={() => handleRangeSelect("year")}>
+            Last Year
+          </MenuItem>
+          <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
+          <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
+            Custom Range
+          </MenuItem>
         </Menu>
 
-        <Dialog open={dateDialogOpen} onClose={() => setDateDialogOpen(false)}>
-          <DialogTitle>Select Date Range</DialogTitle>
-          <DialogContent>
+        <Popover
+          open={Boolean(popoverAnchorEl)}
+          anchorEl={popoverAnchorEl}
+          onClose={handlePopoverClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+        >
+          <Box sx={{ p: 2, minWidth: 300 }}>
+            <Typography variant="h6" gutterBottom>
+              Select Date Range
+            </Typography>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <DatePicker
                   label="Start Date"
                   value={startDate}
                   onChange={(newValue) => setStartDate(newValue)}
-                  slotProps={{ textField: { size: 'small' } }}
-                  format="MM/dd/yyyy"
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yy"
                 />
                 <DatePicker
                   label="End Date"
                   value={endDate}
                   onChange={(newValue) => setEndDate(newValue)}
-                  slotProps={{ textField: { size: 'small' } }}
-                  format="MM/dd/yyyy"
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yy"
                 />
               </Box>
             </LocalizationProvider>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              setDateDialogOpen(false);
-              setSelectedRange('custom');
-            }}>
-              Apply
-            </Button>
-          </DialogActions>
-        </Dialog>
+            <Box
+              sx={{
+                mt: 2,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
+              <Button onClick={handlePopoverClose}>Cancel</Button>
+              <Button onClick={handleApplyCustomRange} variant="contained">
+                Apply
+              </Button>
+            </Box>
+          </Box>
+        </Popover>
       </>
     );
   };
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
-  
+
   const filteredRows = rows.filter((row) => {
     const matchesSearch =
       searchTerm === "" ||
       row.desc.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.equipment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      row.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPriority = priorityFilter === "All" || row.priority === priorityFilter;
+      row.channel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      row.channelId.toString().includes(searchTerm);
+    const matchesPriority =
+      priorityFilter === "All" || row.priority === priorityFilter;
     const matchesStatus = statusFilter === "All" || row.status === statusFilter;
     const rowDate = new Date(row.date);
+    const rowDateStart = startOfDay(rowDate);
+    const rowDateEnd = endOfDay(rowDate);
     const matchesDate =
-      (!startDate || rowDate >= startDate) &&
-      (!endDate || rowDate <= endDate);
+      (!startDate || rowDateEnd >= startOfDay(startDate)) &&
+      (!endDate || rowDateStart <= endOfDay(endDate));
     return matchesSearch && matchesPriority && matchesStatus && matchesDate;
   });
 
-  const emptyRows = rowsPerPage - Math.min(rowsPerPage, filteredRows.length - page * rowsPerPage);
+  const emptyRows =
+    rowsPerPage -
+    Math.min(rowsPerPage, filteredRows.length - page * rowsPerPage);
 
   const handleDelete = async (id: number) => {
-    setDeleteId(id); // Store the ID to delete
-    setDeleteDialogOpen(true); // Open confirmation dialog
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -577,8 +647,8 @@ function EnhancedTable() {
       console.error("Error deleting alert:", error);
       alert("Something went wrong. Please try again.");
     } finally {
-      setDeleteDialogOpen(false); // Close dialog
-      setDeleteId(null); // Reset ID
+      setDeleteDialogOpen(false);
+      setDeleteId(null);
     }
   };
 
@@ -588,8 +658,8 @@ function EnhancedTable() {
       alert(`Alert is already resolved.`);
       return;
     }
-    setResolveId(id); // Store the ID to resolve
-    setResolveDialogOpen(true); // Open confirmation dialog
+    setResolveId(id);
+    setResolveDialogOpen(true);
   };
 
   const confirmResolve = async () => {
@@ -618,8 +688,8 @@ function EnhancedTable() {
       console.error("Error marking alert as resolved:", error);
       alert("Something went wrong. Please try again.");
     } finally {
-      setResolveDialogOpen(false); // Close dialog
-      setResolveId(null); // Reset ID
+      setResolveDialogOpen(false);
+      setResolveId(null);
     }
   };
   // Added menu handlers
@@ -662,14 +732,14 @@ function EnhancedTable() {
       console.error("Error during bulk delete:", error);
       alert("An error occurred while deleting alerts. Please try again.");
     } finally {
-      setBulkDeleteDialogOpen(false); // Close dialog
-      handleMenuClose(); // Close menu
+      setBulkDeleteDialogOpen(false);
+      handleMenuClose();
     }
   };
 
   const handleBulkResolve = () => {
     if (selected.length === 0) return;
-    setBulkResolveDialogOpen(true); // Open the confirmation dialog
+    setBulkResolveDialogOpen(true);
   };
 
   const confirmBulkResolve = async () => {
@@ -688,7 +758,7 @@ function EnhancedTable() {
       });
 
       if (unresolvedIds.length === 0) {
-        alert(`All selected alert(s) were already resolved.`);
+        alert(`All selected alert(s) already resolved.`);
         setBulkResolveDialogOpen(false);
         handleMenuClose();
         return;
@@ -751,7 +821,7 @@ function EnhancedTable() {
           message += `Successfully resolved ${successCount} alert(s). `;
         }
         if (alreadyResolvedCount > 0) {
-          message += `${alreadyResolvedCount} alert(s) were already resolved. `;
+          message += `${alreadyResolvedCount} alert(s) already resolved. `;
         }
         if (failureCount > 0) {
           message += `${failureCount} alert(s) failed to resolve. Please try again.`;
@@ -781,7 +851,7 @@ function EnhancedTable() {
     <div>
       <SearchContainer>
         <TextField
-          placeholder="Search by description, equipment or location"
+          placeholder="Search by description or channel"
           variant="outlined"
           size="small"
           value={searchTerm}
@@ -814,9 +884,6 @@ function EnhancedTable() {
             <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
           </Select>
         </FormControl>
-        <Button variant="contained" color="primary">
-          Go
-        </Button>
         <DateFilterMenu />
         <Button
           variant="outlined"
@@ -877,8 +944,8 @@ function EnhancedTable() {
                           }
                         />
                       </TableCell>
-                      <TableCell align="left">{row.location}</TableCell>
-                      <TableCell align="left">{row.equipment}</TableCell>
+                      <TableCell align="left">{row.channelId}</TableCell>
+                      <TableCell align="left">{row.channel}</TableCell>
                       <TableCell align="left">
                         {row.priority === "HIGH" && (
                           <PriorityChip
@@ -929,7 +996,11 @@ function EnhancedTable() {
                           />
                         )}
                       </TableCell>
-                      <TableCell align="left">{row.date}</TableCell>
+                      <TableCell align="left">
+                        {row.date !== "Unknown"
+                          ? format(new Date(row.date), "dd/MM/yy HH:mm:ss")
+                          : "Unknown"}
+                      </TableCell>
                       <TableCell padding="none" align="right">
                         <Box mr={2}>
                           <IconButton

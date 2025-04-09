@@ -73,6 +73,7 @@ export async function GET() {
             channelId: true,
             channel: {
               select: {
+                name: true,
                 longitude: true,
                 latitude: true,
               },
@@ -89,6 +90,7 @@ export async function GET() {
         ? [alert.feed.channel.latitude ?? 0, alert.feed.channel.longitude ?? 0]
         : [0, 0], // Fallback for missing feed/channel
       channelId: alert.feed?.channelId ?? 0,
+      channelName: alert.feed?.channel?.name ?? "Unknown",
       priority: alert.priority || 'LOW',
       alertDescription: alert.alertDescription,
       status: alert.alertStatus,
