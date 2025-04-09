@@ -58,6 +58,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, startOfDay, endOfDay } from "date-fns";
+import AlertDetailsPopup from "./components/AlertDetailsPopup";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
@@ -117,7 +118,7 @@ type AlertType = {
   date: string;
 };
 
-type RowType = {
+export type RowType = {
   id: number;
   location: string; // Convert [lat, lon] to string
   channelId: number;
@@ -346,6 +347,8 @@ function EnhancedTable() {
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [selectedRange, setSelectedRange] = React.useState("all");
+  const [descriptionDialogOpen, setDescriptionDialogOpen] = React.useState(false);
+  const [selectedRow, setSelectedRow] = React.useState<RowType | null>(null);
 
   const fetchAlerts = async () => {
     try {
@@ -436,6 +439,16 @@ function EnhancedTable() {
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleRowClick = (row: RowType) => {
+    setSelectedRow(row);
+    setDescriptionDialogOpen(true);
+  };
+
+  const handleDescriptionDialogClose = () => {
+    setDescriptionDialogOpen(false);
+    setSelectedRow(null);
   };
 
   const DateFilterMenu = () => {
@@ -934,6 +947,8 @@ function EnhancedTable() {
                       tabIndex={-1}
                       key={`${row.id || "unknown"}-${index}`} //originally: key={`${row.id}-${index}`}
                       selected={isItemSelected}
+                      onClick={() => handleRowClick(row)} 
+                      sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
@@ -998,7 +1013,7 @@ function EnhancedTable() {
                       </TableCell>
                       <TableCell align="left">
                         {row.date !== "Unknown"
-                          ? format(new Date(row.date), "dd/MM/yy HH:mm:ss")
+                          ? format(new Date(row.date), "dd/MM/yy HH:mm")
                           : "Unknown"}
                       </TableCell>
                       <TableCell padding="none" align="right">
@@ -1040,6 +1055,12 @@ function EnhancedTable() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+      <AlertDetailsPopup
+        open={descriptionDialogOpen}
+        row={selectedRow}
+        onClose={handleDescriptionDialogClose}
+        // No onApprove or onCancel props yet
+      />
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
