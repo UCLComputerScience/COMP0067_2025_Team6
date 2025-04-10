@@ -20,23 +20,24 @@ model Alerts {
 }
 
 model Channel {
-  id          Int       @id
-  name        String    @db.VarChar
+  id          Int         @id
+  name        String      @db.VarChar
   latitude    Float
   longitude   Float
-  field1      String?   @db.VarChar(100)
-  field2      String?   @db.VarChar(100)
-  field3      String?   @db.VarChar(100)
-  field4      String?   @db.VarChar(100)
-  field5      String?   @db.VarChar(100)
-  field6      String?   @db.VarChar(100)
-  field7      String?   @db.VarChar(100)
-  field8      String?   @db.VarChar(100)
+  field1      String?     @db.VarChar(100)
+  field2      String?     @db.VarChar(100)
+  field3      String?     @db.VarChar(100)
+  field4      String?     @db.VarChar(100)
+  field5      String?     @db.VarChar(100)
+  field6      String?     @db.VarChar(100)
+  field7      String?     @db.VarChar(100)
+  field8      String?     @db.VarChar(100)
   lastEntryId Int
-  createdAt   DateTime? @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime? @default(now()) @db.Timestamp(6)
+  createdAt   DateTime?   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime?   @default(now()) @db.Timestamp(6)
   ApiKey      ApiKey[]
   feed        Feed[]
+  Threshold   Threshold[]
 }
 
 model Feed {
@@ -105,6 +106,26 @@ model ApiKey {
   labId     Int?
   channel   Channel? @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lab       Labs?    @relation(fields: [labId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model DefaultThreshold {
+  id        Int      @id @default(autoincrement())
+  fieldName String
+  minValue  Float
+  maxValue  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Threshold {
+  id        Int      @id @default(autoincrement())
+  channelId Int
+  fieldName String
+  minValue  Float
+  maxValue  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
 
 enum AlertStatus {

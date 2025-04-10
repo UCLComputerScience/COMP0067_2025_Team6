@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
       include: {
         ApiKey: {
           include: {
-            lab: true, // Include Labs data linked via labId
+            lab: true, 
           },
         },
       },

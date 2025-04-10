@@ -27,6 +27,7 @@ import {
   InputLabel,
   Menu,
   MenuItem,
+  Modal,
   TextField,
   FormControl,
   Typography as MuiTypography,
@@ -41,8 +42,10 @@ import {
   Add as AddIcon,
   MoreVert,
   Search as SearchIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import BatteryGauge from "react-battery-gauge"; //had installed react-battery-gauge (can remove if causing issues)
+import HideAuthGuard from "@/components/guards/HideAuthGuard"; // Adjust path as needed
 
 const Card = styled(MuiCard)(spacing);
 
@@ -61,13 +64,6 @@ const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
 
 const Typography = styled(MuiTypography)(spacing);
-
-const SwitchContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 6px;
-  width: 100%;
-`;
 
 const SearchBarContainer = styled(Box)`
   display: flex;
@@ -128,9 +124,6 @@ interface SensorFieldProps {
 const batteryData = {
   battery: "85%", // This could be updated later if connected to a real source
 };
-
-
-
 
 const sensorRanges = {
   Temperature: { min: -50, max: 150, unit: "°C" }, // Unit for Temperature
@@ -208,7 +201,6 @@ function SensorField({
 function LabCard({ channelId, name, apiKey }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
   const [sliderValues, setSliderValues] = useState<number[][]>([]); // State to handle slider values
-  const [toggle, setToggle] = useState<boolean>(false); // Toggle state
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Menu state
 
@@ -283,10 +275,6 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
     setSliderValues(updated);
   };
 
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setToggle(event.target.checked);
-  };
-
   return (
     <Card sx={{ maxWidth: 320, marginBottom: 4 }}>
       <CardContent
@@ -302,6 +290,12 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
           <Grid item>
             <Typography variant="h5" gutterBottom fontWeight="bold">
               {channel.name}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ fontSize: "0.8rem", color: "grey.500" }}
+            >
+              {channelId}
             </Typography>
           </Grid>
 
@@ -390,15 +384,171 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
             </Typography>
           </Box>
         </Box>
-        <SwitchContainer>
-          <Switch
-            checked={toggle}
-            onChange={handleToggleChange}
-            sx={{ transform: "scale(1.7)" }}
-          />
-        </SwitchContainer>
       </CardContent>
     </Card>
+  );
+}
+
+
+function SettingsForm() {
+  const [fields, setFields] = useState<{ name: string; min: number; max: number }[]>([]);
+
+  const handleFieldChange = (index: number, key: string, value: any) => {
+    const updatedFields = [...fields];
+    if (key === "name") {
+      updatedFields[index] = { ...updatedFields[index], name: value };
+    } else {
+      updatedFields[index] = { ...updatedFields[index], [key]: Number(value) }; // Fixed: Removed extra ]
+    }
+    setFields(updatedFields);
+  };
+
+  const handleAddField = () => {
+    setFields([...fields, { name: "", min: 0, max: 100 }]);
+  };
+
+  const handleRemoveField = (index: number) => {
+    const updatedFields = fields.filter((_, i) => i !== index);
+    setFields(updatedFields);
+  };
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/controls/api/settings");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.fields && data.fields.length > 0) {
+            setFields(data.fields);
+          }
+        } else {
+          console.error("Failed to fetch settings:", await response.text());
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const settings = {
+      fields: fields.map((field) => ({
+        name: field.name,
+        min: field.min,
+        max: field.max,
+      })),
+    };
+    try {
+      const response = await fetch("/api/controls/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      if (response.ok) {
+        console.log("Settings saved to database:", settings);
+      } else {
+        console.error("Failed to save settings:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        mb: 4,
+        p: 2,
+        border: "1px solid #ddd",
+        borderRadius: 2,
+        backgroundColor: "#f9f9f9",
+        maxWidth: 800,
+        margin: "0 auto",
+      }}
+    >
+      <Typography variant="h4" gutterBottom>Default Sensor Settings</Typography>
+      <form onSubmit={handleSubmit}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div></div>
+          {fields.length === 0 ? (
+            <Typography variant="body1" color="textSecondary">
+              No fields defined yet. Click "Add Field" to start.
+            </Typography>
+          ) : (
+            fields.map((field, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  mb: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <TextField
+                  label={`Field ${index + 1}`}
+                  value={field.name}
+                  onChange={(e) => handleFieldChange(index, "name", e.target.value)}
+                  sx={{ width: 200 }}
+                  placeholder="Enter field name"
+                />
+                <TextField
+                  label="Min Value"
+                  type="number"
+                  value={field.min}
+                  onChange={(e) => handleFieldChange(index, "min", e.target.value)}
+                  sx={{ width: 120 }}
+                />
+                <TextField
+                  label="Max Value"
+                  type="number"
+                  value={field.max}
+                  onChange={(e) => handleFieldChange(index, "max", e.target.value)}
+                  sx={{ width: 120 }}
+                />
+                <IconButton
+                  onClick={() => handleRemoveField(index)}
+                  sx={{
+                    border: "1px solid grey",
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    color: "grey",
+                    "&:hover": {
+                      borderColor: "darkgrey",
+                      color: "darkgrey",
+                    },
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Box>
+            ))
+          )}
+
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={handleAddField}
+            sx={{ alignSelf: "flex-start", mb: 2 }}
+          >
+            Add Field
+          </Button>
+
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ alignSelf: "flex-start", mt: 2 }}
+          >
+            Save Settings
+          </Button>
+        </Box>
+      </form>
+    </Box>
   );
 }
 
@@ -409,6 +559,10 @@ function Controls() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openSettings, setOpenSettings] = useState(false);
+
+  const handleOpenSettings = () => setOpenSettings(true);
+  const handleCloseSettings = () => setOpenSettings(false);
 
   useEffect(() => {
     const fetchChannels = async () => {
@@ -429,8 +583,10 @@ function Controls() {
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
 
-  const filteredChannels = channels.filter((channel) =>
-    searchTerm === "" || channel.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredChannels = channels.filter(
+    (channel) =>
+      searchTerm === "" ||
+      channel.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -478,10 +634,38 @@ function Controls() {
             </MenuItem>
           </Select>
         </FormControl>
+        <HideAuthGuard requiredRoles={["ADMIN", "SUPER_USER"]}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleOpenSettings}
+            sx={{ ml: "auto" }} // Aligns to the right
+          >
+            Manage Settings
+          </Button>
+        </HideAuthGuard>
       </SearchBarContainer>
+      <Modal
+        open={openSettings}
+        onClose={handleCloseSettings}
+        aria-labelledby="settings-modal-title"
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            p: 4,
+            borderRadius: 2,
+            boxShadow: 24,
+            maxWidth: 800,
+            width: "100%",
+          }}
+        >
+          <SettingsForm />
+        </Box>
+      </Modal>
 
       <Box sx={{ mb: 5, padding: 2 }}>
-        <Typography variant="h3" gutterBottom>All Channels</Typography>
         <Grid container spacing={6}>
           {filteredChannels.map((channel) => (
             <Grid item xs={12} key={channel.id}>
