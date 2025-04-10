@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model Alerts {
@@ -14,6 +15,7 @@ model Alerts {
   alertDescription String        @db.VarChar(255)
   alertStatus      AlertStatus
   alertDate        DateTime      @db.Timestamp(6)
+  readStatus       ReadStatus
   feed             Feed          @relation(fields: [entryId], references: [entryId], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -126,4 +128,9 @@ enum Role {
 enum UserStatus {
   ACTIVE
   INACTIVE
+}
+
+enum ReadStatus {
+  READ
+  UNREAD
 }
