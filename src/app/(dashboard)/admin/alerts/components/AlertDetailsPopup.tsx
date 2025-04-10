@@ -1,3 +1,4 @@
+// app/admin/alerts/components/AlertDetailsPopup.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -6,12 +7,12 @@ import {
   CardContent,
   Dialog,
   DialogTitle,
-  Divider as MuiDivider,
   IconButton,
   Menu,
   MenuItem,
   Typography,
   Chip as MuiChip,
+  Grid,
 } from "@mui/material";
 import styled from "@emotion/styled";
 import { spacing } from "@mui/system";
@@ -22,11 +23,19 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { green, orange, red, blue, grey } from "@mui/material/colors";
 
-const Card = styled(MuiCard)`
+const HeaderCard = styled(MuiCard)`
   ${spacing}
-  margin: 16px;
+  margin: 16px 16px 8px 16px;
   overflow: visible;
   border: 1px solid ${grey[300]};
+`;
+
+const DescriptionCard = styled(MuiCard)`
+  ${spacing}
+  margin: 8px 16px 16px 16px;
+  overflow: visible;
+  border: 1px solid ${grey[300]};
+  flex: 1;
 `;
 
 const PriorityChip = styled(MuiChip)`
@@ -42,13 +51,8 @@ const PriorityChip = styled(MuiChip)`
 
 const StatusChip = styled(MuiChip)`
   ${spacing}
-  background: ${(props) =>
-    props.label === "RESOLVED" ? blue[500] : grey[500]};
+  background: ${(props) => (props.label === "RESOLVED" ? blue[500] : grey[500])};
   color: white;
-`;
-
-const Divider = styled(MuiDivider)`
-  ${spacing}
 `;
 
 interface AlertDetailsPopupProps {
@@ -76,19 +80,31 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   if (!row) return null;
 
   // Placeholder for dynamic buttons (UI only)
-  const showApprovalButtons =
-    row.priority === "HIGH" && row.status === "UNRESOLVED";
+  const showApprovalButtons = row.priority === "HIGH" && row.status === "UNRESOLVED";
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={false}
+      sx={{
+        "& .MuiDialog-paper": {
+          width: "700px",
+          height: "600px",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
+    >
       <DialogTitle
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          fontSize: "1.1rem",
         }}
       >
-        Alert Details
+        Alert
         <IconButton
           aria-label="more"
           onClick={handleMenuClick}
@@ -113,61 +129,89 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           </MenuItem>
         </Menu>
       </DialogTitle>
-      <Card>
+      {/* Header Block */}
+      <HeaderCard sx={{ bgcolor: grey[200] }}>
         <CardContent>
-          <Box mb={2}>
-            <Typography variant="subtitle2" color="textSecondary">
-              Description
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 1 }}>
-              {row.desc}
-            </Typography>
-          </Box>
-          <Divider my={2} />
-          <Box>
-            <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-              Additional Details
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography>
-                <strong>Channel ID:</strong> {row.channelId}
-              </Typography>
-              <Typography>
-                <strong>Channel Name:</strong> {row.channel}
-              </Typography>
-              <Typography>
-                <strong>Location:</strong> {row.location}
-              </Typography>
-              <Typography>
-                <strong>Priority:</strong>{" "}
-                <PriorityChip size="small" label={row.priority} />
-              </Typography>
-              <Typography>
-                <strong>Status:</strong>{" "}
-                <StatusChip size="small" label={row.status} />
-              </Typography>
-              <Typography>
-                <strong>Date & Time:</strong>{" "}
-                {row.date !== "Unknown"
-                  ? format(new Date(row.date), "dd/MM/yy HH:mm")
-                  : "Unknown"}
-              </Typography>
-            </Box>
+          <Typography variant="h6" color="textSecondary">
+            Details
+          </Typography>
+          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography sx={{ fontSize: "1rem" }}>
+                  <strong>Channel ID:</strong> {row.channelId}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography sx={{ fontSize: "1rem" }}>
+                  <strong>Channel Name:</strong> {row.channel}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography sx={{ fontSize: "1rem" }}>
+                  <strong>Priority:</strong> <PriorityChip size="small" label={row.priority} />
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography sx={{ fontSize: "1rem" }}>
+                  <strong>Status:</strong> <StatusChip size="small" label={row.status} />
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography sx={{ fontSize: "1rem" }}>
+                  <strong>Date:</strong>{" "}
+                  {row.date !== "Unknown" ? format(new Date(row.date), "dd/MM/yy HH:mm") : "Unknown"}
+                </Typography>
+              </Grid>
+            </Grid>
           </Box>
         </CardContent>
-      </Card>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, p: 2 }}>
+      </HeaderCard>
+
+      {/* Description Block */}
+      <DescriptionCard>
+        <CardContent sx={{ flex: 1 }}>
+          <Typography variant="h6" color="textSecondary">
+            Description
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 2, fontSize: "1rem" }}>
+            {row.desc}
+          </Typography>
+        </CardContent>
+      </DescriptionCard>
+
+      {/* Buttons with Standard Size */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+          p: 4,
+        }}
+      >
         {showApprovalButtons && (
           <>
-            <Button variant="contained" color="primary">
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ minWidth: "100px" }}
+            >
               Approve
             </Button>
-            <Button variant="outlined" color="secondary">
+            <Button
+              variant="outlined"
+              color="secondary"
+              sx={{ minWidth: "100px" }}
+            >
               Reject
             </Button>
           </>
         )}
-        <Button variant="outlined" onClick={onClose}>
+        <Button
+          variant="outlined"
+          onClick={onClose}
+          sx={{ minWidth: "100px" }}
+        >
           Cancel
         </Button>
       </Box>
