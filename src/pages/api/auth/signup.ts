@@ -55,6 +55,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         });
 
+    // Log the sign-up event to UsageHistory table and link to the user
+    await prisma.usageHistory.create({
+      data: {
+        userEmail: newUser.email,  // Linking to User using email
+        action: "User Signup",     // Action performed
+        metadata: {
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          organisation: newUser.organisation,
+        },
+      },
+    });
+
     return res.status(201).json({ message: "User created successfully", user: newUser });
   } catch (error) {
     console.error("Signup Error:", error);

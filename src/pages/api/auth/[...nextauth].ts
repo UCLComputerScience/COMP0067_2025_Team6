@@ -49,6 +49,17 @@ export default NextAuth({
           if (user.status !== "ACTIVE") {
             return null; // User is inactive, return null and prevent login
           }
+
+          // Log the login event into UsageHistory table
+          await prisma.usageHistory.create({
+            data: {
+              timestamp: new Date().toISOString(),
+              userEmail: user.email, // Use the user's email to reference the user
+              action: "Logged in", // Action description
+              metadata: {}, // Optional: You can store additional info here if needed
+            },
+          });
+
           // Return user object with necessary fields
           return {
             id: user.id.toString(),
