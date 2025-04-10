@@ -10,22 +10,6 @@ import {
 import { Slider } from "@mui/material";
 import { Menu as MenuIcon } from "@mui/icons-material";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const Card = styled(MuiCard)`
   padding: 16px;
   border-radius: 8px;
