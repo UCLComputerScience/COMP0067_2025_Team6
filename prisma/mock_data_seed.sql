@@ -32,9 +32,9 @@ INSERT INTO "Channel" (
 INSERT INTO "ApiKey" (
   "id", "channelId", "api", "labId"
 ) VALUES
-  (1, 2606541, 'https://api.thingspeak.com/channels/2606541/fields/1.json', 1), -- Lab 1
-  (2, 2035654, 'https://api.thingspeak.com/channels/2035654/fields/1.json', 1), -- Lab 1
-  (3, 2613687, 'https://api.thingspeak.com/channels/2613687/fields/1.json', 2); -- Lab 2
+  (1, 2606541, 'https://api.thingspeak.com/channels/2606541/feeds.json', 1), -- Lab 1
+  (2, 2035654, 'https://api.thingspeak.com/channels/2035654/feeds.json', 1), -- Lab 1
+  (3, 2613687, 'https://api.thingspeak.com/channels/2613687/feeds.json', 2); -- Lab 2
 
 -- Insert into Feed table (aligned with Channel IDs)
 INSERT INTO "Feed" (

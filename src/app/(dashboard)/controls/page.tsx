@@ -35,7 +35,6 @@ import {
   Slider,
   Switch,
 } from "@mui/material";
-// import LabCard from "@/components/pages/dashboard/controls/LabCard";
 import { spacing } from "@mui/system";
 import { orange, green, blue } from "@mui/material/colors";
 import {
@@ -78,16 +77,41 @@ const SearchBarContainer = styled(Box)`
   gap: 16px;
 `;
 
-// Define Types for the Channel Data
-interface Channel {
+interface ApiKey {
+  id: number;
   channelId: number;
-  name: string;
+  api: string;
   labId: number;
+  lab: {
+    id: number;
+    labLocation: string;
+    managerId: number;
+  };
+}
+
+interface Channel {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  field1?: string | null;
+  field2?: string | null;
+  field3?: string | null;
+  field4?: string | null;
+  field5?: string | null;
+  field6?: string | null;
+  field7?: string | null;
+  field8?: string | null;
+  lastEntryId: number;
+  createdAt: string;
+  updatedAt: string;
+  ApiKey: ApiKey[];
 }
 
 interface LabCardProps {
   channelId: number;
   name: string;
+  apiKey: string;
 }
 
 interface SensorFieldProps {
@@ -105,50 +129,8 @@ const batteryData = {
   battery: "85%", // This could be updated later if connected to a real source
 };
 
-const channelData: Channel[] = [
-  { channelId: 2606541, name: "Proteus Monitor 1", labId: 247 },
-  { channelId: 2613687, name: "Proteus Monitor 2", labId: 247 },
-  { channelId: 2207475, name: "Proteus P9", labId: 247 },
-  { channelId: 2035654, name: "Proteus P8", labId: 249 },
-  { channelId: 1746537, name: "Proteus P7", labId: 249 },
-  { channelId: 1746536, name: "Proteus P6", labId: 249 },
-  { channelId: 1746535, name: "Proteus P5", labId: 312 },
-  { channelId: 1603568, name: "Proteus P4", labId: 312 },
-  { channelId: 1603565, name: "Proteus P3", labId: 249 },
-  { channelId: 1598577, name: "Proteus P2", labId: 247 },
-  { channelId: 1593183, name: "Proteus P1", labId: 249 },
-];
 
-// const labData = {
-//   channel: {
-//     id: 2606541,
-//     name: "Proteus Monitor 1",
-//     latitude: "0.0",
-//     longitude: "0.0",
-//     field1: "Temperature",
-//     field2: "Humidity",
-//     field3: "Pressure",
-//     created_at: "2024-07-23T12:14:02Z",
-//     updated_at: "2024-08-15T06:42:31Z",
-//     last_entry_id: 12967,
-//   },
-//   feeds: [
-//     {
-//       created_at: "2025-03-01T09:50:39Z",
-//       entry_id: 12966,
-//       field1: "25.05000",
-//       field2: "36.68066",
-//       field3: "1018.11660",
-//     },
-//     {
-//       created_at: "2025-03-01T09:50:53Z",
-//       entry_id: 12967,
-//       field1: "25.05000",
-//       field2: "36.69141",
-//       field3: "1018.11390",
-//     },
-//   ],
-// };
+
 
 const sensorRanges = {
   Temperature: { min: -50, max: 150, unit: "°C" }, // Unit for Temperature
@@ -223,7 +205,7 @@ function SensorField({
   );
 }
 
-function LabCard({ channelId, name }: LabCardProps) {
+function LabCard({ channelId, name, apiKey }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
   const [sliderValues, setSliderValues] = useState<number[][]>([]); // State to handle slider values
   const [toggle, setToggle] = useState<boolean>(false); // Toggle state
@@ -242,22 +224,23 @@ function LabCard({ channelId, name }: LabCardProps) {
   // Fetch data from the API
   useEffect(() => {
     const fetchData = async () => {
+      console.log("Fetching from URL:", apiKey);
       try {
-        const response = await fetch(
-          `https://api.thingspeak.com/channels/${channelId}/feeds.json?`
-        );
+        const response = await fetch(`${apiKey}`);
         if (!response.ok) {
           throw new Error("Failed to fetch data");
         }
         const data = await response.json();
+        console.log("Fetched data:", data);
         setChannelData(data); // Set the API response
       } catch (err) {
+        console.error("Fetch error:", err.message);
         setError(err.message); // Handle errors by setting the error message
       }
     };
 
     fetchData();
-  }, [channelId]);
+  }, [channelId, apiKey]);
 
   // If data is still loading
   if (!channelData) {
@@ -423,31 +406,31 @@ function Controls() {
   // State for search and selected lab filter
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLabId, setSelectedLabId] = useState<number | "">("");
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  interface GroupedByLab {
-    [labId: string]: Channel[]; // Channels are grouped by labId
-  }
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const response = await fetch("/controls/api/all_channels");
+        if (!response.ok) throw new Error("Failed to fetch channels");
+        const data = await response.json();
+        setChannels(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChannels();
+  }, []);
 
-  // Group by labId
-  const groupedByLab: GroupedByLab = channelData.reduce((groups, channel) => {
-    if (!groups[channel.labId]) {
-      groups[channel.labId] = [];
-    }
-    groups[channel.labId].push(channel);
-    return groups;
-  }, {});
+  if (loading) return <Typography>Loading...</Typography>;
+  if (error) return <Typography color="error">{error}</Typography>;
 
-  // Filter channels based on search term and selected labId
-  const filteredLabs = Object.entries(groupedByLab).filter(
-    ([labId, channels]) => {
-      return (
-        (searchTerm === "" ||
-          channels.some((channel) =>
-            channel.name.toLowerCase().includes(searchTerm.toLowerCase())
-          )) &&
-        (selectedLabId === "" || Number(labId) === selectedLabId)
-      );
-    }
+  const filteredChannels = channels.filter((channel) =>
+    searchTerm === "" || channel.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -487,48 +470,30 @@ function Controls() {
           <Select
             value={selectedLabId}
             label="Lab ID"
-            onChange={(e) => setSelectedLabId(e.target.value)}
+            onChange={(e) => setSelectedLabId(e.target.value as number | "")}
+            disabled
           >
             <MenuItem value="">
               <em>All Labs</em>
             </MenuItem>
-            {Object.keys(groupedByLab).map((labId) => (
-              <MenuItem key={labId} value={Number(labId)}>
-                {`Lab ${labId}`}
-              </MenuItem>
-            ))}
           </Select>
         </FormControl>
       </SearchBarContainer>
 
-      {/* Render filtered lab sections */}
-      {filteredLabs.map(([labId, channels]) => (
-        <Box
-          key={labId}
-          sx={{
-            mb: 5,
-            backgroundColor: "#f5f5f5", // Light grey background for the box
-            padding: 2, // Padding inside the box
-            borderRadius: 2, // Rounded corners
-            border: "1px solid #ddd", // Light border to define the box
-            boxShadow: 2, // Subtle shadow effect for a card-like appearance
-            pl: 8, // Left padding for the entire box
-          }}
-        >
-          <Typography variant="h3" gutterBottom>
-            Lab {labId}
-          </Typography>
-
-          <Grid container spacing={6}>
-            {/* Map through the predefined channel data and create LabCard for each channel */}
-            {channels.map((channel) => (
-              <Grid item xs={12} key={channel.channelId}>
-                <LabCard channelId={channel.channelId} name={channel.name} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      ))}
+      <Box sx={{ mb: 5, padding: 2 }}>
+        <Typography variant="h3" gutterBottom>All Channels</Typography>
+        <Grid container spacing={6}>
+          {filteredChannels.map((channel) => (
+            <Grid item xs={12} key={channel.id}>
+              <LabCard
+                channelId={channel.id}
+                name={channel.name}
+                apiKey={channel.ApiKey[0]?.api || ""}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     </>
   );
 }
