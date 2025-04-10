@@ -22,10 +22,16 @@ import {
   Card as MuiCard,
   CardContent as MuiCardContent,
   Divider as MuiDivider,
-  Grid,
+  Grid2 as Grid,
   Link,
+  InputLabel,
+  Menu,
+  MenuItem,
+  TextField,
+  FormControl,
   Typography as MuiTypography,
   IconButton,
+  Select,
   Slider,
   Switch,
 } from "@mui/material";
@@ -34,8 +40,8 @@ import { spacing } from "@mui/system";
 import { orange, green, blue } from "@mui/material/colors";
 import {
   Add as AddIcon,
-  BatteryChargingFull,
   MoreVert,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import BatteryGauge from "react-battery-gauge"; //had installed react-battery-gauge (can remove if causing issues)
 
@@ -60,53 +66,30 @@ const Typography = styled(MuiTypography)(spacing);
 const SwitchContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 6px;
   width: 100%;
 `;
 
-// Mocking battery data separately
-const batteryData = {
-  battery: "85%", // This could be updated later if connected to a real source
-};
+const SearchBarContainer = styled(Box)`
+  display: flex;
+  justify-content: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 16px;
+`;
 
-const labData = {
-  channel: {
-    id: 2606541,
-    name: "Proteus Monitor 1",
-    latitude: "0.0",
-    longitude: "0.0",
-    field1: "Temperature",
-    field2: "Humidity",
-    field3: "Pressure",
-    created_at: "2024-07-23T12:14:02Z",
-    updated_at: "2024-08-15T06:42:31Z",
-    last_entry_id: 12967,
-  },
-  feeds: [
-    {
-      created_at: "2025-03-01T09:50:39Z",
-      entry_id: 12966,
-      field1: "25.05000",
-      field2: "36.68066",
-      field3: "1018.11660",
-    },
-    {
-      created_at: "2025-03-01T09:50:53Z",
-      entry_id: 12967,
-      field1: "25.05000",
-      field2: "36.69141",
-      field3: "1018.11390",
-    },
-  ],
-};
+// Define Types for the Channel Data
+interface Channel {
+  channelId: number;
+  name: string;
+  labId: number;
+}
 
-const sensorRanges = {
-  Temperature: { min: -50, max: 150 },
-  Pressure: { min: 0, max: 2000 },
-  Humidity: { min: 0, max: 100 },
-};
+interface LabCardProps {
+  channelId: number;
+  name: string;
+}
 
-// SensorField Component (Handles the Slider Display)
 interface SensorFieldProps {
   label: string;
   value: number[];
@@ -114,9 +97,66 @@ interface SensorFieldProps {
   max: number;
   step: number;
   onSliderChange: (event: Event, newValue: number | number[]) => void;
-  latestValue: string | number;
+  latestValue: string;
 }
 
+// Mocking battery data separately
+const batteryData = {
+  battery: "85%", // This could be updated later if connected to a real source
+};
+
+const channelData: Channel[] = [
+  { channelId: 2606541, name: "Proteus Monitor 1", labId: 247 },
+  { channelId: 2613687, name: "Proteus Monitor 2", labId: 247 },
+  { channelId: 2207475, name: "Proteus P9", labId: 247 },
+  { channelId: 2035654, name: "Proteus P8", labId: 249 },
+  { channelId: 1746537, name: "Proteus P7", labId: 249 },
+  { channelId: 1746536, name: "Proteus P6", labId: 249 },
+  { channelId: 1746535, name: "Proteus P5", labId: 312 },
+  { channelId: 1603568, name: "Proteus P4", labId: 312 },
+  { channelId: 1603565, name: "Proteus P3", labId: 249 },
+  { channelId: 1598577, name: "Proteus P2", labId: 247 },
+  { channelId: 1593183, name: "Proteus P1", labId: 249 },
+];
+
+// const labData = {
+//   channel: {
+//     id: 2606541,
+//     name: "Proteus Monitor 1",
+//     latitude: "0.0",
+//     longitude: "0.0",
+//     field1: "Temperature",
+//     field2: "Humidity",
+//     field3: "Pressure",
+//     created_at: "2024-07-23T12:14:02Z",
+//     updated_at: "2024-08-15T06:42:31Z",
+//     last_entry_id: 12967,
+//   },
+//   feeds: [
+//     {
+//       created_at: "2025-03-01T09:50:39Z",
+//       entry_id: 12966,
+//       field1: "25.05000",
+//       field2: "36.68066",
+//       field3: "1018.11660",
+//     },
+//     {
+//       created_at: "2025-03-01T09:50:53Z",
+//       entry_id: 12967,
+//       field1: "25.05000",
+//       field2: "36.69141",
+//       field3: "1018.11390",
+//     },
+//   ],
+// };
+
+const sensorRanges = {
+  Temperature: { min: -50, max: 150, unit: "°C" }, // Unit for Temperature
+  Pressure: { min: 0, max: 2000, unit: "hPa" }, // Unit for Pressure
+  Humidity: { min: 0, max: 100, unit: "%" }, // Unit for Humidity
+};
+
+// SensorField Component (Handles the Slider Display)
 function SensorField({
   label,
   value,
@@ -126,6 +166,9 @@ function SensorField({
   onSliderChange,
   latestValue,
 }: SensorFieldProps) {
+  // Extract unit from sensorRanges using the label
+  const unit = sensorRanges[label]?.unit || "";
+
   return (
     <Box
       sx={{
@@ -150,12 +193,12 @@ function SensorField({
         // Marks: an indicator for the actual sensor reading.
         marks={[
           {
-            value: parseFloat(latestValue.toString()),
-            label: `${latestValue} units`,
+            value: parseFloat(latestValue),
+            // label: `${latestValue} units`,
           },
         ]}
         sx={{
-          width: "100%",
+          width: "120px", // Fixed width for the slider
           margin: "0 8px",
           "& .MuiSlider-mark": {
             width: 10, // Increase the width
@@ -170,60 +213,107 @@ function SensorField({
           },
         }}
       />
-      <Typography variant="body2" sx={{ width: "80px", textAlign: "center" }}>
-        {`${latestValue} units`}
+      <Typography
+        variant="body2"
+        sx={{ width: "80px", textAlign: "center", fontWeight: "bold" }}
+      >
+        {`${latestValue}${unit}`}
       </Typography>
     </Box>
   );
 }
 
-interface LabCardProps {
-  channelId: number;
-}
+function LabCard({ channelId, name }: LabCardProps) {
+  const [channelData, setChannelData] = useState<any | null>(null);
+  const [sliderValues, setSliderValues] = useState<number[][]>([]); // State to handle slider values
+  const [toggle, setToggle] = useState<boolean>(false); // Toggle state
+  const [error, setError] = useState<string | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Menu state
 
-function LabCard({ channelId }: LabCardProps) {
-  // Look up the channel data using the channelId
-  const { channel, feeds } = labData; // For now, labData is our static source
-  if (channel.id !== channelId) {
+  // Function to handle menu open/close
+  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Fetch data from the API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          `https://api.thingspeak.com/channels/${channelId}/feeds.json?`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const data = await response.json();
+        setChannelData(data); // Set the API response
+      } catch (err) {
+        setError(err.message); // Handle errors by setting the error message
+      }
+    };
+
+    fetchData();
+  }, [channelId]);
+
+  // If data is still loading
+  if (!channelData) {
+    return <Typography variant="body1">Loading data...</Typography>;
+  }
+
+  // If there's an error, show the error message
+  if (error) {
     return (
-      <Typography variant="body1">No data for channelId {channelId}</Typography>
+      <Typography variant="body1" color="error">{`Error: ${error}`}</Typography>
     );
   }
 
-  // Get the latest feed (we assume the last element is the latest)
+  // Destructure data from the API response
+  const { channel, feeds } = channelData;
+
+  // Get the latest feed
   const latestFeed = feeds[feeds.length - 1];
 
   // Create an array of fields using keys that start with 'field'
   const fields = Object.keys(channel)
     .filter((key) => key.startsWith("field"))
     .map((key) => ({
-      label: String(channel[key as keyof typeof channel]), // e.g., "Temperature", "Humidity", etc.
-      latestValue: latestFeed[key as keyof typeof latestFeed], // e.g., "25.05000", etc.
+      label: channel[key], // e.g., "Temperature", "Humidity", etc.
+      latestValue: parseFloat(latestFeed[key]).toFixed(2), // e.g., "25.05000", etc.
     }));
 
-  // Initialize slider values for each sensor as a range: [defaultMin, defaultMax]
-  // For example, here we default each slider to [30, 70]
-  const [sliderValues, setSliderValues] = useState(fields.map(() => [30, 70]));
+  // Initialize slider values for each field as [0, 100] directly
+  const initialSliderValues = fields.map(() => [0, 100]);
 
-  interface SliderChangeHandler {
-    (index: number, newValue: number | number[]): void;
+  // Set the slider values state if it's the first render
+  if (sliderValues.length === 0 && fields.length > 0) {
+    setSliderValues(initialSliderValues);
   }
 
-  const handleSliderChange: SliderChangeHandler = (index, newValue) => {
+  // Handle slider change for each sensor
+  const handleSliderChange = (index: number, newValue: number | number[]) => {
     const updated = [...sliderValues];
     updated[index] = newValue as number[]; // newValue is an array: [minThreshold, maxThreshold]
     setSliderValues(updated);
   };
 
-  // Toggle state for the switch at the bottom of the card
-  const [toggle, setToggle] = useState(false);
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setToggle(event.target.checked);
   };
 
   return (
-    <Card sx={{ maxWidth: 345, marginBottom: 4 }}>
-      <CardContent>
+    <Card sx={{ maxWidth: 320, marginBottom: 4 }}>
+      <CardContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          height: "100%", // Ensure it takes up the full height
+        }}
+      >
         <Grid container alignItems="center" justifyContent="space-between">
           {/* Device Name */}
           <Grid item>
@@ -234,17 +324,44 @@ function LabCard({ channelId }: LabCardProps) {
 
           {/* Battery and Menu Icons */}
           <Grid item>
-            <IconButton>
+            {/* <IconButton>
               <BatteryGauge
                 value={parseInt(batteryData.battery, 10)}
                 size={35}
               />
-            </IconButton>
-            <IconButton>
+            </IconButton> */}
+            <IconButton onClick={handleMenuOpen}>
               <MoreVert />
             </IconButton>
           </Grid>
         </Grid>
+
+        {/* Menu Component */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              console.log("Edit Settings clicked");
+            }}
+          >
+            Edit Settings
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              console.log("Delete Device clicked");
+            }}
+          >
+            Delete Device
+          </MenuItem>
+        </Menu>
+
+        {/* Create space */}
+        <Box sx={{ height: "16px" }}></Box>
 
         {/* Display Sensor Fields with sliders */}
         {fields.map((field, index) => (
@@ -273,7 +390,7 @@ function LabCard({ channelId }: LabCardProps) {
           >
             <Typography variant="body2">
               <strong>Start date:</strong>{" "}
-              {new Date(channel.created_at).toLocaleString()}
+              {new Date(channel.created_at).toLocaleDateString()}
             </Typography>
           </Box>
           <Box
@@ -286,13 +403,16 @@ function LabCard({ channelId }: LabCardProps) {
           >
             <Typography variant="body2">
               <strong>Last updated:</strong>{" "}
-              {new Date(channel.updated_at).toLocaleString()}
+              {new Date(channel.updated_at).toLocaleDateString()}
             </Typography>
           </Box>
         </Box>
-
         <SwitchContainer>
-          <Switch checked={toggle} onChange={handleToggleChange} />
+          <Switch
+            checked={toggle}
+            onChange={handleToggleChange}
+            sx={{ transform: "scale(1.7)" }}
+          />
         </SwitchContainer>
       </CardContent>
     </Card>
@@ -300,10 +420,35 @@ function LabCard({ channelId }: LabCardProps) {
 }
 
 function Controls() {
-  const latestFeed = labData.feeds[labData.feeds.length - 1];
-  const fields = Object.keys(latestFeed)
-    .filter((key) => key.startsWith("field"))
-    .map((key) => ({ label: labData.channel[key as keyof typeof labData.channel], value: latestFeed[key as keyof typeof latestFeed] }));
+  // State for search and selected lab filter
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedLabId, setSelectedLabId] = useState<number | "">("");
+
+  interface GroupedByLab {
+    [labId: string]: Channel[]; // Channels are grouped by labId
+  }
+
+  // Group by labId
+  const groupedByLab: GroupedByLab = channelData.reduce((groups, channel) => {
+    if (!groups[channel.labId]) {
+      groups[channel.labId] = [];
+    }
+    groups[channel.labId].push(channel);
+    return groups;
+  }, {});
+
+  // Filter channels based on search term and selected labId
+  const filteredLabs = Object.entries(groupedByLab).filter(
+    ([labId, channels]) => {
+      return (
+        (searchTerm === "" ||
+          channels.some((channel) =>
+            channel.name.toLowerCase().includes(searchTerm.toLowerCase())
+          )) &&
+        (selectedLabId === "" || Number(labId) === selectedLabId)
+      );
+    }
+  );
 
   return (
     <>
@@ -323,11 +468,67 @@ function Controls() {
 
       <Divider my={6} />
 
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <LabCard channelId={labData.channel.id} />
-        </Grid>
-      </Grid>
+      {/* Search and Filter Bar */}
+      <SearchBarContainer>
+        <TextField
+          placeholder="Search"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon color="action" />,
+          }}
+          sx={{ minWidth: 300 }}
+        />
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Lab ID</InputLabel>
+          <Select
+            value={selectedLabId}
+            label="Lab ID"
+            onChange={(e) => setSelectedLabId(e.target.value)}
+          >
+            <MenuItem value="">
+              <em>All Labs</em>
+            </MenuItem>
+            {Object.keys(groupedByLab).map((labId) => (
+              <MenuItem key={labId} value={Number(labId)}>
+                {`Lab ${labId}`}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </SearchBarContainer>
+
+      {/* Render filtered lab sections */}
+      {filteredLabs.map(([labId, channels]) => (
+        <Box
+          key={labId}
+          sx={{
+            mb: 5,
+            backgroundColor: "#f5f5f5", // Light grey background for the box
+            padding: 2, // Padding inside the box
+            borderRadius: 2, // Rounded corners
+            border: "1px solid #ddd", // Light border to define the box
+            boxShadow: 2, // Subtle shadow effect for a card-like appearance
+            pl: 8, // Left padding for the entire box
+          }}
+        >
+          <Typography variant="h3" gutterBottom>
+            Lab {labId}
+          </Typography>
+
+          <Grid container spacing={6}>
+            {/* Map through the predefined channel data and create LabCard for each channel */}
+            {channels.map((channel) => (
+              <Grid item xs={12} key={channel.channelId}>
+                <LabCard channelId={channel.channelId} name={channel.name} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      ))}
     </>
   );
 }
