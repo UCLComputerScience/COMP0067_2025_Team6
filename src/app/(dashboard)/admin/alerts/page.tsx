@@ -148,20 +148,38 @@ function createRowFromAlert(alert: AlertType): RowType {
   };
 }
 
-function descendingComparator(a: RowType, b: RowType, orderBy: string) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
+function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
+  if (orderBy === "channelId") {
+    // Numerical sorting for Channel ID
+    return b.channelId - a.channelId;
+  } else if (orderBy === "channel") {
+    // Alphabetical sorting for Channel Name
+    return b.channel.localeCompare(a.channel);
+  } else if (orderBy === "priority") {
+    // Custom order: LOW (1), MODERATE (2), HIGH (3)
+    const priorityOrder = { LOW: 1, MODERATE: 2, HIGH: 3 };
+    return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+  } else if (orderBy === "desc") {
+    // Alphabetical sorting for Description
+    return b.desc.localeCompare(a.desc);
+  } else if (orderBy === "status") {
+    // Custom order: UNRESOLVED (0), RESOLVED (1)
+    const statusOrder = { UNRESOLVED: 0, RESOLVED: 1 };
+    return (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0);
+  } else if (orderBy === "date") {
+    // Chronological sorting for Date & Time
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
+  return 0; // Default case (e.g., "actions" won't sort)
 }
 
-function getComparator(order: "desc" | "asc", orderBy: string) {
+function getComparator(
+  order: "desc" | "asc",
+  orderBy: keyof RowType
+): (a: RowType, b: RowType) => number {
   return order === "desc"
-    ? (a: RowType, b: RowType) => descendingComparator(a, b, orderBy)
-    : (a: RowType, b: RowType) => -descendingComparator(a, b, orderBy);
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
 function stableSort(
@@ -199,11 +217,12 @@ const headCells: Array<HeadCell> = [
 type EnhancedTableHeadProps = {
   numSelected: number;
   order: "desc" | "asc";
-  orderBy: string;
+  orderBy: keyof RowType; // [CHANGED]
   rowCount: number;
   onSelectAllClick: (e: any) => void;
-  onRequestSort: (e: any, property: string) => void;
+  onRequestSort: (e: any, property: keyof RowType) => void; // [CHANGED]
 };
+
 const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   const {
     onSelectAllClick,
@@ -213,7 +232,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
     rowCount,
     onRequestSort,
   } = props;
-  const createSortHandler = (property: string) => (event: any) => {
+  const createSortHandler = (property: keyof RowType) => (event: any) => {
     onRequestSort(event, property);
   };
 
@@ -235,13 +254,17 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
           >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : "asc"}
-              onClick={createSortHandler(headCell.id)}
-            >
-              {headCell.label}
-            </TableSortLabel>
+            {headCell.id === "actions" ? (
+              headCell.label
+            ) : (
+              <TableSortLabel
+                active={orderBy === headCell.id}
+                direction={orderBy === headCell.id ? order : "asc"}
+                onClick={createSortHandler(headCell.id)}
+              >
+                {headCell.label}
+              </TableSortLabel>
+            )}
           </TableCell>
         ))}
       </TableRow>
@@ -325,8 +348,8 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
 };
 
 function EnhancedTable() {
-  const [order, setOrder] = React.useState<"desc" | "asc">("asc");
-  const [orderBy, setOrderBy] = React.useState("customer");
+  const [order, setOrder] = React.useState<"desc" | "asc">("desc");
+  const [orderBy, setOrderBy] = React.useState<keyof RowType>("date");
   const [selected, setSelected] = React.useState<Array<string>>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -347,7 +370,8 @@ function EnhancedTable() {
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [selectedRange, setSelectedRange] = React.useState("all");
-  const [descriptionDialogOpen, setDescriptionDialogOpen] = React.useState(false);
+  const [descriptionDialogOpen, setDescriptionDialogOpen] =
+    React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowType | null>(null);
 
   const fetchAlerts = async () => {
@@ -383,7 +407,7 @@ function EnhancedTable() {
     fetchAlerts();
   }, [reloadAlerts]);
 
-  const handleRequestSort = (event: any, property: string) => {
+  const handleRequestSort = (event: any, property: keyof RowType) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
@@ -947,7 +971,7 @@ function EnhancedTable() {
                       tabIndex={-1}
                       key={`${row.id || "unknown"}-${index}`} //originally: key={`${row.id}-${index}`}
                       selected={isItemSelected}
-                      onClick={() => handleRowClick(row)} 
+                      onClick={() => handleRowClick(row)}
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox">
@@ -1016,7 +1040,7 @@ function EnhancedTable() {
                           ? format(new Date(row.date), "dd/MM/yy HH:mm")
                           : "Unknown"}
                       </TableCell>
-                      <TableCell padding="none" align="right">
+                      <TableCell padding="none" align="left">
                         <Box mr={2}>
                           <IconButton
                             aria-label="delete"
