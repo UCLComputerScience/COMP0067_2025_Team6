@@ -392,25 +392,19 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
 
 function SettingsForm() {
   const [fields, setFields] = useState<
-    { fieldName: string; minValue: number; maxValue: number }[]
+    { fieldName: string; minValue: string | number; maxValue: string | number }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // Added for better UX
 
-  const handleFieldChange = (index: number, key: string, value: any) => {
+  const handleFieldChange = (index: number, key: string, value: string) => {
     const updatedFields = [...fields];
-    if (key === "fieldName") {
-      updatedFields[index] = { ...updatedFields[index], fieldName: value };
-    } else {
-      updatedFields[index] = {
-        ...updatedFields[index],
-        [key]: Number(value),
-      };
-    }
+    updatedFields[index] = { ...updatedFields[index], [key]: value }; // Store as string, allow empty
     setFields(updatedFields);
   };
 
   const handleAddField = () => {
-    setFields([...fields, { fieldName: "", minValue: 0, maxValue: 100 }]);
+    setFields([...fields, { fieldName: "", minValue: "", maxValue: "" }]); // Start with empty strings
   };
 
   const handleRemoveField = (index: number) => {
@@ -420,6 +414,8 @@ function SettingsForm() {
 
   useEffect(() => {
     const fetchSettings = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const response = await fetch("/api/controls/settings");
         if (!response.ok) {
@@ -430,8 +426,8 @@ function SettingsForm() {
           setFields(
             data.fields.map((field: any) => ({
               fieldName: field.fieldName,
-              minValue: field.minValue,
-              maxValue: field.maxValue,
+              minValue: field.minValue.toString(), 
+              maxValue: field.maxValue.toString(), 
             }))
           );
         } else {
@@ -440,6 +436,8 @@ function SettingsForm() {
       } catch (error) {
         console.error("Error fetching default thresholds:", error);
         setError("Failed to load default thresholds. Please try again.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchSettings();
@@ -448,27 +446,35 @@ function SettingsForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     // Validate fields
-    const invalidFields = fields.filter(
-      (field) =>
-        !field.fieldName ||
-        isNaN(field.minValue) ||
-        isNaN(field.maxValue) ||
-        field.minValue > field.maxValue
-    );
+    const invalidFields = fields.filter((field) => {
+      const min = field.minValue === "" ? NaN : Number(field.minValue);
+      const max = field.maxValue === "" ? NaN : Number(field.maxValue);
+      return !field.fieldName || isNaN(min) || isNaN(max) || min > max;
+    });
+
     if (invalidFields.length > 0) {
       setError(
-        "All fields must have a valid name, and min value must be less than max value."
+        "All fields must have a valid name and numeric min/max values, with min less than max."
       );
+      setLoading(false);
       return;
     }
+
+    // Convert to numbers for API submission
+    const submissionFields = fields.map((field) => ({
+      fieldName: field.fieldName,
+      minValue: Number(field.minValue),
+      maxValue: Number(field.maxValue),
+    }));
 
     try {
       const response = await fetch("/api/controls/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields }),
+        body: JSON.stringify({ fields: submissionFields }),
       });
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -476,17 +482,23 @@ function SettingsForm() {
       const data = await response.json();
       setFields(
         data.fields?.count
-          ? fields
+          ? submissionFields.map((field) => ({
+              ...field,
+              minValue: field.minValue.toString(), 
+              maxValue: field.maxValue.toString(), 
+            }))
           : data.fields.map((field: any) => ({
               fieldName: field.fieldName,
-              minValue: field.minValue,
-              maxValue: field.maxValue,
+              minValue: field.minValue.toString(),
+              maxValue: field.maxValue.toString(),
             }))
       );
       alert("Default thresholds saved successfully!");
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       setError("Failed to save default thresholds. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -510,9 +522,10 @@ function SettingsForm() {
           {error}
         </Typography>
       )}
+      {loading && <Typography mb={2}>Loading...</Typography>}
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {fields.length === 0 ? (
+          {fields.length === 0 && !loading ? (
             <Typography variant="body1" color="textSecondary">
               No fields defined yet. Click "Add Field" to start.
             </Typography>
@@ -537,6 +550,7 @@ function SettingsForm() {
                   sx={{ width: 200 }}
                   placeholder="Enter field name"
                   required
+                  disabled={loading}
                 />
                 <TextField
                   label="Min Value"
@@ -546,7 +560,10 @@ function SettingsForm() {
                     handleFieldChange(index, "minValue", e.target.value)
                   }
                   sx={{ width: 120 }}
+                  inputProps={{ step: "0.1" }} // Allow decimals
+                  placeholder="Enter min value"
                   required
+                  disabled={loading}
                 />
                 <TextField
                   label="Max Value"
@@ -556,7 +573,10 @@ function SettingsForm() {
                     handleFieldChange(index, "maxValue", e.target.value)
                   }
                   sx={{ width: 120 }}
+                  inputProps={{ step: "0.1" }} // Allow decimals
+                  placeholder="Enter max value"
                   required
+                  disabled={loading}
                 />
                 <IconButton
                   onClick={() => handleRemoveField(index)}
@@ -571,6 +591,7 @@ function SettingsForm() {
                       color: "darkgrey",
                     },
                   }}
+                  disabled={loading}
                 >
                   <CloseIcon sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -583,6 +604,7 @@ function SettingsForm() {
             startIcon={<AddIcon />}
             onClick={handleAddField}
             sx={{ alignSelf: "flex-start", mb: 2 }}
+            disabled={loading}
           >
             Add Field
           </Button>
@@ -592,9 +614,9 @@ function SettingsForm() {
             variant="contained"
             color="primary"
             sx={{ alignSelf: "flex-start", mt: 2 }}
-            disabled={fields.length === 0}
+            disabled={fields.length === 0 || loading}
           >
-            Save Settings
+            {loading ? "Saving..." : "Save Settings"}
           </Button>
         </Box>
       </form>
