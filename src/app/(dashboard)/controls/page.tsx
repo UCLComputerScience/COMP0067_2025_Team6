@@ -45,6 +45,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import HideAuthGuard from "@/components/guards/HideAuthGuard";
+import ThresholdForm from "./components/thresholdform"
 
 // --- No changes to styling ---
 const Card = styled(MuiCard)(spacing);
@@ -206,6 +207,10 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   const [sliderValues, setSliderValues] = useState<number[][]>([]);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [openThresholdForm, setOpenThresholdForm] = useState(false);
+  const [thresholds, setThresholds] = useState<
+    { fieldName: string; minValue: number; maxValue: number; unit: string }[]
+  >([]); // Store channel-specific thresholds
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -213,6 +218,33 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleOpenThresholdForm = () => {
+    setOpenThresholdForm(true);
+    handleMenuClose();
+  };
+
+  const handleCloseThresholdForm = () => {
+    setOpenThresholdForm(false);
+  };
+
+  const handleThresholdsSave = () => {
+    // Refresh thresholds
+    fetchThresholds();
+  };
+
+  const fetchThresholds = async () => {
+    try {
+      const response = await fetch(`/api/controls/thresholds?channelId=${channelId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch thresholds");
+      }
+      const data = await response.json();
+      setThresholds(data.thresholds || []);
+    } catch (err) {
+      console.error("Error fetching thresholds:", err);
+    }
   };
 
   useEffect(() => {
@@ -233,6 +265,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
     };
 
     fetchData();
+    fetchThresholds(); // Initial fetch of thresholds
   }, [channelId, apiKey]);
 
   if (!channelData) {
@@ -253,11 +286,14 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       latestValue: parseFloat(latestFeed[key]).toFixed(2),
     }));
 
-  // Change: Initialize slider values using defaultThresholds or ±10 from latestValue
+  // Initialize slider values using thresholds or defaultThresholds
   const initialSliderValues = fields.map((field) => {
-    const threshold = defaultThresholds.find((t) => t.fieldName === field.label);
+    const threshold = thresholds.find((t) => t.fieldName === field.label);
+    const defaultThreshold = defaultThresholds.find((t) => t.fieldName === field.label);
     if (threshold) {
       return [threshold.minValue, threshold.maxValue];
+    } else if (defaultThreshold) {
+      return [defaultThreshold.minValue, defaultThreshold.maxValue];
     } else {
       const latest = parseFloat(field.latestValue);
       return [latest - 10, latest + 10];
@@ -308,29 +344,37 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => { handleMenuClose(); console.log("Edit Settings clicked"); }}>
-            Edit Settings
-          </MenuItem>
+          <MenuItem onClick={handleOpenThresholdForm}>Edit Settings</MenuItem>
           <MenuItem onClick={() => { handleMenuClose(); console.log("Delete Device clicked"); }}>
             Delete Device
           </MenuItem>
         </Menu>
 
+        <ThresholdForm
+          open={openThresholdForm}
+          handleClose={handleCloseThresholdForm}
+          channelId={channelId}
+          channelName={name}
+          defaultThresholds={defaultThresholds}
+          channelFields={fields.map((f) => f.label)}
+          onSave={handleThresholdsSave}
+        />
+
         <Box sx={{ height: "16px" }}></Box>
 
         {fields.map((field, index) => {
-          // Change: Use defaultThresholds or ±10 from latestValue for min/max
-          const threshold = defaultThresholds.find((t) => t.fieldName === field.label);
+          const threshold = thresholds.find((t) => t.fieldName === field.label);
+          const defaultThreshold = defaultThresholds.find((t) => t.fieldName === field.label);
           const latest = parseFloat(field.latestValue);
           return (
             <SensorField
               key={index}
               label={field.label}
               value={sliderValues[index]}
-              min={threshold?.minValue ?? (latest - 10)}
-              max={threshold?.maxValue ?? (latest + 10)}
-              step={0.1} // Change: Use 0.1 for finer control
-              unit={threshold?.unit || ""} // Change: Use unit from defaultThresholds
+              min={threshold?.minValue ?? defaultThreshold?.minValue ?? (latest - 10)}
+              max={threshold?.maxValue ?? defaultThreshold?.maxValue ?? (latest + 10)}
+              step={0.1}
+              unit={threshold?.unit ?? defaultThreshold?.unit ?? ""}
               onSliderChange={(event, newValue) => handleSliderChange(index, newValue)}
               latestValue={field.latestValue}
             />
@@ -354,7 +398,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   );
 }
 
-function SettingsForm() {
+function SettingsForm({ handleClose, onSave }: { handleClose: () => void; onSave?: () => void }) {
   const [fields, setFields] = useState<
     { fieldName: string; minValue: string | number; maxValue: string | number; unit: string }[]
   >([]);
@@ -445,22 +489,9 @@ function SettingsForm() {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      const data = await response.json();
-      setFields(
-        data.fields?.count
-          ? submissionFields.map((field) => ({
-              ...field,
-              minValue: field.minValue.toString(),
-              maxValue: field.maxValue.toString(),
-            }))
-          : data.fields.map((field: any) => ({
-              fieldName: field.fieldName,
-              minValue: field.minValue.toString(),
-              maxValue: field.maxValue.toString(),
-              unit: field.unit || "",
-            }))
-      );
       alert("Default thresholds saved successfully!");
+      onSave?.(); // Notify parent to refresh
+      handleClose(); // Close the modal
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       setError("Failed to save default thresholds. Please try again.");
@@ -586,15 +617,24 @@ function SettingsForm() {
             Add Field
           </Button>
 
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            sx={{ alignSelf: "flex-start", mt: 2 }}
-            disabled={loading}
-          >
-            {loading ? "Saving..." : "Save Settings"}
-          </Button>
+          <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save Settings"}
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          </Box>
         </Box>
       </form>
     </Box>
@@ -605,7 +645,6 @@ function Controls() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLabId, setSelectedLabId] = useState<number | "">("");
   const [channels, setChannels] = useState<Channel[]>([]);
-  // Change: Added defaultThresholds state
   const [defaultThresholds, setDefaultThresholds] = useState<
     { fieldName: string; minValue: number; maxValue: number; unit: string }[]
   >([]);
@@ -616,31 +655,36 @@ function Controls() {
   const handleOpenSettings = () => setOpenSettings(true);
   const handleCloseSettings = () => setOpenSettings(false);
 
-  // Change: Fetch defaultThresholds along with channels
+  const fetchData = async () => {
+    try {
+      const [channelsResponse, thresholdsResponse] = await Promise.all([
+        fetch("/controls/api/all_channels"),
+        fetch("/api/controls/settings"),
+      ]);
+
+      if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
+      if (!thresholdsResponse.ok) throw new Error("Failed to fetch default thresholds");
+
+      const channelsData = await channelsResponse.json();
+      const thresholdsData = await thresholdsResponse.json();
+
+      setChannels(channelsData);
+      setDefaultThresholds(thresholdsData.fields || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [channelsResponse, thresholdsResponse] = await Promise.all([
-          fetch("/controls/api/all_channels"),
-          fetch("/api/controls/settings"),
-        ]);
-
-        if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
-        if (!thresholdsResponse.ok) throw new Error("Failed to fetch default thresholds");
-
-        const channelsData = await channelsResponse.json();
-        const thresholdsData = await thresholdsResponse.json();
-
-        setChannels(channelsData);
-        setDefaultThresholds(thresholdsData.fields || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const handleSettingsSave = () => {
+    setLoading(true);
+    fetchData();
+  };
 
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -691,16 +735,14 @@ function Controls() {
             </MenuItem>
           </Select>
         </FormControl>
-        <HideAuthGuard requiredRoles={["ADMIN", "SUPER_USER"]}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenSettings}
-            sx={{ ml: "auto" }}
-          >
-            Manage Settings
-          </Button>
-        </HideAuthGuard>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpenSettings}
+          sx={{ ml: "auto" }}
+        >
+          Manage Settings
+        </Button>
       </SearchBarContainer>
       <Modal
         open={openSettings}
@@ -718,7 +760,7 @@ function Controls() {
             width: "100%",
           }}
         >
-          <SettingsForm />
+          <SettingsForm handleClose={handleCloseSettings} onSave={handleSettingsSave} />
         </Box>
       </Modal>
 
@@ -726,7 +768,6 @@ function Controls() {
         <Grid container spacing={6}>
           {filteredChannels.map((channel) => (
             <Grid item xs={12} key={channel.id}>
-              {/* Change: Pass defaultThresholds to LabCard */}
               <LabCard
                 channelId={channel.id}
                 name={channel.name}
@@ -740,8 +781,7 @@ function Controls() {
     </>
   );
 }
-
-export default Controls;
+export default Controls
 
 // const TaskTitle = styled(Typography)`
 //   font-weight: 600;
