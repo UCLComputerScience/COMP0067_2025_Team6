@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from 'next/server';
 
 import prisma from "../../../lib/prisma";
 
@@ -14,7 +15,7 @@ interface ApiKey {
   updatedAt: Date;
 }
 
-export async function GET(req: GetRequest): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(req.url);
     const labId = searchParams.get("labId");
