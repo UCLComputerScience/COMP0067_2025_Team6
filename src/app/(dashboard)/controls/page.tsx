@@ -44,7 +44,6 @@ import {
   Search as SearchIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import BatteryGauge from "react-battery-gauge"; //had installed react-battery-gauge (can remove if causing issues)
 import HideAuthGuard from "@/components/guards/HideAuthGuard"; // Adjust path as needed
 
 const Card = styled(MuiCard)(spacing);
@@ -392,10 +391,10 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
 
 function SettingsForm() {
   const [fields, setFields] = useState<
-    { fieldName: string; minValue: string | number; maxValue: string | number }[]
+    { fieldName: string; minValue: string | number; maxValue: string | number; unit: string }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // Added for better UX
+  const [loading, setLoading] = useState(false);
 
   const handleFieldChange = (index: number, key: string, value: string) => {
     const updatedFields = [...fields];
@@ -404,7 +403,7 @@ function SettingsForm() {
   };
 
   const handleAddField = () => {
-    setFields([...fields, { fieldName: "", minValue: "", maxValue: "" }]); // Start with empty strings
+    setFields([...fields, { fieldName: "", minValue: "", maxValue: "", unit: "" }]);
   };
 
   const handleRemoveField = (index: number) => {
@@ -426,8 +425,9 @@ function SettingsForm() {
           setFields(
             data.fields.map((field: any) => ({
               fieldName: field.fieldName,
-              minValue: field.minValue.toString(), 
-              maxValue: field.maxValue.toString(), 
+              minValue: field.minValue.toString(),
+              maxValue: field.maxValue.toString(),
+              unit: field.unit || "", // Default to empty if unit isn’t in DB yet
             }))
           );
         } else {
@@ -448,26 +448,29 @@ function SettingsForm() {
     setError(null);
     setLoading(true);
 
-    // Validate fields
-    const invalidFields = fields.filter((field) => {
-      const min = field.minValue === "" ? NaN : Number(field.minValue);
-      const max = field.maxValue === "" ? NaN : Number(field.maxValue);
-      return !field.fieldName || isNaN(min) || isNaN(max) || min > max;
-    });
+    // Validate fields only if there are rows
+    if (fields.length > 0) {
+      const invalidFields = fields.filter((field) => {
+        const min = field.minValue === "" ? NaN : Number(field.minValue);
+        const max = field.maxValue === "" ? NaN : Number(field.maxValue);
+        return !field.fieldName || isNaN(min) || isNaN(max) || min > max;
+      });
 
-    if (invalidFields.length > 0) {
-      setError(
-        "All fields must have a valid name and numeric min/max values, with min less than max."
-      );
-      setLoading(false);
-      return;
+      if (invalidFields.length > 0) {
+        setError(
+          "All fields must have a valid name and numeric min/max values, with min less than max."
+        );
+        setLoading(false);
+        return;
+      }
     }
 
-    // Convert to numbers for API submission
+    // Convert to numbers for API submission (if fields exist)
     const submissionFields = fields.map((field) => ({
       fieldName: field.fieldName,
       minValue: Number(field.minValue),
       maxValue: Number(field.maxValue),
+      unit: field.unit,
     }));
 
     try {
@@ -484,13 +487,14 @@ function SettingsForm() {
         data.fields?.count
           ? submissionFields.map((field) => ({
               ...field,
-              minValue: field.minValue.toString(), 
-              maxValue: field.maxValue.toString(), 
+              minValue: field.minValue.toString(),
+              maxValue: field.maxValue.toString(),
             }))
           : data.fields.map((field: any) => ({
               fieldName: field.fieldName,
               minValue: field.minValue.toString(),
               maxValue: field.maxValue.toString(),
+              unit: field.unit || "",
             }))
       );
       alert("Default thresholds saved successfully!");
@@ -560,7 +564,7 @@ function SettingsForm() {
                     handleFieldChange(index, "minValue", e.target.value)
                   }
                   sx={{ width: 120 }}
-                  inputProps={{ step: "0.1" }} // Allow decimals
+                  inputProps={{ step: "0.1" }}
                   placeholder="Enter min value"
                   required
                   disabled={loading}
@@ -573,9 +577,19 @@ function SettingsForm() {
                     handleFieldChange(index, "maxValue", e.target.value)
                   }
                   sx={{ width: 120 }}
-                  inputProps={{ step: "0.1" }} // Allow decimals
+                  inputProps={{ step: "0.1" }}
                   placeholder="Enter max value"
                   required
+                  disabled={loading}
+                />
+                <TextField
+                  label="Unit"
+                  value={field.unit}
+                  onChange={(e) =>
+                    handleFieldChange(index, "unit", e.target.value)
+                  }
+                  sx={{ width: 80 }}
+                  placeholder="e.g., C"
                   disabled={loading}
                 />
                 <IconButton
@@ -614,7 +628,7 @@ function SettingsForm() {
             variant="contained"
             color="primary"
             sx={{ alignSelf: "flex-start", mt: 2 }}
-            disabled={fields.length === 0 || loading}
+            disabled={loading} // Removed fields.length === 0 condition
           >
             {loading ? "Saving..." : "Save Settings"}
           </Button>

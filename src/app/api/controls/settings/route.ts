@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET: Fetch all default thresholds
 export async function GET() {
   try {
     const thresholds = await prisma.defaultThreshold.findMany();
@@ -28,12 +27,13 @@ export async function POST(request: Request) {
 
     const upsertPromises = fields.map((field) =>
       prisma.defaultThreshold.upsert({
-        where: { fieldName: field.fieldName }, // Unique by fieldName (add unique constraint in schema if needed)
-        update: { minValue: field.minValue, maxValue: field.maxValue },
+        where: { fieldName: field.fieldName },
+        update: { minValue: field.minValue, maxValue: field.maxValue, unit: field.unit },
         create: {
           fieldName: field.fieldName,
           minValue: field.minValue,
           maxValue: field.maxValue,
+          unit: field.unit,
         },
       })
     );

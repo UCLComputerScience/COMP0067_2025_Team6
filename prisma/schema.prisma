@@ -124,6 +124,7 @@ model DefaultThreshold {
   maxValue  Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  unit      String?
 }
 
 model Threshold {
