@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./[...nextauth]";
 
 const prisma = new PrismaClient();
 
@@ -15,23 +17,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           lastName: true,
           organisation: true,
           userRole: true,
+          status: true,
         },
       });
 
-      console.log("Fetched users:", users);
       return res.status(200).json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
-      return res.status(500).json({ error: "Internal server error", details: (error instanceof Error ? error.message : "Unknown error") });
+      return res.status(500).json({ error: "Internal server error" });
     }
-  } 
-  
-  else if (req.method === "POST") {
-    try {
-      const { userIds, role } = req.body;
-      console.log("Updating user roles:", { userIds, role });
+  }
 
-      if (!userIds || !role || !Array.isArray(userIds) || userIds.length === 0) {
+  if (req.method === "POST") {
+    try {
+      const session = await getServerSession(req, res, authOptions);
+      const { userIds, role, currentUserEmail } = req.body;
+
+      console.log("Incoming POST data:", { userIds, role, currentUserEmail });
+
+      const userEmail = (session?.user?.email || currentUserEmail || "").toLowerCase();
+      if (!userIds || !Array.isArray(userIds) || userIds.length === 0 || !role) {
         return res.status(400).json({ error: "Missing user IDs or role" });
       }
 
@@ -40,23 +45,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Invalid role" });
       }
 
+      // Update user roles
       await prisma.user.updateMany({
         where: { id: { in: userIds } },
         data: { userRole: role },
       });
 
-      console.log(`Updated ${userIds.length} users to role: ${role}`);
+      console.log(`Updated roles for ${userIds.length} users to: ${role}`);
+
+      // Log usage history
+      if (userEmail) {
+        try {
+          const emailExists = await prisma.user.findUnique({ where: { email: userEmail } });
+
+          const log = await prisma.usageHistory.create({
+            data: {
+              timestamp: new Date(),
+              userEmail,
+              action: `Changed ${userIds.length} user(s) role to ${role}`,
+              metadata: {
+                userIds: userIds.map((id: number | string) => String(id)),
+                newRole: role,
+              },
+              // No need to link relation explicitly; will connect if email exists
+            },
+          });
+
+          console.log("Usage history logged successfully:", log.id);
+        } catch (logError) {
+          console.error("Error logging usage history:", logError);
+        }
+      } else {
+        console.warn("No valid user email provided for logging.");
+      }
+
       return res.status(200).json({ message: `Updated ${userIds.length} users successfully` });
     } catch (error) {
-      console.error("Error updating user roles:", error);
-      return res.status(500).json({ 
-        error: "Failed to update roles", 
-        details: error instanceof Error ? error.message : "Unknown error" 
-      });
+      console.error("Error processing POST /users:", error);
+      return res.status(500).json({ error: "Failed to update roles" });
     }
-  } 
-  
-  else {
-    return res.status(405).json({ error: "Method not allowed" });
   }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }

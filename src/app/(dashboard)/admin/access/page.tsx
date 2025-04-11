@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
+import { getSession } from "next-auth/react";
 
 import {
   Box,
@@ -39,12 +39,16 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress, // Added for loading indicator
+  Snackbar, // Added for user feedback
+  Alert,
 } from "@mui/material";
 import { orange } from "@mui/material/colors";
 import {
   Edit as EditIcon,
   Star as StarIcon,
   Search as SearchIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
 
@@ -273,6 +277,225 @@ function EnhancedTable() {
   const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
   const [users, setUsers] = React.useState<Array<RowType>>([]);
   const [loading, setLoading] = React.useState(true);
+  const [reloadUsers, setReloadUsers] = useState(false); // New state to trigger re-fetch
+
+  // Added state for user feedback
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Confirmation dialog state
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [confirmDialogAction, setConfirmDialogAction] = React.useState<
+    "activate" | "deactivate"
+  >("deactivate");
+
+  // Close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Show feedback to user
+  const showFeedback = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "Active";
+      case "INACTIVE":
+        return "Inactive";
+      default:
+        return "Unknown";
+    }
+  };
+
+  // Fetch users function - single implementation
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/auth/users?_t=${timestamp}`, {
+        cache: "no-store", // Force server to revalidate the data
+        headers: {
+          pragma: "no-cache",
+          "cache-control": "no-cache",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const mappedUsers = data.map((user) => ({
+          id: user.id,
+          firstname: user.firstName,
+          lastname: user.lastName,
+          usertype: user.organisation || "Standard",
+          role: formatRole(user.userRole),
+          status: formatStatus(user.status),
+        }));
+
+        setUsers(mappedUsers);
+        console.log("Users fetched successfully:", mappedUsers);
+      } else {
+        console.error("Failed to fetch users:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Run fetchUsers on component mount and when reloadUsers changes
+  useEffect(() => {
+    console.log("Fetching users...");
+    fetchUsers();
+  }, [reloadUsers]);
+
+  // Function to manually refresh data
+  const handleRefreshData = () => {
+    showFeedback("Refreshing user data...", "info");
+    setReloadUsers((prev) => !prev);
+  };
+
+  const handleDeactivateUsers = async () => {
+    if (selectedUsers.length === 0) return;
+
+    try {
+      const response = await fetch("/api/auth/deactivate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds: selectedUsers }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text(); // Get the error message from the response body
+        try {
+          // Attempt to parse as JSON, in case the server sends a JSON error response
+          const errorJson = JSON.parse(errorText);
+          throw new Error(
+            `Failed to deactivate users: ${
+              errorJson.error || errorJson.message || errorText
+            }`
+          );
+        } catch (parseError) {
+          // If response isn't JSON, just throw the text error message
+          throw new Error(`Failed to deactivate users: ${errorText}`);
+        }
+      }
+
+      const result = await response.json();
+      console.log("Users deactivated successfully:", result);
+
+      // Trigger a re-fetch instead of manually updating state
+      setReloadUsers((prev) => !prev);
+
+      // // Update local state
+      // setUsers((prevUsers) =>
+      //   prevUsers.map((user) =>
+      //     selectedUsers.includes(user.id)
+      //       ? { ...user, status: "Inactive" }
+      //       : user
+      //   )
+      // );
+
+      // Cleanup
+      setSelected([]);
+      setSelectedUsers([]);
+      closeConfirmationDialog();
+
+      showFeedback(
+        `Successfully deactivated ${selectedUsers.length} user(s)`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error deactivating users:", error);
+      showFeedback(`Failed to deactivate users: ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleActivateUsers = async () => {
+    if (selectedUsers.length === 0) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch("/api/auth/activate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds: selectedUsers }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(
+            `Failed to activate users: ${
+              errorJson.error || errorJson.message || errorText
+            }`
+          );
+        } catch (parseError) {
+          throw new Error(`Failed to activate users: ${errorText}`);
+        }
+      }
+
+      const result = await response.json();
+      console.log("Users activated successfully:", result);
+
+      // Trigger a re-fetch instead of manually updating state
+      setReloadUsers((prev) => !prev);
+
+      // // Update local state
+      // setUsers((prevUsers) =>
+      //   prevUsers.map((user) =>
+      //     selectedUsers.includes(user.id) ? { ...user, status: "Active" } : user
+      //   )
+      // );
+
+      // Cleanup
+      setSelected([]);
+      setSelectedUsers([]);
+      closeConfirmationDialog();
+
+      showFeedback(
+        `Successfully activated ${selectedUsers.length} user(s)`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error activating users:", error);
+      showFeedback(`Failed to activate users: ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open confirmation dialog
+  const openConfirmationDialog = (action: "activate" | "deactivate") => {
+    setConfirmDialogAction(action);
+    setConfirmDialogOpen(true);
+  };
+
+  // Close confirmation dialog
+  const closeConfirmationDialog = () => {
+    setConfirmDialogOpen(false);
+  };
 
   const formatRole = (role: string) => {
     switch (role) {
@@ -289,50 +512,52 @@ function EnhancedTable() {
     }
   };
 
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("/api/auth/users");
-        if (response.ok) {
-          const data = await response.json();
-          interface UserApiResponse {
-            id: string;
-            firstName: string;
-            lastName: string;
-            organisation?: string;
-            role: string;
-          }
+  // React.useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const response = await fetch("/api/auth/users");
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         interface UserApiResponse {
+  //           id: string;
+  //           firstName: string;
+  //           lastName: string;
+  //           organisation?: string;
+  //           role: string;
+  //         }
 
-          interface MappedUser extends RowType {
-            id: string;
-            firstname: string;
-            lastname: string;
-            usertype: string;
-            role: string;
-            status: string;
-          }
+  //         interface MappedUser extends RowType {
+  //           id: string;
+  //           firstname: string;
+  //           lastname: string;
+  //           usertype: string;
+  //           role: string;
+  //           status: string;
+  //         }
 
-          const mappedUsers: MappedUser[] = data.map((user: UserApiResponse) => ({
-            id: user.id,
-            firstname: user.firstName,
-            lastname: user.lastName,
-            usertype: user.organisation || "Standard",
-            role: formatRole(user.role),
-            status: "Active",
-          }));
-          setUsers(mappedUsers);
-        } else {
-          console.error("Failed to fetch users");
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //         const mappedUsers: MappedUser[] = data.map(
+  //           (user: UserApiResponse) => ({
+  //             id: user.id,
+  //             firstname: user.firstName,
+  //             lastname: user.lastName,
+  //             usertype: user.organisation || "Standard",
+  //             role: formatRole(user.role),
+  //             status: "Active",
+  //           })
+  //         );
+  //         setUsers(mappedUsers);
+  //       } else {
+  //         console.error("Failed to fetch users");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching users:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchUsers();
-  }, []);
+  //   fetchUsers();
+  // }, []);
 
   const handleEditClick = (row: RowType) => {
     setEditingRow(row);
@@ -388,6 +613,10 @@ function EnhancedTable() {
           selectedRole
         );
 
+        // Get the current user's session
+        const session = await getSession();
+        console.log("Current session:", session);
+
         const response = await fetch("/api/auth/users", {
           method: "POST",
           headers: {
@@ -396,27 +625,36 @@ function EnhancedTable() {
           body: JSON.stringify({
             userIds: selectedUsers,
             role: selectedRole,
+            currentUserEmail: session?.user?.email,
           }),
         });
 
-        const result = await response.json();
-        console.log("API response:", result);
-
-        if (response.ok) {
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              selectedUsers.includes(user.id)
-                ? { ...user, role: formatRole(selectedRole) }
-                : user
-            )
-          );
-
-          setSelected([]);
-        } else {
-          console.error("Failed to update roles:", result.error);
+        if (!response.ok) {
+          const errorText = await response.text();
+          try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(
+              `Failed to update roles: ${
+                errorJson.error || errorJson.message || errorText
+              }`
+            );
+          } catch (parseError) {
+            throw new Error(`Failed to update roles: ${errorText}`);
+          }
         }
+
+        // Trigger a re-fetch
+        setReloadUsers((prev) => !prev);
+        setSelected([]);
+        showFeedback(
+          `Successfully updated role for ${selectedUsers.length} user(s)`,
+          "success"
+        );
       } catch (error) {
         console.error("Error updating roles:", error);
+        showFeedback(`Error updating roles: ${error.message}`, "error");
+      } finally {
+        setLoading(false);
       }
     }
     handleCloseDialog();
@@ -479,6 +717,25 @@ function EnhancedTable() {
   };
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
+
+  // Check if all selected users are active or inactive
+  const areAllSelectedUsersActive = () => {
+    if (selectedUsers.length === 0) return false;
+
+    return selectedUsers.every((userId) => {
+      const user = users.find((u) => u.id === userId);
+      return user && user.status === "Active";
+    });
+  };
+
+  const areAllSelectedUsersInactive = () => {
+    if (selectedUsers.length === 0) return false;
+
+    return selectedUsers.every((userId) => {
+      const user = users.find((u) => u.id === userId);
+      return user && user.status === "Inactive";
+    });
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -547,6 +804,15 @@ function EnhancedTable() {
         </FormControl>
         <Button variant="contained" color="primary">
           Go
+        </Button>
+        {/* Added refresh button for manual data refresh */}
+        <Button
+          variant="outlined"
+          onClick={handleRefreshData}
+          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+          disabled={loading}
+        >
+          {loading ? "Refreshing..." : "Refresh Data"}
         </Button>
       </SearchContainer>
 
@@ -652,9 +918,7 @@ function EnhancedTable() {
         <DialogContent>
           <Tabs value={currentTab} onChange={handleTabChange}>
             <Tab label="User Role" />
-            <Tab label="Instrument Access" />
-            <Tab label="Dashboard Access" />
-            <Tab label="Control Access" />
+            <Tab label="User Status" />
           </Tabs>
 
           {currentTab === 0 && (
@@ -678,34 +942,92 @@ function EnhancedTable() {
 
           {currentTab === 1 && (
             <Box sx={{ mt: 2 }}>
-              {/* Instrument Access */}
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Instrument Access</InputLabel>
-                <Select
-                  value={instrumentAccess}
-                  onChange={(e) => setInstrumentAccess(e.target.value)}
-                  label="Instrument Access"
-                >
-                  <MenuItem value="full">Full Access</MenuItem>
-                  <MenuItem value="limited">Limited Access</MenuItem>
-                  <MenuItem value="none">No Access</MenuItem>
-                </Select>
-              </FormControl>
+              {/* User Status Management */}
+              <Typography variant="body1" gutterBottom>
+                Manage user status:
+              </Typography>
+
+              {areAllSelectedUsersActive() && (
+                <Box mt={3} display="flex" justifyContent="flex-end">
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => openConfirmationDialog("deactivate")}
+                    disabled={selectedUsers.length === 0}
+                  >
+                    Deactivate Users
+                  </Button>
+                </Box>
+              )}
+
+              {areAllSelectedUsersInactive() && (
+                <Box mt={3} display="flex" justifyContent="flex-end">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => openConfirmationDialog("activate")}
+                    disabled={selectedUsers.length === 0}
+                  >
+                    Activate Users
+                  </Button>
+                </Box>
+              )}
+
+              {!areAllSelectedUsersActive() &&
+                !areAllSelectedUsersInactive() &&
+                selectedUsers.length > 0 && (
+                  <Typography color="error">
+                    Selected users have mixed statuses. Please select users with
+                    the same status.
+                  </Typography>
+                )}
             </Box>
-          )}
-
-          {currentTab === 2 && (
-            <Box sx={{ mt: 2 }}>{/* Add Dashboard Access fields here */}</Box>
-          )}
-
-          {currentTab === 3 && (
-            <Box sx={{ mt: 2 }}>{/* Control Access fields here */}</Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSaveChanges} color="primary">
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmation Dialog for Activation/Deactivation */}
+      <Dialog open={confirmDialogOpen} onClose={closeConfirmationDialog}>
+        <DialogTitle>
+          {confirmDialogAction === "deactivate"
+            ? "Confirm User Deactivation"
+            : "Confirm User Activation"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            {confirmDialogAction === "deactivate"
+              ? `Are you sure you want to deactivate ${
+                  selectedUsers.length
+                } selected user${
+                  selectedUsers.length !== 1 ? "s" : ""
+                }? Deactivated users will no longer be able to access the system.`
+              : `Are you sure you want to activate ${
+                  selectedUsers.length
+                } selected user${
+                  selectedUsers.length !== 1 ? "s" : ""
+                }? Activated users will be able to access the system.`}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirmationDialog}>Cancel</Button>
+          <Button
+            onClick={
+              confirmDialogAction === "deactivate"
+                ? handleDeactivateUsers
+                : handleActivateUsers
+            }
+            variant="contained"
+            color={
+              confirmDialogAction === "deactivate" ? "secondary" : "primary"
+            }
+          >
+            {confirmDialogAction === "deactivate" ? "Deactivate" : "Activate"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -726,9 +1048,6 @@ function Products() {
             <Link component={NextLink} href="/">
               Dashboard
             </Link>
-            {/* <Link component={NextLink} href="/">
-              Pages
-            </Link> */}
             <Typography>Manage Access</Typography>
           </Breadcrumbs>
         </Grid>
