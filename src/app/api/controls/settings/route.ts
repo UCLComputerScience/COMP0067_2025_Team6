@@ -1,41 +1,51 @@
-import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // Adjust path to your Prisma client
 
-const prisma = new PrismaClient();
-
+// GET: Fetch all default thresholds
 export async function GET() {
   try {
     const thresholds = await prisma.defaultThreshold.findMany();
-    const settings = {
-      fields: thresholds.map((t) => ({
-        name: t.fieldName,
-        min: t.minValue,
-        max: t.maxValue,
-      })),
-    };
-    return NextResponse.json(settings, { status: 200 });
+    return NextResponse.json({ fields: thresholds });
   } catch (error) {
     console.error("Error fetching default thresholds:", error);
-    return NextResponse.json({ message: "Error fetching settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch default thresholds" },
+      { status: 500 }
+    );
   }
 }
 
+// POST: Save or update default thresholds
 export async function POST(request: Request) {
   try {
     const { fields } = await request.json();
+
+    // Validate input
+    if (!fields || !Array.isArray(fields)) {
+      return NextResponse.json(
+        { error: "Invalid fields data" },
+        { status: 400 }
+      );
+    }
+
+    // Clear existing default thresholds
     await prisma.defaultThreshold.deleteMany();
-    await prisma.defaultThreshold.createMany({
-      data: fields.map((field: { name: string; min: number; max: number }) => ({
-        fieldName: field.name,
-        minValue: field.min,
-        maxValue: field.max,
+
+    // Create new default thresholds
+    const createdThresholds = await prisma.defaultThreshold.createMany({
+      data: fields.map((field: { fieldName: string; minValue: number; maxValue: number }) => ({
+        fieldName: field.fieldName,
+        minValue: field.minValue,
+        maxValue: field.maxValue,
       })),
     });
-    return NextResponse.json({ message: "Default settings saved" }, { status: 200 });
+
+    return NextResponse.json({ fields: createdThresholds });
   } catch (error) {
     console.error("Error saving default thresholds:", error);
-    return NextResponse.json({ message: "Error saving settings" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json(
+      { error: "Failed to save default thresholds" },
+      { status: 500 }
+    );
   }
 }

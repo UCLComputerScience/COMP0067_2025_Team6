@@ -391,20 +391,26 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
 
 
 function SettingsForm() {
-  const [fields, setFields] = useState<{ name: string; min: number; max: number }[]>([]);
+  const [fields, setFields] = useState<
+    { fieldName: string; minValue: number; maxValue: number }[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFieldChange = (index: number, key: string, value: any) => {
     const updatedFields = [...fields];
-    if (key === "name") {
-      updatedFields[index] = { ...updatedFields[index], name: value };
+    if (key === "fieldName") {
+      updatedFields[index] = { ...updatedFields[index], fieldName: value };
     } else {
-      updatedFields[index] = { ...updatedFields[index], [key]: Number(value) }; // Fixed: Removed extra ]
+      updatedFields[index] = {
+        ...updatedFields[index],
+        [key]: Number(value),
+      };
     }
     setFields(updatedFields);
   };
 
   const handleAddField = () => {
-    setFields([...fields, { name: "", min: 0, max: 100 }]);
+    setFields([...fields, { fieldName: "", minValue: 0, maxValue: 100 }]);
   };
 
   const handleRemoveField = (index: number) => {
@@ -415,17 +421,25 @@ function SettingsForm() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch("/controls/api/settings");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.fields && data.fields.length > 0) {
-            setFields(data.fields);
-          }
+        const response = await fetch("/api/controls/settings");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.fields && Array.isArray(data.fields)) {
+          setFields(
+            data.fields.map((field: any) => ({
+              fieldName: field.fieldName,
+              minValue: field.minValue,
+              maxValue: field.maxValue,
+            }))
+          );
         } else {
-          console.error("Failed to fetch settings:", await response.text());
+          setFields([]);
         }
       } catch (error) {
-        console.error("Error fetching settings:", error);
+        console.error("Error fetching default thresholds:", error);
+        setError("Failed to load default thresholds. Please try again.");
       }
     };
     fetchSettings();
@@ -433,26 +447,46 @@ function SettingsForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const settings = {
-      fields: fields.map((field) => ({
-        name: field.name,
-        min: field.min,
-        max: field.max,
-      })),
-    };
+    setError(null);
+
+    // Validate fields
+    const invalidFields = fields.filter(
+      (field) =>
+        !field.fieldName ||
+        isNaN(field.minValue) ||
+        isNaN(field.maxValue) ||
+        field.minValue > field.maxValue
+    );
+    if (invalidFields.length > 0) {
+      setError(
+        "All fields must have a valid name, and min value must be less than max value."
+      );
+      return;
+    }
+
     try {
       const response = await fetch("/api/controls/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({ fields }),
       });
-      if (response.ok) {
-        console.log("Settings saved to database:", settings);
-      } else {
-        console.error("Failed to save settings:", await response.text());
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
+      const data = await response.json();
+      setFields(
+        data.fields?.count
+          ? fields
+          : data.fields.map((field: any) => ({
+              fieldName: field.fieldName,
+              minValue: field.minValue,
+              maxValue: field.maxValue,
+            }))
+      );
+      alert("Default thresholds saved successfully!");
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("Error saving default thresholds:", error);
+      setError("Failed to save default thresholds. Please try again.");
     }
   };
 
@@ -468,10 +502,16 @@ function SettingsForm() {
         margin: "0 auto",
       }}
     >
-      <Typography variant="h4" gutterBottom>Default Sensor Settings</Typography>
+      <Typography variant="h4" gutterBottom>
+        Default Threshold Settings
+      </Typography>
+      {error && (
+        <Typography color="error" mb={2}>
+          {error}
+        </Typography>
+      )}
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <div></div>
           {fields.length === 0 ? (
             <Typography variant="body1" color="textSecondary">
               No fields defined yet. Click "Add Field" to start.
@@ -490,24 +530,33 @@ function SettingsForm() {
               >
                 <TextField
                   label={`Field ${index + 1}`}
-                  value={field.name}
-                  onChange={(e) => handleFieldChange(index, "name", e.target.value)}
+                  value={field.fieldName}
+                  onChange={(e) =>
+                    handleFieldChange(index, "fieldName", e.target.value)
+                  }
                   sx={{ width: 200 }}
                   placeholder="Enter field name"
+                  required
                 />
                 <TextField
                   label="Min Value"
                   type="number"
-                  value={field.min}
-                  onChange={(e) => handleFieldChange(index, "min", e.target.value)}
+                  value={field.minValue}
+                  onChange={(e) =>
+                    handleFieldChange(index, "minValue", e.target.value)
+                  }
                   sx={{ width: 120 }}
+                  required
                 />
                 <TextField
                   label="Max Value"
                   type="number"
-                  value={field.max}
-                  onChange={(e) => handleFieldChange(index, "max", e.target.value)}
+                  value={field.maxValue}
+                  onChange={(e) =>
+                    handleFieldChange(index, "maxValue", e.target.value)
+                  }
                   sx={{ width: 120 }}
+                  required
                 />
                 <IconButton
                   onClick={() => handleRemoveField(index)}
@@ -543,6 +592,7 @@ function SettingsForm() {
             variant="contained"
             color="primary"
             sx={{ alignSelf: "flex-start", mt: 2 }}
+            disabled={fields.length === 0}
           >
             Save Settings
           </Button>
