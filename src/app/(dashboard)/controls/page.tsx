@@ -44,8 +44,9 @@ import {
   Search as SearchIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import HideAuthGuard from "@/components/guards/HideAuthGuard"; // Adjust path as needed
+import HideAuthGuard from "@/components/guards/HideAuthGuard";
 
+// --- No changes to styling ---
 const Card = styled(MuiCard)(spacing);
 
 const CardContent = styled(MuiCardContent)<{ pb?: number }>`
@@ -72,6 +73,7 @@ const SearchBarContainer = styled(Box)`
   gap: 16px;
 `;
 
+// --- Updated interfaces ---
 interface ApiKey {
   id: number;
   channelId: number;
@@ -103,32 +105,37 @@ interface Channel {
   ApiKey: ApiKey[];
 }
 
+// Change: Added defaultThresholds to LabCardProps
 interface LabCardProps {
   channelId: number;
   name: string;
   apiKey: string;
+  defaultThresholds: { fieldName: string; minValue: number; maxValue: number; unit: string }[];
 }
 
+// Change: Added unit to SensorFieldProps
 interface SensorFieldProps {
   label: string;
   value: number[];
   min: number;
   max: number;
   step: number;
+  unit: string; // New prop
   onSliderChange: (event: Event, newValue: number | number[]) => void;
   latestValue: string;
 }
 
 // Mocking battery data separately
 const batteryData = {
-  battery: "85%", // This could be updated later if connected to a real source
+  battery: "85%",
 };
 
-const sensorRanges = {
-  Temperature: { min: -50, max: 150, unit: "°C" }, // Unit for Temperature
-  Pressure: { min: 0, max: 2000, unit: "hPa" }, // Unit for Pressure
-  Humidity: { min: 0, max: 100, unit: "%" }, // Unit for Humidity
-};
+// --- Removed sensorRanges since we'll use DefaultThreshold units ---
+/* const sensorRanges = {
+  Temperature: { min: -50, max: 150, unit: "°C" },
+  Pressure: { min: 0, max: 2000, unit: "hPa" },
+  Humidity: { min: 0, max: 100, unit: "%" },
+}; */
 
 // SensorField Component (Handles the Slider Display)
 function SensorField({
@@ -137,12 +144,10 @@ function SensorField({
   min,
   max,
   step,
+  unit, // Change: Use unit prop directly
   onSliderChange,
   latestValue,
 }: SensorFieldProps) {
-  // Extract unit from sensorRanges using the label
-  const unit = sensorRanges[label]?.unit || "";
-
   return (
     <Box
       sx={{
@@ -164,29 +169,28 @@ function SensorField({
         step={step}
         onChange={onSliderChange}
         valueLabelDisplay="auto"
-        // Marks: an indicator for the actual sensor reading.
         marks={[
           {
             value: parseFloat(latestValue),
-            // label: `${latestValue} units`,
           },
         ]}
         sx={{
-          width: "120px", // Fixed width for the slider
+          width: "120px",
           margin: "0 8px",
           "& .MuiSlider-mark": {
-            width: 10, // Increase the width
-            height: 10, // Increase the height
-            borderRadius: "50%", // Make them circular
-            backgroundColor: "orange", // Ensure the mark is white
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            backgroundColor: "orange",
           },
           "& .MuiSlider-thumb": {
-            width: 12, // Set the desired width
-            height: 12, // Set the desired height
-            borderRadius: "50%", // Ensure the thumb remains circular
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
           },
         }}
       />
+      {/* Change: Use unit prop instead of sensorRanges */}
       <Typography
         variant="body2"
         sx={{ width: "80px", textAlign: "center", fontWeight: "bold" }}
@@ -197,13 +201,12 @@ function SensorField({
   );
 }
 
-function LabCard({ channelId, name, apiKey }: LabCardProps) {
+function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
-  const [sliderValues, setSliderValues] = useState<number[][]>([]); // State to handle slider values
+  const [sliderValues, setSliderValues] = useState<number[][]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); // Menu state
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  // Function to handle menu open/close
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -212,7 +215,6 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
     setAnchorEl(null);
   };
 
-  // Fetch data from the API
   useEffect(() => {
     const fetchData = async () => {
       console.log("Fetching from URL:", apiKey);
@@ -223,53 +225,52 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
         }
         const data = await response.json();
         console.log("Fetched data:", data);
-        setChannelData(data); // Set the API response
+        setChannelData(data);
       } catch (err) {
         console.error("Fetch error:", err.message);
-        setError(err.message); // Handle errors by setting the error message
+        setError(err.message);
       }
     };
 
     fetchData();
   }, [channelId, apiKey]);
 
-  // If data is still loading
   if (!channelData) {
     return <Typography variant="body1">Loading data...</Typography>;
   }
 
-  // If there's an error, show the error message
   if (error) {
-    return (
-      <Typography variant="body1" color="error">{`Error: ${error}`}</Typography>
-    );
+    return <Typography variant="body1" color="error">{`Error: ${error}`}</Typography>;
   }
 
-  // Destructure data from the API response
   const { channel, feeds } = channelData;
-
-  // Get the latest feed
   const latestFeed = feeds[feeds.length - 1];
 
-  // Create an array of fields using keys that start with 'field'
   const fields = Object.keys(channel)
     .filter((key) => key.startsWith("field"))
     .map((key) => ({
-      label: channel[key], // e.g., "Temperature", "Humidity", etc.
-      latestValue: parseFloat(latestFeed[key]).toFixed(2), // e.g., "25.05000", etc.
+      label: channel[key],
+      latestValue: parseFloat(latestFeed[key]).toFixed(2),
     }));
 
-  // Initialize slider values for each field as [0, 100] directly
-  const initialSliderValues = fields.map(() => [0, 100]);
+  // Change: Initialize slider values using defaultThresholds or ±10 from latestValue
+  const initialSliderValues = fields.map((field) => {
+    const threshold = defaultThresholds.find((t) => t.fieldName === field.label);
+    if (threshold) {
+      return [threshold.minValue, threshold.maxValue];
+    } else {
+      const latest = parseFloat(field.latestValue);
+      return [latest - 10, latest + 10];
+    }
+  });
 
-  // Set the slider values state if it's the first render
   if (sliderValues.length === 0 && fields.length > 0) {
     setSliderValues(initialSliderValues);
   }
 
   const handleSliderChange = (index: number, newValue: number | number[]) => {
     const updated = [...sliderValues];
-    updated[index] = newValue as number[]; 
+    updated[index] = newValue as number[];
     setSliderValues(updated);
   };
 
@@ -284,7 +285,6 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
         }}
       >
         <Grid container alignItems="center" justifyContent="space-between">
-          {/* Device Name */}
           <Grid item>
             <Typography variant="h5" gutterBottom fontWeight="bold">
               {channel.name}
@@ -296,81 +296,56 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
               {channelId}
             </Typography>
           </Grid>
-
           <Grid item>
-
             <IconButton onClick={handleMenuOpen}>
               <MoreVert />
             </IconButton>
           </Grid>
         </Grid>
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem
-            onClick={() => {
-              handleMenuClose();
-              console.log("Edit Settings clicked");
-            }}
-          >
+          <MenuItem onClick={() => { handleMenuClose(); console.log("Edit Settings clicked"); }}>
             Edit Settings
           </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleMenuClose();
-              console.log("Delete Device clicked");
-            }}
-          >
+          <MenuItem onClick={() => { handleMenuClose(); console.log("Delete Device clicked"); }}>
             Delete Device
           </MenuItem>
         </Menu>
 
-        {/* Create space */}
         <Box sx={{ height: "16px" }}></Box>
 
-        {/* Display Sensor Fields with sliders */}
-        {fields.map((field, index) => (
-          <SensorField
-            key={index}
-            label={field.label}
-            value={sliderValues[index]}
-            min={0}
-            max={100}
-            step={1}
-            onSliderChange={(event, newValue) =>
-              handleSliderChange(index, newValue)
-            }
-            latestValue={field.latestValue}
-          />
-        ))}
+        {fields.map((field, index) => {
+          // Change: Use defaultThresholds or ±10 from latestValue for min/max
+          const threshold = defaultThresholds.find((t) => t.fieldName === field.label);
+          const latest = parseFloat(field.latestValue);
+          return (
+            <SensorField
+              key={index}
+              label={field.label}
+              value={sliderValues[index]}
+              min={threshold?.minValue ?? (latest - 10)}
+              max={threshold?.maxValue ?? (latest + 10)}
+              step={0.1} // Change: Use 0.1 for finer control
+              unit={threshold?.unit || ""} // Change: Use unit from defaultThresholds
+              onSliderChange={(event, newValue) => handleSliderChange(index, newValue)}
+              latestValue={field.latestValue}
+            />
+          );
+        })}
 
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <Box
-            sx={{
-              backgroundColor: "#f0f0f0",
-              borderRadius: "4px",
-              padding: "8px",
-              flex: 1,
-            }}
-          >
+          <Box sx={{ backgroundColor: "#f0f0f0", borderRadius: "4px", padding: "8px", flex: 1 }}>
             <Typography variant="body2">
-              <strong>Start date:</strong>{" "}
-              {new Date(channel.created_at).toLocaleDateString()}
+              <strong>Start date:</strong> {new Date(channel.created_at).toLocaleDateString()}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              backgroundColor: "#f0f0f0",
-              borderRadius: "4px",
-              padding: "8px",
-              flex: 1,
-            }}
-          >
+          <Box sx={{ backgroundColor: "#f0f0f0", borderRadius: "4px", padding: "8px", flex: 1 }}>
             <Typography variant="body2">
-              <strong>Last updated:</strong>{" "}
-              {new Date(channel.updated_at).toLocaleDateString()}
+              <strong>Last updated:</strong> {new Date(channel.updated_at).toLocaleDateString()}
             </Typography>
           </Box>
         </Box>
@@ -378,7 +353,6 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
     </Card>
   );
 }
-
 
 function SettingsForm() {
   const [fields, setFields] = useState<
@@ -389,7 +363,7 @@ function SettingsForm() {
 
   const handleFieldChange = (index: number, key: string, value: string) => {
     const updatedFields = [...fields];
-    updatedFields[index] = { ...updatedFields[index], [key]: value }; // Store as string, allow empty
+    updatedFields[index] = { ...updatedFields[index], [key]: value };
     setFields(updatedFields);
   };
 
@@ -418,7 +392,7 @@ function SettingsForm() {
               fieldName: field.fieldName,
               minValue: field.minValue.toString(),
               maxValue: field.maxValue.toString(),
-              unit: field.unit || "", 
+              unit: field.unit || "",
             }))
           );
         } else {
@@ -439,7 +413,6 @@ function SettingsForm() {
     setError(null);
     setLoading(true);
 
-    
     if (fields.length > 0) {
       const invalidFields = fields.filter((field) => {
         const min = field.minValue === "" ? NaN : Number(field.minValue);
@@ -456,7 +429,6 @@ function SettingsForm() {
       }
     }
 
-    // Convert to numbers for API submission 
     const submissionFields = fields.map((field) => ({
       fieldName: field.fieldName,
       minValue: Number(field.minValue),
@@ -580,7 +552,7 @@ function SettingsForm() {
                     handleFieldChange(index, "unit", e.target.value)
                   }
                   sx={{ width: 80 }}
-                  placeholder="e.g., C"
+                  placeholder="e.g., °C"
                   disabled={loading}
                 />
                 <IconButton
@@ -619,7 +591,7 @@ function SettingsForm() {
             variant="contained"
             color="primary"
             sx={{ alignSelf: "flex-start", mt: 2 }}
-            disabled={loading} 
+            disabled={loading}
           >
             {loading ? "Saving..." : "Save Settings"}
           </Button>
@@ -630,10 +602,13 @@ function SettingsForm() {
 }
 
 function Controls() {
-  // State for search and selected lab filter
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLabId, setSelectedLabId] = useState<number | "">("");
   const [channels, setChannels] = useState<Channel[]>([]);
+  // Change: Added defaultThresholds state
+  const [defaultThresholds, setDefaultThresholds] = useState<
+    { fieldName: string; minValue: number; maxValue: number; unit: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openSettings, setOpenSettings] = useState(false);
@@ -641,20 +616,30 @@ function Controls() {
   const handleOpenSettings = () => setOpenSettings(true);
   const handleCloseSettings = () => setOpenSettings(false);
 
+  // Change: Fetch defaultThresholds along with channels
   useEffect(() => {
-    const fetchChannels = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/controls/api/all_channels");
-        if (!response.ok) throw new Error("Failed to fetch channels");
-        const data = await response.json();
-        setChannels(data);
+        const [channelsResponse, thresholdsResponse] = await Promise.all([
+          fetch("/controls/api/all_channels"),
+          fetch("/api/controls/settings"),
+        ]);
+
+        if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
+        if (!thresholdsResponse.ok) throw new Error("Failed to fetch default thresholds");
+
+        const channelsData = await channelsResponse.json();
+        const thresholdsData = await thresholdsResponse.json();
+
+        setChannels(channelsData);
+        setDefaultThresholds(thresholdsData.fields || []);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchChannels();
+    fetchData();
   }, []);
 
   if (loading) return <Typography>Loading...</Typography>;
@@ -681,7 +666,6 @@ function Controls() {
 
       <Divider my={6} />
 
-      {/* Search and Filter Bar */}
       <SearchBarContainer>
         <TextField
           placeholder="Search"
@@ -694,7 +678,6 @@ function Controls() {
           }}
           sx={{ minWidth: 300 }}
         />
-
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Lab ID</InputLabel>
           <Select
@@ -713,7 +696,7 @@ function Controls() {
             variant="contained"
             color="primary"
             onClick={handleOpenSettings}
-            sx={{ ml: "auto" }} 
+            sx={{ ml: "auto" }}
           >
             Manage Settings
           </Button>
@@ -743,10 +726,12 @@ function Controls() {
         <Grid container spacing={6}>
           {filteredChannels.map((channel) => (
             <Grid item xs={12} key={channel.id}>
+              {/* Change: Pass defaultThresholds to LabCard */}
               <LabCard
                 channelId={channel.id}
                 name={channel.name}
                 apiKey={channel.ApiKey[0]?.api || ""}
+                defaultThresholds={defaultThresholds}
               />
             </Grid>
           ))}
