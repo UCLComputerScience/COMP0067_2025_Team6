@@ -267,10 +267,9 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
     setSliderValues(initialSliderValues);
   }
 
-  // Handle slider change for each sensor
   const handleSliderChange = (index: number, newValue: number | number[]) => {
     const updated = [...sliderValues];
-    updated[index] = newValue as number[]; // newValue is an array: [minThreshold, maxThreshold]
+    updated[index] = newValue as number[]; 
     setSliderValues(updated);
   };
 
@@ -281,7 +280,7 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          height: "100%", // Ensure it takes up the full height
+          height: "100%",
         }}
       >
         <Grid container alignItems="center" justifyContent="space-between">
@@ -298,21 +297,13 @@ function LabCard({ channelId, name, apiKey }: LabCardProps) {
             </Typography>
           </Grid>
 
-          {/* Battery and Menu Icons */}
           <Grid item>
-            {/* <IconButton>
-              <BatteryGauge
-                value={parseInt(batteryData.battery, 10)}
-                size={35}
-              />
-            </IconButton> */}
+
             <IconButton onClick={handleMenuOpen}>
               <MoreVert />
             </IconButton>
           </Grid>
         </Grid>
-
-        {/* Menu Component */}
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -427,7 +418,7 @@ function SettingsForm() {
               fieldName: field.fieldName,
               minValue: field.minValue.toString(),
               maxValue: field.maxValue.toString(),
-              unit: field.unit || "", // Default to empty if unit isn’t in DB yet
+              unit: field.unit || "", 
             }))
           );
         } else {
@@ -448,7 +439,7 @@ function SettingsForm() {
     setError(null);
     setLoading(true);
 
-    // Validate fields only if there are rows
+    
     if (fields.length > 0) {
       const invalidFields = fields.filter((field) => {
         const min = field.minValue === "" ? NaN : Number(field.minValue);
@@ -465,7 +456,7 @@ function SettingsForm() {
       }
     }
 
-    // Convert to numbers for API submission (if fields exist)
+    // Convert to numbers for API submission 
     const submissionFields = fields.map((field) => ({
       fieldName: field.fieldName,
       minValue: Number(field.minValue),
@@ -628,7 +619,7 @@ function SettingsForm() {
             variant="contained"
             color="primary"
             sx={{ alignSelf: "flex-start", mt: 2 }}
-            disabled={loading} // Removed fields.length === 0 condition
+            disabled={loading} 
           >
             {loading ? "Saving..." : "Save Settings"}
           </Button>
@@ -685,9 +676,6 @@ function Controls() {
         <Link component={NextLink} href="/">
           Dashboard
         </Link>
-        {/* <Link component={NextLink} href="/">
-          Pages
-        </Link> */}
         <Typography>Controls</Typography>
       </Breadcrumbs>
 
@@ -725,7 +713,7 @@ function Controls() {
             variant="contained"
             color="primary"
             onClick={handleOpenSettings}
-            sx={{ ml: "auto" }} // Aligns to the right
+            sx={{ ml: "auto" }} 
           >
             Manage Settings
           </Button>
