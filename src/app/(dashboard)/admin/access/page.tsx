@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
+import { getSession } from "next-auth/react";
 
 import {
   Box,
@@ -341,9 +342,9 @@ function EnhancedTable() {
           lastname: user.lastName,
           usertype: user.organisation || "Standard",
           role: formatRole(user.userRole),
-          status: formatStatus(user.status), 
+          status: formatStatus(user.status),
         }));
-        
+
         setUsers(mappedUsers);
         console.log("Users fetched successfully:", mappedUsers);
       } else {
@@ -612,6 +613,10 @@ function EnhancedTable() {
           selectedRole
         );
 
+        // Get the current user's session
+        const session = await getSession();
+        console.log("Current session:", session);
+
         const response = await fetch("/api/auth/users", {
           method: "POST",
           headers: {
@@ -620,6 +625,7 @@ function EnhancedTable() {
           body: JSON.stringify({
             userIds: selectedUsers,
             role: selectedRole,
+            currentUserEmail: session?.user?.email,
           }),
         });
 
