@@ -90,6 +90,8 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       });
     
       if (res.ok) {
+        const labLocation = await getLabLocation(name); 
+        await logActivity("Device Added", labLocation, name);
         setMessage("API added successfully!");
         setApi("");
         setData(`${api}`);
@@ -104,6 +106,37 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
     setLoading(false);
     setOpen(false)
   }
+  const getLabLocation = async (deviceName: string) => {
+    try {
+      const response = await fetch(`/api/device-lab?deviceName=${encodeURIComponent(deviceName)}`);
+      const data = await response.json();
+      return data.labLocation;
+    } catch (error) {
+      console.error("Failed to fetch lab location:", error);
+      return "Unknown";
+    }
+  };
+  
+
+  const logActivity = async (action: string, labLocation: string, device: string) => {
+    const response = await fetch("/api/logs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action,
+        labLocation, 
+        device,
+      }),
+    });
+
+    if (response.ok) {
+      console.log("Activity log created successfully");
+    } else {
+      console.error("Failed to create activity log");
+    }
+  };
 
   return (
     <div>

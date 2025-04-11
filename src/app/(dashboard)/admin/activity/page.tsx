@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
@@ -13,14 +13,11 @@ import {
   InputLabel,
   TextField,
 } from "@mui/material";
-import { useState } from "react";
-// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
   Box,
   Breadcrumbs as MuiBreadcrumbs,
   Button,
-  Checkbox,
   Divider as MuiDivider,
   Grid2 as Grid,
   IconButton,
@@ -67,128 +64,16 @@ const Customer = styled.div`
   align-items: center;
 `;
 
-function createData(
-  id: string,
-  timestamp: string,
-  userSystem: string,
-  action: string,
-  location: string,
-  status: string,
-  additionalDetails: string
-) {
-  return {
-    id,
-    timestamp,
-    userSystem,
-    action,
-    location,
-    status,
-    additionalDetails,
-  };
-}
-
 type RowType = {
   [key: string]: string;
   id: string;
   timestamp: string;
-  userSystem: string;
+  firstName: string;
+  lastName: string;
+  device: string;
   action: string;
   location: string;
-  status: string;
-  additionalDetails: string;
 };
-const rows: Array<RowType> = [
-  createData(
-    "1",
-    "05/02/2025 13:00",
-    "John Smith",
-    "Details Changed",
-    "UK",
-    "Successful",
-    " "
-  ),
-  createData(
-    "2",
-    "05/02/2025 11:00",
-    "Linda Harvey",
-    "Dashboard Edited",
-    "UK",
-    "Failed",
-    " "
-  ),
-  createData(
-    "3",
-    "04/02/2025 09:00",
-    "Bob Johnson",
-    "Report Export",
-    "UK",
-    "Error",
-    " "
-  ),
-  createData(
-    "4",
-    "15/01/2025 09:00",
-    "Lucas Smith",
-    "Details Changed",
-    "UK",
-    "Error",
-    " "
-  ),
-  createData(
-    "5",
-    "04/02/2025 09:00",
-    "Bob",
-    "Report Export",
-    "UK",
-    "Error",
-    "Hehe"
-  ),
-  createData(
-    "6",
-    "04/02/2025 09:00",
-    "Billy",
-    "Report Export",
-    "UK",
-    "Error",
-    "Pepe"
-  ),
-  createData(
-    "7",
-    "04/02/2025 09:00",
-    "John",
-    "Report Export",
-    "UK",
-    "Error",
-    " "
-  ),
-  createData(
-    "8",
-    "04/02/2025 09:00",
-    "Rob",
-    "Report Export",
-    "UK",
-    "Error",
-    " "
-  ),
-  createData(
-    "9",
-    "04/02/2025 09:00",
-    "John",
-    "Report Export",
-    "UK",
-    "Error",
-    " "
-  ),
-  createData(
-    "10",
-    "04/02/2025 09:00",
-    "Meow",
-    "Report Export",
-    "UK",
-    "Error",
-    " "
-  ),
-];
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
   if (b[orderBy] < a[orderBy]) {
@@ -222,19 +107,30 @@ function stableSort(
   return stabilizedThis.map((element) => element.el);
 }
 
+const columnWidths = {
+  timestamp: "20%",
+  firstName: "15%",
+  lastName: "15%",
+  device: "15%",
+  action: "15%",
+  location: "20%"
+};
+
 type HeadCell = {
   id: string;
   alignment: "left" | "center" | "right" | "justify" | "inherit" | undefined;
   label: string;
   disablePadding?: boolean;
+  width: string;
 };
+
 const headCells: Array<HeadCell> = [
-  { id: "timestamp", alignment: "left", label: "Timestamp" },
-  { id: "userSystem", alignment: "left", label: "User/System" },
-  { id: "action", alignment: "left", label: "Action" },
-  { id: "location", alignment: "left", label: "Location" },
-  { id: "status", alignment: "left", label: "Status" },
-  { id: "additionalDetails", alignment: "left", label: "Additional Details" },
+  { id: "timestamp", alignment: "left", label: "Timestamp", width: columnWidths.timestamp },
+  { id: "firstName", alignment: "left", label: "First Name", width: columnWidths.firstName },
+  { id: "lastName", alignment: "left", label: "Last Name", width: columnWidths.lastName },
+  { id: "device", alignment: "left", label: "Device", width: columnWidths.device },
+  { id: "action", alignment: "left", label: "Action", width: columnWidths.action },
+  { id: "location", alignment: "left", label: "Location", width: columnWidths.location },
 ];
 
 type EnhancedTableHeadProps = {
@@ -245,6 +141,7 @@ type EnhancedTableHeadProps = {
   onSelectAllClick: (e: any) => void;
   onRequestSort: (e: any, property: string) => void;
 };
+
 const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   const {
     onSelectAllClick,
@@ -267,6 +164,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
             align={headCell.alignment}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{ width: headCell.width }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -284,7 +182,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
 
 type EnhancedTableToolbarProps = {
   numSelected: number;
-  filters: { user: string; activity: string; status: string; date: string };
+  filters: { user: string; activity: string; date: string };
   setFilters: React.Dispatch<React.SetStateAction<any>>;
 };
 
@@ -303,7 +201,7 @@ const EnhancedTableToolbar = ({
       }}
     >
       <TextField
-        label="Search User/System"
+        label="Search User/Device"
         variant="outlined"
         size="small"
         style={{ minWidth: 200 }}
@@ -331,30 +229,8 @@ const EnhancedTableToolbar = ({
           }
         >
           <MenuItem value="">All</MenuItem>
-          <MenuItem value="Details Changed">Details Changed</MenuItem>
-          <MenuItem value="Dashboard Edited">Dashboard Edited</MenuItem>
-          <MenuItem value="Report Export">Report Export</MenuItem>
-        </Select>
-      </FormControl>
-
-      <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
-        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>
-          Status
-        </InputLabel>
-        <Select
-          value={filters.status}
-          displayEmpty
-          onChange={(e) =>
-            setFilters((prev: typeof filters) => ({
-              ...prev,
-              status: e.target.value,
-            }))
-          }
-        >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="Successful">Successful</MenuItem>
-          <MenuItem value="Failed">Failed</MenuItem>
-          <MenuItem value="Error">Error</MenuItem>
+          <MenuItem value="Device Added">Device Added</MenuItem>
+          <MenuItem value="Device Deleted">Device Deleted</MenuItem>
         </Select>
       </FormControl>
 
@@ -377,48 +253,61 @@ const EnhancedTableToolbar = ({
   );
 };
 
+
 function EnhancedTable({
+  rows,
+  filters,
+  setFilters,
   onDataFiltered,
 }: {
-  onDataFiltered: (data: Array<RowType>, filters: any) => void;
+  rows: Array<RowType>;
+  filters: { user: string; activity: string; date: string };
+  setFilters: React.Dispatch<React.SetStateAction<any>>;
+  onDataFiltered?: (data: Array<RowType>, filters: any) => void;
 }) {
   const [order, setOrder] = React.useState<"desc" | "asc">("asc");
   const [orderBy, setOrderBy] = React.useState("timestamp");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(6);
 
-  const [filters, setFilters] = useState({
-    user: "",
-    activity: "",
-    status: "",
-    date: "",
-  });
-
   const formatDate = (timestamp: string) => {
-    const [datePart] = timestamp.split(" ");
-    const [day, month, year] = datePart.split("/");
-    return `${year}-${month}-${day}`;
+    return new Date(timestamp).toISOString().slice(0, 10);
   };
 
   const filteredRows = React.useMemo(() => {
     return rows.filter((row) => {
-      const rowDate = formatDate(row.timestamp);
-      return (
-        (filters.user === "" ||
-          row.userSystem.toLowerCase().includes(filters.user.toLowerCase())) &&
-        (filters.activity === "" || row.action === filters.activity) &&
-        (filters.status === "" || row.status === filters.status) &&
-        (filters.date === "" || rowDate === filters.date)
-      );
+      const searchTerm = filters.user.toLowerCase();
+      const firstName = row.firstName ?? "";
+      const lastName = row.lastName ?? "";
+      const deviceName = row.device ?? "";
+      
+      const matchesSearch =
+        filters.user === "" ||
+        firstName.toLowerCase().includes(searchTerm) ||
+        lastName.toLowerCase().includes(searchTerm) ||
+        deviceName.toLowerCase().includes(searchTerm);
+
+      const matchesActivity =
+        filters.activity === "" || row.action === filters.activity;
+      
+      let matchesDate = true;
+      if (filters.date !== "") {
+        const rowDate = formatDate(row.timestamp);
+        matchesDate = rowDate === filters.date;
+      }
+      
+      return matchesSearch && matchesActivity && matchesDate;
     });
-  }, [filters]);
+  }, [filters, rows]);
 
   React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      onDataFiltered(filteredRows, filters);
-    }, 100);
+    if (onDataFiltered) {
+      const timeoutId = setTimeout(() => {
+        onDataFiltered(filteredRows, filters);
+      }, 100);
 
-    return () => clearTimeout(timeoutId);
+      return () => clearTimeout(timeoutId);
+    }
   }, [filters, filteredRows, onDataFiltered]);
 
   const handleRequestSort = (event: any, property: string) => {
@@ -458,8 +347,9 @@ function EnhancedTable({
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
-            size={"medium"}
+            size="medium"
             aria-label="enhanced table"
+            sx={{ minWidth: 1000, tableLayout: "fixed" }} 
           >
             <TableHead>
               <TableRow>
@@ -469,6 +359,7 @@ function EnhancedTable({
                     align={headCell.alignment}
                     padding={headCell.disablePadding ? "none" : "normal"}
                     sortDirection={orderBy === headCell.id ? order : false}
+                    sx={{ width: headCell.width }} 
                   >
                     <TableSortLabel
                       active={orderBy === headCell.id}
@@ -486,12 +377,24 @@ function EnhancedTable({
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row: RowType, index: number) => (
                   <TableRow hover tabIndex={-1} key={`${row.id}-${index}`}>
-                    <TableCell>{row.timestamp}</TableCell>
-                    <TableCell>{row.userSystem}</TableCell>
-                    <TableCell>{row.action}</TableCell>
-                    <TableCell>{row.location}</TableCell>
-                    <TableCell>{row.status}</TableCell>
-                    <TableCell>{row.additionalDetails}</TableCell>
+                    <TableCell sx={{ width: columnWidths.timestamp, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {new Date(row.timestamp).toLocaleString()}
+                    </TableCell>
+                    <TableCell sx={{ width: columnWidths.firstName, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row.firstName}
+                    </TableCell> 
+                    <TableCell sx={{ width: columnWidths.lastName, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row.lastName}
+                    </TableCell>
+                    <TableCell sx={{ width: columnWidths.device, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row.device}
+                    </TableCell>
+                    <TableCell sx={{ width: columnWidths.action, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row.action}
+                    </TableCell>
+                    <TableCell sx={{ width: columnWidths.location, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {row.location}
+                    </TableCell>
                   </TableRow>
                 ))}
               {emptyRows > 0 && (
@@ -522,38 +425,72 @@ function EnhancedTable({
 }
 
 function ActivityLogs() {
-  const [filteredData, setFilteredData] = useState(rows);
+  const [filteredData, setFilteredData] = useState<Array<RowType>>([]);
   const [currentFilters, setCurrentFilters] = useState({
     user: "",
     activity: "",
-    status: "",
     date: "",
   });
 
-  const handleDataFiltered = (newData: Array<RowType>, filters: any) => {
-    setFilteredData(newData);
+  useEffect(() => {
+    const fetchActivityLogs = async () => {
+      try {
+        const response = await fetch("/api/logs");
+        const data = await response.json();
+        const transformed = data.map((log: any) => {
+          const [firstName, ...lastNameParts] = log.user.split(" ");
+          const lastName = lastNameParts.join(" ");
+          return {
+            id: log.id,
+            timestamp: log.timestamp,
+            firstName: firstName,
+            lastName: lastName,
+            device: log.device,
+            action: log.action,
+            location: log.labLocation,
+          };
+        });
+  
+        setFilteredData(transformed); 
+      } catch (error) {
+        console.error("Failed to fetch logs", error);
+        setFilteredData([]); 
+      }
+    };
+  
+    fetchActivityLogs();
+  }, []);
+
+  const handleDataFiltered = (data: Array<RowType>, filters: any) => {
     setCurrentFilters(filters);
   };
-
+  
   const handleExport = () => {
     const doc = new jsPDF();
 
     const columns = [
       { header: "Timestamp", dataKey: "timestamp" },
-      { header: "User/System", dataKey: "userSystem" },
+      { header: "First Name", dataKey: "firstName" },
+      { header: "Last Name", dataKey: "lastName" },
+      { header: "Device", dataKey: "device" },
       { header: "Action", dataKey: "action" },
       { header: "Location", dataKey: "location" },
-      { header: "Status", dataKey: "status" },
-      { header: "Additional Details", dataKey: "additionalDetails" },
     ];
 
-    const data = filteredData.map((row) => ({
-      timestamp: row.timestamp,
-      userSystem: row.userSystem,
+    const data = filteredData.filter((log) => {
+      return (
+        (currentFilters.user === "" ||
+          (`${log.firstName} ${log.lastName}`).toLowerCase().includes(currentFilters.user.toLowerCase())) &&
+        (currentFilters.activity === "" || log.action === currentFilters.activity) &&
+        (currentFilters.date === "" || new Date(log.timestamp).toISOString().slice(0, 10) === currentFilters.date)
+      );
+    }).map((row) => ({
+      timestamp: new Date(row.timestamp).toLocaleString(),
+      firstName: row.firstName,
+      lastName: row.lastName,
+      device: row.device,
       action: row.action,
       location: row.location,
-      status: row.status,
-      additionalDetails: row.additionalDetails,
     }));
 
     doc.setFontSize(16);
@@ -568,8 +505,6 @@ function ActivityLogs() {
       activeFilters.push(`User Search: "${currentFilters.user}"`);
     if (currentFilters.activity)
       activeFilters.push(`Activity Type: ${currentFilters.activity}`);
-    if (currentFilters.status)
-      activeFilters.push(`Status: ${currentFilters.status}`);
     if (currentFilters.date) activeFilters.push(`Date: ${currentFilters.date}`);
 
     if (activeFilters.length > 0) {
@@ -597,6 +532,15 @@ function ActivityLogs() {
     doc.save("activity-logs.pdf");
   };
 
+  const filteredLogs = filteredData.filter((log) => {
+    return (
+      (currentFilters.user === "" ||
+        (`${log.firstName} ${log.lastName}`).toLowerCase().includes(currentFilters.user.toLowerCase())) &&
+      (currentFilters.activity === "" || log.action === currentFilters.activity) &&
+      (currentFilters.date === "" || log.timestamp.includes(currentFilters.date))
+    );
+  });
+
   return (
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={10}>
@@ -604,27 +548,27 @@ function ActivityLogs() {
           <Typography variant="h3" gutterBottom display="inline">
             Activity Logs
           </Typography>
-
           <Breadcrumbs aria-label="Breadcrumb" mt={2}>
-            <Link component={NextLink} href="/">
-              Dashboard
-            </Link>
+            <Link component={NextLink} href="/">Dashboard</Link>
             <Typography>Activity Logs</Typography>
           </Breadcrumbs>
         </Grid>
         <Grid>
-          <div>
-            <Button variant="contained" color="primary" onClick={handleExport}>
-              <AddIcon />
-              Export
-            </Button>
-          </div>
+          <Button variant="contained" color="primary" onClick={handleExport}>
+            <AddIcon />
+            Export
+          </Button>
         </Grid>
       </Grid>
       <Divider my={6} />
       <Grid container spacing={6}>
         <Grid size={12}>
-          <EnhancedTable onDataFiltered={handleDataFiltered} />
+          <EnhancedTable
+            rows={filteredData}
+            filters={currentFilters}
+            setFilters={setCurrentFilters}
+            onDataFiltered={handleDataFiltered}
+          />
         </Grid>
       </Grid>
     </React.Fragment>
