@@ -2,6 +2,7 @@
 
 import { Paper } from "@mui/material";
 import React from "react";
+import { useSearchParams } from "next/navigation";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
@@ -14,6 +15,7 @@ import {
   Button,
   InputBase,
   Box,
+  Alert,
   Container,
   Grid,
 } from "@mui/material";
@@ -120,6 +122,20 @@ const RightSection = styled(Paper)`
 `;
 
 function SignIn() {
+  const searchParams = useSearchParams();
+  const rawError = searchParams.get("error");
+
+  const errorMap: Record<string, string> = {
+    InvalidCredentials:
+      "Invalid login details. Please check your email and password.",
+    DeactivatedAccount:
+      "This account has been deactivated. Please contact the admin.",
+    // Optional fallback
+    CredentialsSignin: "Invalid login attempt. Please try again.",
+  };
+
+  const errorMessage = rawError ? errorMap[rawError] : null;
+
   return (
     <React.Fragment>
       <TopBar position="static">
@@ -206,6 +222,11 @@ function SignIn() {
               >
                 Sign in to your account
               </Typography>
+              {errorMessage && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                  {errorMessage}
+                </Alert>
+              )}
               <SignInComponent />
             </ContentWrapper>
           </RightSection>
