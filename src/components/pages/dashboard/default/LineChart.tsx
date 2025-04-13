@@ -26,6 +26,17 @@ const ChartWrapper = styled.div`
   height: 378px;
 `;
 
+const getLabLocation = async (deviceName: string) => {
+  try {
+    const response = await fetch(`/api/device-lab?deviceName=${encodeURIComponent(deviceName)}`);
+    const data = await response.json();
+    return data.labLocation;
+  } catch (error) {
+    console.error("Failed to fetch lab location:", error);
+    return "Unknown"; 
+  }
+};
+
 const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, field, DeviceData, DeviceLabels, setData }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -41,10 +52,23 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, fie
   const handleDelete = async () => {
     handleClose();
     try {
+      const labLocation = await getLabLocation(channel); 
+  
       const response = await fetch(`/api/apikeys/${channel_id}`, { method: "DELETE" });
-
+  
       if (response.ok) {
         setData(channel);
+  
+        await fetch("/api/logs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "Device Deleted",
+            labLocation, 
+            device: channel,
+          }),
+        });
+        
       } else {
         console.error("Failed to delete");
       }
@@ -52,7 +76,7 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, fie
       console.error("Error deleting record:", error);
     }
   };
-
+  
   const data = {
     labels: DeviceLabels,
     datasets: [

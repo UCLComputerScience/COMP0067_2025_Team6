@@ -144,3 +144,12 @@ enum ReadStatus {
   READ
   UNREAD
 }
+
+model ActivityLog {
+  id           Int      @id @default(autoincrement())
+  action       String   @db.VarChar(100)
+  user         String   @db.VarChar(100)
+  labLocation  String   @db.VarChar(100)
+  device       String?  @db.VarChar(100)
+  timestamp    DateTime @default(now()) @db.Timestamp(6)
+}
