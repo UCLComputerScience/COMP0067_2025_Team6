@@ -249,7 +249,7 @@ const OrganisationInformation = () => {
       const response = await fetch("/api/auth/updateOrganisationProfile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.user.id, ...formData }), // ✅ sending formData
+        body: JSON.stringify({ userId: session.user.id, ...formData }), 
       });
   
       if (!response.ok) {
@@ -260,7 +260,7 @@ const OrganisationInformation = () => {
       }
   
       const data = await response.json();
-      alert("Organisation information saved!"); // ✅ success
+      alert("Organisation information saved!"); 
       setLastSavedData(formData); 
       localStorage.setItem("organisationInfo", JSON.stringify(formData));
     } catch (error: any) {
