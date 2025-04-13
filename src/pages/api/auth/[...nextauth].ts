@@ -33,22 +33,62 @@ export default NextAuth({
       },
 
       async authorize(credentials) {
-        // Check if email and password are provided
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          const error = new Error("Missing credentials");
+          (error as any).name = "MissingCredentials";
+          throw error;
         }
-
-        // Fetch user from the database
+        
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
+        
+        if (!user || credentials.password !== user.password) {
+          const error = new Error("Invalid login details");
+          (error as any).name = "InvalidCredentials";
+          throw error;
+        }
+        
+        if (user.status !== "ACTIVE") {
+          const error = new Error("This account has been deactivated. Please contact Admin.");
+          (error as any).name = "DeactivatedAccount";
+          throw error;
+        }
 
-        // Check if user exists and password matches (hash passwords in production)
-        if (user && credentials.password === user.password) {
-          // Check if the user's status is "ACTIVE"
-          if (user.status !== "ACTIVE") {
-            return null; // User is inactive, return null and prevent login
-          }
+
+        // if (!credentials?.email || !credentials?.password) {
+        //   throw new Error("Invalid login details");
+        // }
+
+        // const user = await prisma.user.findUnique({
+        //   where: { email: credentials.email },
+        // });
+
+        // if (!user || credentials.password !== user.password) {
+        //   throw new Error("Invalid login details");
+        // }
+
+        // if (user.status !== "ACTIVE") {
+        //   throw new Error("This account has been deactivated. Please contact Admin.");
+        // }
+
+      // async authorize(credentials) {
+      //   // Check if email and password are provided
+      //   if (!credentials?.email || !credentials?.password) {
+      //     return null;
+      //   }
+
+      //   // Fetch user from the database
+      //   const user = await prisma.user.findUnique({
+      //     where: { email: credentials.email },
+      //   });
+
+      //   // Check if user exists and password matches (hash passwords in production)
+      //   if (user && credentials.password === user.password) {
+      //     // Check if the user's status is "ACTIVE"
+      //     if (user.status !== "ACTIVE") {
+      //       return null; // User is inactive, return null and prevent login
+      //     }
 
           // Log the login event into UsageHistory table
           await prisma.usageHistory.create({
@@ -71,9 +111,8 @@ export default NextAuth({
             userRole: user.userRole,
             status: user.status,
           };
-        }
 
-        return null; // Return null if credentials are incorrect
+        // return null; // Return null if credentials are incorrect
       },
     }),
   ],
