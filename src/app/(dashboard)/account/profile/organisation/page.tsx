@@ -3,6 +3,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
 import PasswordIcon from "@mui/icons-material/Password";
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react"; 
 import styled from "@emotion/styled";
 import NextLink from "next/link";
 import {
@@ -12,6 +13,7 @@ import {
   Button as MuiButton,
   Card as MuiCard,
   CardContent,
+  LinearProgress,
   Divider as MuiDivider,
   Grid as MuiGrid,
   Typography as MuiTypography,
@@ -19,6 +21,7 @@ import {
   Chip as MuiChip,
 } from "@mui/material";
 import { Grid } from "@mui/material";
+
 const Breadcrumbs = styled(MuiBreadcrumbs)`
   margin-bottom: 16px;
 `;
@@ -38,70 +41,51 @@ const Avatar = styled(MuiAvatar)`
   margin-bottom: 16px;
 `;
 
-//calculate profile completion
 const OrganisationCompletion = () => {
-  const loadOrganisationData = () => {
-    const savedData = localStorage.getItem("organisationInfo");
-    return savedData
-      ? JSON.parse(savedData)
-      : {
-          organisation: "",
-          organisationRole: "",
-          organisationEmail: "",
-          organisationPhoneNumber: "",
-          organisationAddressLine1: "",
-          organisationAddressLine2: "",
-          organisationCity: "",
-          organisationCounty: "",
-          organisationPostcode: "",
-        };
-  };
-
-  const [orgData, setOrgData] = useState(loadOrganisationData());
+  const { data: session } = useSession();
+  const [completion, setCompletion] = useState<number>(0);
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      setOrgData(loadOrganisationData());
+    if (!session?.user?.id) return;
+
+    const loadOrganisation = async () => {
+      try {
+        const res = await fetch(`/api/auth/getOrganisationProfile?userId=${session.user.id}`);
+        if (!res.ok) throw new Error("Failed to load organisation profile");
+        const { user } = await res.json();
+
+        const fields = [
+          user.organisation,
+          user.organisationRole,
+          user.organisationEmail,
+          user.organisationPhoneNumber,
+          user.organisationAddressLine1,
+          user.organisationCity,
+          user.organisationCounty,
+          user.organisationPostcode,
+        ];
+
+        const filled = fields.filter((field: string) => field && field.trim() !== "").length;
+        const percentage = Math.round((filled / fields.length) * 100);
+        setCompletion(percentage);
+      } catch (error) {
+        console.error("Error loading organisation completion:", error);
+      }
     };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
 
-  const requiredFields = [
-    "organisation",
-    "organisationRole",
-    "organisationEmail",
-    "organisationPhoneNumber",
-    "organisationAddressLine1",
-    "organisationCity",
-    "organisationCounty",
-    "organisationPostcode",
-  ];
-  
-  const filledFields = requiredFields.filter((field) => {
-    const value = orgData[field];
-    return value && typeof value === "string" && value.trim() !== "";
-  }).length;
-  
-  const totalFields = requiredFields.length;
-  const completionPercentage = Math.round((filledFields / totalFields) * 100);
-  
+    loadOrganisation();
+  }, [session]);
 
-  if (completionPercentage === 100) return null;
+  if (completion === 100) return null;
 
   return (
-    <Card>
-      <CardContent
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box>
+    <Card sx={{ mb: 3 }}>
+      <CardContent>
+        <Box display="flex" flexDirection="column" gap={1}>
           <Typography variant="h6" color="primary">
-            Complete Your Organisation Profile ({completionPercentage}%)
+            Complete Your Organisation Profile ({completion}%)
           </Typography>
+          <LinearProgress variant="determinate" value={completion} />
           <Typography variant="body2" color="textSecondary">
             Please update your organisation details to reach 100% completion.
           </Typography>
@@ -114,12 +98,6 @@ const OrganisationCompletion = () => {
 const ProfileDetails = () => {
   const [user, setUser] = useState({ firstName: "", lastName: "", userRole: "STANDARD_USER" });
   const [avatar, setAvatar] = useState("/static/img/avatar.jpg");
-
-  interface User {
-    firstName: string;
-    lastName: string;
-    userRole: string;
-  }
 
   const formatRole = (role: string): string => {
     if (!role) return "User";
@@ -210,32 +188,28 @@ const ProfileDetails = () => {
 };
 
 const OrganisationInformation = () => {
-  const loadSavedData = () => {
-    const savedData = localStorage.getItem("organisationInfo");
-    return savedData
-      ? JSON.parse(savedData)
-      : {
-          organisation: "",
-          organisationRole: "",
-          organisationEmail: "",
-          organisationPhoneNumber: "",
-          organisationAddressLine1: "",
-          organisationAddressLine2: "",
-          organisationCity: "",
-          organisationCounty: "",
-          organisationPostcode: "",
-        };
-  };
-
-  const [formData, setFormData] = useState(loadSavedData);
-  const [lastSavedData, setLastSavedData] = useState(loadSavedData);
+  const { data: session } = useSession();
+  const [formData, setFormData] = useState({
+    organisation: "",
+    organisationRole: "",
+    organisationEmail: "",
+    organisationPhoneNumber: "",
+    organisationAddressLine1: "",
+    organisationAddressLine2: "",
+    organisationCity: "",
+    organisationCounty: "",
+    organisationPostcode: "",
+  });
+  const [lastSavedData, setLastSavedData] = useState(formData);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!session?.user?.id) return;
+
     const fetchOrganisationData = async () => {
       try {
         const response = await fetch(
-          "/api/auth/getOrganisationProfile?userId=1"
+          `/api/auth/getOrganisationProfile?userId=${session.user.id}`
         );
         if (!response.ok)
           throw new Error("Failed to fetch organisation data");
@@ -258,7 +232,7 @@ const OrganisationInformation = () => {
     };
 
     fetchOrganisationData();
-  }, []);
+  }, [session]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const updatedData = { ...formData, [e.target.name]: e.target.value };
@@ -267,30 +241,27 @@ const OrganisationInformation = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (!session?.user?.id) return;
+  
     try {
       setIsLoading(true);
-      console.log(
-        "Saving Organisation Data:",
-        JSON.stringify({ userId: 1, ...formData })
-      );
-
+  
       const response = await fetch("/api/auth/updateOrganisationProfile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: 1, ...formData }),
+        body: JSON.stringify({ userId: session.user.id, ...formData }), // ✅ sending formData
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
           `Failed to save changes: ${errorData.message || response.statusText}`
         );
       }
-
+  
       const data = await response.json();
-      console.log("Save Successful:", data);
-      alert("Organisation information saved!");
-      setLastSavedData(formData);
+      alert("Organisation information saved!"); // ✅ success
+      setLastSavedData(formData); 
       localStorage.setItem("organisationInfo", JSON.stringify(formData));
     } catch (error: any) {
       console.error("Error saving organisation information:", error);
@@ -299,12 +270,11 @@ const OrganisationInformation = () => {
       setIsLoading(false);
     }
   };
+  
 
   const handleCancel = () => {
-    if (lastSavedData) {
-      setFormData(lastSavedData);
-      localStorage.setItem("organisationInfo", JSON.stringify(lastSavedData));
-    }
+    setFormData(lastSavedData);
+    localStorage.setItem("organisationInfo", JSON.stringify(lastSavedData));
     alert("Changes discarded.");
   };
 
@@ -484,5 +454,4 @@ const OrganisationPage = () => {
 };
 
 export default OrganisationPage;
-
 
