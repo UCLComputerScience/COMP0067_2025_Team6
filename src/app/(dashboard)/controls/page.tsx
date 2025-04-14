@@ -188,7 +188,7 @@ function SensorField({
           },
         }}
       />
-      {/* Change: Use unit prop instead of sensorRanges */}
+
       <Typography
         variant="body2"
         sx={{ width: "80px", textAlign: "center", fontWeight: "bold" }}
@@ -202,6 +202,9 @@ function SensorField({
 function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
   const [sliderValues, setSliderValues] = useState<number[][]>([]);
+  const [initialSliderValues, setInitialSliderValues] = useState<number[][]>([]); // Track initial values
+  const [hasChanges, setHasChanges] = useState(false); // Track if sliders have changed
+  const [saving, setSaving] = useState(false); // Track save operation
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openThresholdForm, setOpenThresholdForm] = useState(false);
@@ -226,11 +229,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
     setOpenThresholdForm(false);
   };
 
-  const handleThresholdsSave = () => {
-    // Refresh thresholds
-    fetchThresholds();
-  };
-
   const fetchThresholds = async () => {
     try {
       const response = await fetch(
@@ -240,9 +238,113 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
         throw new Error("Failed to fetch thresholds");
       }
       const data = await response.json();
-      setThresholds(data.thresholds || []);
+      const newThresholds = data.thresholds || [];
+      setThresholds(newThresholds);
+
+      if (channelData) {
+        const fields = Object.keys(channelData.channel)
+          .filter((key) => key.startsWith("field"))
+          .map((key) => ({
+            label: channelData.channel[key],
+            latestValue: parseFloat(
+              channelData.feeds[channelData.feeds.length - 1][key]
+            ).toFixed(2),
+          }));
+
+        const updatedSliderValues = fields.map((field) => {
+          const threshold = newThresholds.find(
+            (t: any) => t.fieldName === field.label
+          );
+          const defaultThreshold = defaultThresholds.find(
+            (t) => t.fieldName === field.label
+          );
+          const latest = parseFloat(field.latestValue);
+          if (threshold) {
+            return [threshold.minValue, threshold.maxValue];
+          } else if (defaultThreshold) {
+            return [defaultThreshold.minValue, defaultThreshold.maxValue];
+          } else {
+            return [latest - 10, latest + 10];
+          }
+        });
+
+        setSliderValues(updatedSliderValues);
+        setInitialSliderValues(updatedSliderValues); // Set initial values for change tracking
+        setHasChanges(false); // Reset changes after fetching
+      }
     } catch (err) {
       console.error("Error fetching thresholds:", err);
+      setError("Failed to fetch thresholds.");
+    }
+  };
+
+  const handleThresholdsSave = () => {
+    fetchThresholds();
+  };
+
+  const handleSliderChange = (index: number, newValue: number | number[]) => {
+    const updated = [...sliderValues];
+    updated[index] = newValue as number[];
+    setSliderValues(updated);
+
+    // Check if sliders have changed compared to initial values
+    const changed = updated.some(
+      (val, i) =>
+        val[0] !== initialSliderValues[i]?.[0] ||
+        val[1] !== initialSliderValues[i]?.[1]
+    );
+    setHasChanges(changed);
+  };
+
+  const handleSaveThresholds = async () => {
+    if (!channelData) return;
+
+    setSaving(true);
+    setError(null);
+
+    const fields = Object.keys(channelData.channel)
+      .filter((key) => key.startsWith("field"))
+      .map((key) => channelData.channel[key]);
+
+    // Prepare thresholds for submission
+    const submissionFields = fields
+      .map((fieldName, index) => {
+        const [minValue, maxValue] = sliderValues[index];
+        if (isNaN(minValue) || isNaN(maxValue) || minValue >= maxValue) {
+          return null;
+        }
+        const threshold = thresholds.find((t) => t.fieldName === fieldName);
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === fieldName
+        );
+        return {
+          fieldName,
+          minValue,
+          maxValue,
+          unit: threshold?.unit ?? defaultThreshold?.unit ?? "",
+        };
+      })
+      .filter((field) => field !== null);
+
+    try {
+      const response = await fetch("/api/controls/thresholds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId, thresholds: submissionFields }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Refresh thresholds and reset change tracking
+      await fetchThresholds();
+      alert("Thresholds saved successfully!");
+    } catch (err) {
+      console.error("Error saving thresholds:", err);
+      setError("Failed to save thresholds. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -264,8 +366,39 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
     };
 
     fetchData();
-    fetchThresholds(); // Initial fetch of thresholds
+    fetchThresholds();
   }, [channelId, apiKey]);
+
+  useEffect(() => {
+    if (channelData && sliderValues.length === 0) {
+      const fields = Object.keys(channelData.channel)
+        .filter((key) => key.startsWith("field"))
+        .map((key) => ({
+          label: channelData.channel[key],
+          latestValue: parseFloat(
+            channelData.feeds[channelData.feeds.length - 1][key]
+          ).toFixed(2),
+        }));
+
+      const initialSliderValues = fields.map((field) => {
+        const threshold = thresholds.find((t) => t.fieldName === field.label);
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === field.label
+        );
+        const latest = parseFloat(field.latestValue);
+        if (threshold) {
+          return [threshold.minValue, threshold.maxValue];
+        } else if (defaultThreshold) {
+          return [defaultThreshold.minValue, defaultThreshold.maxValue];
+        } else {
+          return [latest - 10, latest + 10];
+        }
+      });
+
+      setSliderValues(initialSliderValues);
+      setInitialSliderValues(initialSliderValues);
+    }
+  }, [channelData, thresholds, defaultThresholds]);
 
   if (!channelData) {
     return <Typography variant="body1">Loading data...</Typography>;
@@ -286,32 +419,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       label: channel[key],
       latestValue: parseFloat(latestFeed[key]).toFixed(2),
     }));
-
-  // Initialize slider values using thresholds or defaultThresholds
-  const initialSliderValues = fields.map((field) => {
-    const threshold = thresholds.find((t) => t.fieldName === field.label);
-    const defaultThreshold = defaultThresholds.find(
-      (t) => t.fieldName === field.label
-    );
-    if (threshold) {
-      return [threshold.minValue, threshold.maxValue];
-    } else if (defaultThreshold) {
-      return [defaultThreshold.minValue, defaultThreshold.maxValue];
-    } else {
-      const latest = parseFloat(field.latestValue);
-      return [latest - 10, latest + 10];
-    }
-  });
-
-  if (sliderValues.length === 0 && fields.length > 0) {
-    setSliderValues(initialSliderValues);
-  }
-
-  const handleSliderChange = (index: number, newValue: number | number[]) => {
-    const updated = [...sliderValues];
-    updated[index] = newValue as number[];
-    setSliderValues(updated);
-  };
 
   return (
     <Card sx={{ maxWidth: 320, marginBottom: 4 }}>
@@ -380,7 +487,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
             <SensorField
               key={index}
               label={field.label}
-              value={sliderValues[index]}
+              value={sliderValues[index] || [latest - 10, latest + 10]}
               min={
                 threshold?.minValue ?? defaultThreshold?.minValue ?? latest - 10
               }
@@ -397,7 +504,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
           );
         })}
 
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+
+        <Box sx={{ display: "flex", gap: 2, mb: 2, mt: 2 }}>
           <Box
             sx={{
               backgroundColor: "#f0f0f0",
@@ -425,6 +534,19 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
             </Typography>
           </Box>
         </Box>
+        {hasChanges && (
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSaveThresholds}
+              disabled={saving}
+              fullWidth
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

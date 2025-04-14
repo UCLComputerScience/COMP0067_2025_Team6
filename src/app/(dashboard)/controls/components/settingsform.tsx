@@ -131,7 +131,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     <BoxStyled
       sx={{
         mb: 4,
-        p: 2,
+        p: 5,
         border: "1px solid #ddd",
         borderRadius: 2,
         backgroundColor: "#f9f9f9",
@@ -150,7 +150,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       )}
       {loading && <Typography mb={2}>Loading...</Typography>}
       <form onSubmit={handleSubmit}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {fields.length === 0 && !loading ? (
             <Typography variant="body1" color="textSecondary">
               No fields defined yet. Click "Add Field" to start.
@@ -162,7 +162,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 2,
+                  gap: 5,
                   mb: 1,
                   flexWrap: "wrap",
                 }}
@@ -245,7 +245,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
             Add Field
           </Button>
 
-          <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+          <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
             <Button
               type="submit"
               variant="contained"
