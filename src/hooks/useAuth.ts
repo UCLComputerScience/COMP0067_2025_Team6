@@ -3,15 +3,12 @@ import { useState, useEffect } from "react";
 
 const useAuth = () => {
   const { data: session, status } = useSession();
-  const isInitialized = status !== "loading"; // Check if the session is initialized
+  const isInitialized = status !== "loading";
 
-  // Log session data to ensure it's populated
-  console.log("Session Data:", session);
-
-  const [firstName, setFirstName] = useState(session?.user?.firstName || "");
-  const [lastName, setLastName] = useState(session?.user?.lastName || "");
-  const [userName, setUserName] = useState(session?.user?.name || "");
-  const [userRole, setUserRole] = useState(session?.user?.userRole || "STANDARD_USER");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("STANDARD_USER");
 
   const refreshUserData = () => {
     const storedData = localStorage.getItem("personalInfo");
@@ -24,20 +21,26 @@ const useAuth = () => {
   };
 
   useEffect(() => {
-    refreshUserData(); // Load once when mounting
+    if (session?.user) {
+      setFirstName(session.user.firstName || "");
+      setLastName(session.user.lastName || "");
+      setUserName(session.user.name || "");
+      setUserRole(session.user.userRole || "STANDARD_USER");
+    }
+  }, [session]);
+
+  useEffect(() => {
+    refreshUserData();
 
     const handleProfileUpdate = () => {
-      console.log("Profile updated event received in useAuth");
-      refreshUserData(); // Load again when "profileUpdated" event fires
+      refreshUserData();
     };
 
     window.addEventListener("profileUpdated", handleProfileUpdate);
-
     return () => {
       window.removeEventListener("profileUpdated", handleProfileUpdate);
     };
-  }, [session]); // Refresh if session changes
-
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const result = await nextAuthSignIn("credentials", {
@@ -45,18 +48,28 @@ const useAuth = () => {
       email,
       password,
     });
-
+  
     if (result?.error) {
-      console.error("Sign-in error:", result.error); // Log the error for debugging
+      console.error("Sign-in error:", result.error);
       throw new Error(result.error);
     }
-
+  
+    localStorage.removeItem("personalInfo");
+    localStorage.removeItem("userSkills");
+    localStorage.removeItem("userDescription");
+  
     return result;
   };
+  
 
   const signOut = async () => {
+    localStorage.removeItem("personalInfo");
+    localStorage.removeItem("userSkills");
+    localStorage.removeItem("userDescription");
+  
     await nextAuthSignOut();
   };
+  
 
   const resetPassword = async (email: string) => {
     try {
@@ -84,13 +97,13 @@ const useAuth = () => {
     signOut,
     resetPassword,
     session,
-    isAuthenticated: !!session, // true if authenticated
-    isInitialized, // Provide the `isInitialized` state
+    isAuthenticated: !!session,
+    isInitialized,
     status,
     firstName,
     lastName,
     userName,
-    userRole, // Provide the user role
+    userRole,
   };
 };
 
