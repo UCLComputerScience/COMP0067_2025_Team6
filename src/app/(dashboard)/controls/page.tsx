@@ -48,11 +48,11 @@ import {
   Refresh as RefreshIcon,
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers"; 
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns"; 
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { startOfDay, endOfDay } from "date-fns";
 import HideAuthGuard from "@/components/guards/HideAuthGuard";
-import ThresholdForm from "./components/thresholdform"
+import ThresholdForm from "./components/thresholdform";
 import SettingsForm from "./components/settingsform";
 
 // --- No changes to styling ---
@@ -82,7 +82,6 @@ const SearchBarContainer = styled(Box)`
   gap: 16px;
 `;
 
-// --- Updated interfaces ---
 interface ApiKey {
   id: number;
   channelId: number;
@@ -118,10 +117,14 @@ interface LabCardProps {
   channelId: number;
   name: string;
   apiKey: string;
-  defaultThresholds: { fieldName: string; minValue: number; maxValue: number; unit: string }[];
+  defaultThresholds: {
+    fieldName: string;
+    minValue: number;
+    maxValue: number;
+    unit: string;
+  }[];
 }
 
-// Change: Added unit to SensorFieldProps
 interface SensorFieldProps {
   label: string;
   value: number[];
@@ -133,14 +136,13 @@ interface SensorFieldProps {
   latestValue: string;
 }
 
-// SensorField Component (Handles the Slider Display)
 function SensorField({
   label,
   value,
   min,
   max,
   step,
-  unit, // Change: Use unit prop directly
+  unit,
   onSliderChange,
   latestValue,
 }: SensorFieldProps) {
@@ -205,7 +207,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   const [openThresholdForm, setOpenThresholdForm] = useState(false);
   const [thresholds, setThresholds] = useState<
     { fieldName: string; minValue: number; maxValue: number; unit: string }[]
-  >([]); // Store channel-specific thresholds
+  >([]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -231,7 +233,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
 
   const fetchThresholds = async () => {
     try {
-      const response = await fetch(`/api/controls/thresholds?channelId=${channelId}`);
+      const response = await fetch(
+        `/api/controls/thresholds?channelId=${channelId}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch thresholds");
       }
@@ -268,7 +272,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   }
 
   if (error) {
-    return <Typography variant="body1" color="error">{`Error: ${error}`}</Typography>;
+    return (
+      <Typography variant="body1" color="error">{`Error: ${error}`}</Typography>
+    );
   }
 
   const { channel, feeds } = channelData;
@@ -284,7 +290,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   // Initialize slider values using thresholds or defaultThresholds
   const initialSliderValues = fields.map((field) => {
     const threshold = thresholds.find((t) => t.fieldName === field.label);
-    const defaultThreshold = defaultThresholds.find((t) => t.fieldName === field.label);
+    const defaultThreshold = defaultThresholds.find(
+      (t) => t.fieldName === field.label
+    );
     if (threshold) {
       return [threshold.minValue, threshold.maxValue];
     } else if (defaultThreshold) {
@@ -340,7 +348,12 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
           onClose={handleMenuClose}
         >
           <MenuItem onClick={handleOpenThresholdForm}>Edit Settings</MenuItem>
-          <MenuItem onClick={() => { handleMenuClose(); console.log("Delete Device clicked"); }}>
+          <MenuItem
+            onClick={() => {
+              handleMenuClose();
+              console.log("Delete Device clicked");
+            }}
+          >
             Delete Device
           </MenuItem>
         </Menu>
@@ -359,32 +372,56 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
 
         {fields.map((field, index) => {
           const threshold = thresholds.find((t) => t.fieldName === field.label);
-          const defaultThreshold = defaultThresholds.find((t) => t.fieldName === field.label);
+          const defaultThreshold = defaultThresholds.find(
+            (t) => t.fieldName === field.label
+          );
           const latest = parseFloat(field.latestValue);
           return (
             <SensorField
               key={index}
               label={field.label}
               value={sliderValues[index]}
-              min={threshold?.minValue ?? defaultThreshold?.minValue ?? (latest - 10)}
-              max={threshold?.maxValue ?? defaultThreshold?.maxValue ?? (latest + 10)}
+              min={
+                threshold?.minValue ?? defaultThreshold?.minValue ?? latest - 10
+              }
+              max={
+                threshold?.maxValue ?? defaultThreshold?.maxValue ?? latest + 10
+              }
               step={0.1}
               unit={threshold?.unit ?? defaultThreshold?.unit ?? ""}
-              onSliderChange={(event, newValue) => handleSliderChange(index, newValue)}
+              onSliderChange={(event, newValue) =>
+                handleSliderChange(index, newValue)
+              }
               latestValue={field.latestValue}
             />
           );
         })}
 
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <Box sx={{ backgroundColor: "#f0f0f0", borderRadius: "4px", padding: "8px", flex: 1 }}>
+          <Box
+            sx={{
+              backgroundColor: "#f0f0f0",
+              borderRadius: "4px",
+              padding: "8px",
+              flex: 1,
+            }}
+          >
             <Typography variant="body2">
-              <strong>Start date:</strong> {new Date(channel.created_at).toLocaleDateString()}
+              <strong>Start date:</strong>{" "}
+              {new Date(channel.created_at).toLocaleDateString()}
             </Typography>
           </Box>
-          <Box sx={{ backgroundColor: "#f0f0f0", borderRadius: "4px", padding: "8px", flex: 1 }}>
+          <Box
+            sx={{
+              backgroundColor: "#f0f0f0",
+              borderRadius: "4px",
+              padding: "8px",
+              flex: 1,
+            }}
+          >
             <Typography variant="body2">
-              <strong>Last updated:</strong> {new Date(channel.updated_at).toLocaleDateString()}
+              <strong>Last updated:</strong>{" "}
+              {new Date(channel.updated_at).toLocaleDateString()}
             </Typography>
           </Box>
         </Box>
@@ -393,7 +430,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   );
 }
 
-// Date Filter Menu Component (Adapted from Alerts Page)
 function DateFilterMenu({
   startDate,
   endDate,
@@ -410,7 +446,9 @@ function DateFilterMenu({
   setSelectedRange: (range: string) => void;
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
-  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
+  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
 
   const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchorEl(event.currentTarget);
@@ -420,7 +458,10 @@ function DateFilterMenu({
     setMenuAnchorEl(null);
   };
 
-  const handleRangeSelect = (range: string, event?: React.MouseEvent<HTMLElement>) => {
+  const handleRangeSelect = (
+    range: string,
+    event?: React.MouseEvent<HTMLElement>
+  ) => {
     setSelectedRange(range);
     let newStartDate = null;
     let newEndDate = new Date();
@@ -477,7 +518,7 @@ function DateFilterMenu({
         variant="outlined"
         onClick={handleDateFilterClick}
         startIcon={<FilterListIcon />}
-        sx={{ minWidth: 150 }}
+        sx={{ minWidth: 100 }}
       >
         {selectedRange === "7days"
           ? "Last 7 Days"
@@ -497,8 +538,12 @@ function DateFilterMenu({
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <MenuItem onClick={() => handleRangeSelect("7days")}>Last 7 Days</MenuItem>
-        <MenuItem onClick={() => handleRangeSelect("30days")}>Last 30 Days</MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("7days")}>
+          Last 7 Days
+        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("30days")}>
+          Last 30 Days
+        </MenuItem>
         <MenuItem onClick={() => handleRangeSelect("year")}>Last Year</MenuItem>
         <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
         <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
@@ -535,7 +580,9 @@ function DateFilterMenu({
               />
             </Box>
           </LocalizationProvider>
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Box
+            sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}
+          >
             <Button onClick={handlePopoverClose}>Cancel</Button>
             <Button onClick={handleApplyCustomRange} variant="contained">
               Apply
@@ -570,12 +617,13 @@ function Controls() {
     setError(null);
     try {
       const [channelsResponse, thresholdsResponse] = await Promise.all([
-        fetch("/controls/api/all_channels", { cache: "no-store" }),
+        fetch("/api/controls/channels", { cache: "no-store" }),
         fetch("/api/controls/settings", { cache: "no-store" }),
       ]);
 
       if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
-      if (!thresholdsResponse.ok) throw new Error("Failed to fetch default thresholds");
+      if (!thresholdsResponse.ok)
+        throw new Error("Failed to fetch default thresholds");
 
       const channelsData = await channelsResponse.json();
       const thresholdsData = await thresholdsResponse.json();
@@ -689,6 +737,7 @@ function Controls() {
             isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />
           }
           disabled={isRefreshing}
+          sx={{ minWidth: 100 }}
         >
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
@@ -718,7 +767,10 @@ function Controls() {
             width: "100%",
           }}
         >
-          <SettingsForm handleClose={handleCloseSettings} onSave={handleSettingsSave} />
+          <SettingsForm
+            handleClose={handleCloseSettings}
+            onSave={handleSettingsSave}
+          />
         </Box>
       </Modal>
 
@@ -741,5 +793,3 @@ function Controls() {
 }
 
 export default Controls;
-
-

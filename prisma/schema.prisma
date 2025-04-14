@@ -140,6 +140,8 @@ model Threshold {
   updatedAt DateTime @updatedAt
   unit      String?
   channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, fieldName], name: "channelId_fieldName")
 }
 
 model Access {
