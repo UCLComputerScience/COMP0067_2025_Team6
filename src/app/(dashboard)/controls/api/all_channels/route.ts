@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
+  console.log('Server-side DATABASE_URL:', process.env.DATABASE_URL);
   try {
     const channels = await prisma.channel.findMany({
       include: {

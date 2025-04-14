@@ -14,7 +14,6 @@ model Alerts {
   alertDate        DateTime      @db.Timestamp(6)
   priority         PriorityType?
   alertStatus      AlertStatus
-  readStatus       ReadStatus
   feed             Feed          @relation(fields: [entryId], references: [entryId], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -37,6 +36,7 @@ model Channel {
   ApiKey      ApiKey[]
   feed        Feed[]
   Threshold   Threshold[]
+  access      Access[]
 }
 
 model Feed {
@@ -62,6 +62,7 @@ model Labs {
   managerId   Int
   ApiKey      ApiKey[]
   user        User     @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  access      Access[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -97,6 +98,8 @@ model User {
   specialisation           String[]       @default([])
   labs                     Labs[]
   usageHistory             UsageHistory[] @relation("UserUsageHistory")
+  access                   Access[]       @relation
+  grantedAccess            Access[]       @relation("GrantedBy")
 }
 
 model ApiKey {
@@ -135,7 +138,27 @@ model Threshold {
   maxValue  Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  unit      String?
   channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model Access {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  labId         Int?
+  channelId     Int?
+  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime @updatedAt @db.Timestamp(6)
+  grantedBy     Int?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab           Labs?    @relation(fields: [labId], references: [id], onDelete: Cascade)
+  channel       Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  grantedByUser User?    @relation("GrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, labId, channelId])
+  @@index([userId])
+  @@index([labId])
+  @@index([channelId])
 }
 
 enum AlertStatus {
@@ -167,10 +190,10 @@ enum ReadStatus {
 }
 
 model ActivityLog {
-  id           Int      @id @default(autoincrement())
-  action       String   @db.VarChar(100)
-  user         String   @db.VarChar(100)
-  labLocation  String   @db.VarChar(100)
-  device       String?  @db.VarChar(100)
-  timestamp    DateTime @default(now()) @db.Timestamp(6)
+  id          Int      @id @default(autoincrement())
+  action      String   @db.VarChar(100)
+  user        String   @db.VarChar(100)
+  labLocation String   @db.VarChar(100)
+  device      String?  @db.VarChar(100)
+  timestamp   DateTime @default(now()) @db.Timestamp(6)
 }

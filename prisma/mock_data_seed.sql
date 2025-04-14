@@ -66,29 +66,29 @@ INSERT INTO "Feed" (
 
 -- Insert into Alerts table (aligned with Feed entryIds)
 INSERT INTO "Alerts" (
-  "entryId", "priority", "alertDescription", "alertStatus", "alertDate", "readStatus"
+  "entryId", "priority", "alertDescription", "alertStatus", "alertDate"
 ) VALUES
   -- Channel 2606541 (Proteus Monitor 1)
-  (12966, 'HIGH', 'Temperature has exceeded threshold', 'RESOLVED', NOW(), 'READ'),
-  (12967, 'MODERATE', 'Humidity spike detected', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (12968, 'LOW', 'Minor pressure fluctuation', 'RESOLVED', NOW(), 'READ'),
-  (12969, 'HIGH', 'Sensor A1 critical failure', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (12970, 'MODERATE', 'Sensor A2 reading unstable', 'RESOLVED', NOW(), 'READ'),
-  (12971, 'LOW', 'Sensor A3 minor deviation', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (12972, 'HIGH', 'Overheating alert', 'RESOLVED', NOW(), 'READ'),
+  (12966, 'HIGH', 'Temperature has exceeded threshold', 'RESOLVED', NOW()),
+  (12967, 'MODERATE', 'Humidity spike detected', 'UNRESOLVED', NOW()),
+  (12968, 'LOW', 'Minor pressure fluctuation', 'RESOLVED', NOW()),
+  (12969, 'HIGH', 'Sensor A1 critical failure', 'UNRESOLVED', NOW()),
+  (12970, 'MODERATE', 'Sensor A2 reading unstable', 'RESOLVED', NOW()),
+  (12971, 'LOW', 'Sensor A3 minor deviation', 'UNRESOLVED', NOW()),
+  (12972, 'HIGH', 'Overheating alert', 'RESOLVED', NOW()),
   -- Channel 2035654 (Proteus P8)
-  (118, 'MODERATE', 'Humidity levels abnormal', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (119, 'HIGH', 'Temperature above safe limit', 'RESOLVED', NOW(), 'READ'),
-  (120, 'LOW', 'Pressure slightly below normal', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (121, 'MODERATE', 'Sensor B1 inconsistency', 'RESOLVED', NOW(), 'READ'),
-  (122, 'HIGH', 'Critical humidity surge', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (123, 'LOW', 'Sensor B3 minor glitch', 'RESOLVED', NOW(), 'READ'),
-  (124, 'MODERATE', 'Temperature fluctuation', 'UNRESOLVED', NOW(), 'UNREAD'),
+  (118, 'MODERATE', 'Humidity levels abnormal', 'UNRESOLVED', NOW()),
+  (119, 'HIGH', 'Temperature above safe limit', 'RESOLVED', NOW()),
+  (120, 'LOW', 'Pressure slightly below normal', 'UNRESOLVED', NOW()),
+  (121, 'MODERATE', 'Sensor B1 inconsistency', 'RESOLVED', NOW()),
+  (122, 'HIGH', 'Critical humidity surge', 'UNRESOLVED', NOW()),
+  (123, 'LOW', 'Sensor B3 minor glitch', 'RESOLVED', NOW()),
+  (124, 'MODERATE', 'Temperature fluctuation', 'UNRESOLVED', NOW()),
   -- Channel 2613687 (Proteus Monitor 2)
-  (8020, 'LOW', 'Pressure drop detected', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (8021, 'HIGH', 'Temperature critically high', 'RESOLVED', NOW(), 'READ'),
-  (8022, 'MODERATE', 'Humidity out of range', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (8023, 'LOW', 'Sensor C1 slight deviation', 'RESOLVED', NOW(), 'READ'),
-  (8024, 'HIGH', 'Overpressure warning', 'UNRESOLVED', NOW(), 'UNREAD'),
-  (8025, 'MODERATE', 'Sensor C2 unstable reading', 'RESOLVED', NOW(), 'READ');
+  (8020, 'LOW', 'Pressure drop detected', 'UNRESOLVED', NOW()),
+  (8021, 'HIGH', 'Temperature critically high', 'RESOLVED', NOW()),
+  (8022, 'MODERATE', 'Humidity out of range', 'UNRESOLVED', NOW()),
+  (8023, 'LOW', 'Sensor C1 slight deviation', 'RESOLVED', NOW()),
+  (8024, 'HIGH', 'Overpressure warning', 'UNRESOLVED', NOW()),
+  (8025, 'MODERATE', 'Sensor C2 unstable reading', 'RESOLVED', NOW());
 
