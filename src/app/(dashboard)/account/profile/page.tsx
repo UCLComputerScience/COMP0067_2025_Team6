@@ -4,8 +4,10 @@ import BusinessIcon from "@mui/icons-material/Business";
 import PasswordIcon from '@mui/icons-material/Password';
 import React from "react";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import styled from "@emotion/styled";
-
+import { Autocomplete } from "@mui/material";
+import { Snackbar, Alert } from "@mui/material";
 import NextLink from "next/link";
 import {
   Avatar as MuiAvatar,
@@ -14,6 +16,7 @@ import {
   Button as MuiButton,
   Card as MuiCard,
   CardContent,
+  LinearProgress,
   Divider as MuiDivider,
   // Grid as MuiGrid,
   Typography as MuiTypography,
@@ -60,226 +63,226 @@ const Avatar = styled(MuiAvatar)`
 const Chip = styled(MuiChip)`
   margin: 4px;
 `;
+const suggestedSkills = [
+  "Scientific Research",
+  "Experimental Design",
+  "Critical Thinking",
+  "Problem Solving",
+  "Data Interpretation",
+  "Data Analysis",
+  "Report Writing",
+  "Scientific Communication",
+  "Technical Writing",
+  "Project Management",
+  "Attention to Detail",
+  "Time Management",
+  "Teamwork",
+  "Innovation",
+  "Health and Safety",
+  "Regulatory Compliance",
+  "Quality Control",
+  "Safety Compliance",
+  "Data Recording and Management",
+  "Statistical Analysis",
+  "Ethical Research Practices",
+  "Collaboration",
+  "Presentation Skills",
+  "Adaptability",
+  "Leadership",
+  "Resource Management",
+  "Organizational Skills",
+  "Creativity",
+  "Data Visualization",
+  "Multidisciplinary Thinking",
+  "Problem Identification",
+  "Analytical Reasoning",
+  "Mentoring",
+  "Knowledge Sharing",
+  "Effective Communication",
+  "Decision Making",
+  "Workplace Safety",
+  "Documentation",
+  "Self-Motivation"
+];
+
 
 const ProfileCompletion = () => {
-    const loadSavedData = () => {
-      const savedData = localStorage.getItem("personalInfo");
-      return savedData
-        ? JSON.parse(savedData)
-        : {
-            firstName: "",
-            lastName: "",
-            email: "",
-            phoneNumber: "",
-            addressLine1: "",
-            addressLine2: "",
-            city: "",
-            county: "",
-            postcode: "",
-          };
-    };
-  
-    const [profileData, setProfileData] = useState(loadSavedData);
-    const [skills, setSkills] = useState<string[]>(() => {
-      const savedSkills = localStorage.getItem("userSkills");
-      return savedSkills ? JSON.parse(savedSkills) : [];
-    });
-    const [description, setDescription] = useState(() => {
-      const savedDescription = localStorage.getItem("userDescription");
-      return savedDescription || "";
-    });
-  
-    useEffect(() => {
-      const handleStorageChange = () => {
-        setProfileData(loadSavedData());
-        setSkills(JSON.parse(localStorage.getItem("userSkills") || "[]"));
-        setDescription(localStorage.getItem("userDescription") || "");
-      };
-  
-      window.addEventListener("storage", handleStorageChange);
-      return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
-  
-    const calculateCompletion = () => {
-      const filledFields = Object.values(profileData).filter((value) => value !== "").length;
-      const totalFields = Object.keys(profileData).length;
-      const skillsCompleted = skills.length > 0 ? 1 : 0; 
-      const descriptionCompleted = description.trim() !== "" ? 1 : 0;
-  
-      return Math.round(((filledFields + skillsCompleted + descriptionCompleted) / (totalFields + 2)) * 100);
-    };
-  
-    const completionPercentage = calculateCompletion();
-  
-    if (completionPercentage === 100) return null;
-  
-    return (
-      <Card>
-        <CardContent style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Box>
-            <Typography variant="h6" color="primary">
-              Complete Your Personal Profile ({completionPercentage}%)
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Please update your profile details to reach 100% completion.
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  };
+  const { data: session } = useSession();
+  const [completion, setCompletion] = useState<number>(0);
 
-  const ProfileDetails = () => {
-    const [user, setUser] = useState({
-      firstName: "",
-      lastName: "",
-      userRole: "STANDARD_USER",
-      avatar: "",
-    });
-  
-    const [preview, setPreview] = useState<string | null>(null);
-  
-    const loadUserData = () => {
-      const storedData = localStorage.getItem("personalInfo");
-      if (storedData) {
-        const data = JSON.parse(storedData);
-        setUser({
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
-          userRole: data.userRole || "STANDARD_USER",
-          avatar: data.avatar || "",
-        });
-        setPreview(data.avatar || "");
-      }
-    };
-  
-    useEffect(() => {
-      loadUserData();
-  
-      const handleProfileUpdate = () => {
-        loadUserData();
-      };
-  
-      window.addEventListener("profileUpdated", handleProfileUpdate);
-  
-      return () => {
-        window.removeEventListener("profileUpdated", handleProfileUpdate);
-      };
-    }, []);
-  
-    const formatRole = (role: string) => {
-      if (!role) return "User";
-      return role
-        .toLowerCase()
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    };
-  
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-    
-      const localUrl = URL.createObjectURL(file);
-      setPreview(localUrl);
-    
-      const storedData = localStorage.getItem("personalInfo");
-      const updatedUser = storedData ? JSON.parse(storedData) : {};
-      updatedUser.avatar = localUrl;
-      localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
-    
-      window.dispatchEvent(new Event("profileUpdated"));
-      const formData = new FormData();
-      formData.append("avatar", file);
-      formData.append("userId", "1");
-    
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const loadProfile = async () => {
       try {
-        const res = await fetch("/api/auth/upload", {
-          method: "POST",
-          body: formData,
-        });
-    
-        if (!res.ok) {
-          throw new Error("Failed to upload image");
-        }
-    
-        const data = await res.json();
-        const avatarUrl = data.avatarPath;
-    
-        updatedUser.avatar = avatarUrl;
-        localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
-        setPreview(avatarUrl);
-    
-        window.dispatchEvent(new Event("profileUpdated"));
+        const res = await fetch(`/api/auth/getProfile?userId=${session.user.id}`);
+        if (!res.ok) throw new Error("Failed to load profile for completion");
+        const { user } = await res.json();
+        
+        const fields = [
+          user.firstName, user.lastName, user.email, user.phoneNumber,
+          user.addressLine1, user.city, user.county, user.postcode,
+          user.specialisation?.length ? "yes" : "", user.description
+        ];
+        const filled = fields.filter((field) => field && field !== "").length;
+        const percentage = Math.round((filled / fields.length) * 100);
+        setCompletion(percentage);
       } catch (error) {
-        console.error("Upload error:", error);
-        alert("Failed to upload avatar.");
+        console.error("Error loading profile completion:", error);
       }
     };
-    
+
+    loadProfile();
+  }, [session]);
+
+  if (completion === 100) return null;
+
+  return (
+    <Card sx={{ mb: 3 }}>
+      <CardContent>
+        <Box display="flex" flexDirection="column" gap={1}>
+          <Typography variant="h6" color="primary">
+            Complete Your Profile ({completion}%)
+          </Typography>
+          <LinearProgress variant="determinate" value={completion} />
+          <Typography variant="body2" color="textSecondary">
+            Please update your profile details to reach 100% completion.
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ProfileDetails = () => {
+  const { data: session } = useSession();
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    userRole: "STANDARD_USER",
+    avatar: "",
+  });
+  const [preview, setPreview] = useState<string | null>(null);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
   
-    return (
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`/api/auth/getProfile?userId=${session.user.id}`);
+        if (!res.ok) throw new Error("Failed to fetch profile");
+  
+        const { user } = await res.json();
+  
+        setUser({
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          userRole: user.userRole || "STANDARD_USER",
+          avatar: user.avatar || "",
+        });
+  
+        setPreview(user.avatar || "/static/img/avatar.jpg");
+  
+        localStorage.setItem("personalInfo", JSON.stringify(user));
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+  
+    fetchProfile();
+  }, [session]);
+
+  const formatRole = (role: string) =>
+    role.toLowerCase().split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !session?.user?.id) return;
+  
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
+  
+    const storedData = localStorage.getItem("personalInfo");
+    const updatedUser = storedData ? JSON.parse(storedData) : {};
+    updatedUser.avatar = localUrl;
+    localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
+  
+    window.dispatchEvent(new Event("profileUpdated"));
+    const formData = new FormData();
+    formData.append("avatar", file);
+    formData.append("userId", session.user.id); 
+  
+    try {
+      const res = await fetch("/api/auth/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Failed to upload image");
+      const data = await res.json();
+      updatedUser.avatar = data.avatarUrl; 
+      localStorage.setItem("personalInfo", JSON.stringify(updatedUser));
+      setPreview(data.avatarUrl);
+      window.dispatchEvent(new Event("profileUpdated"));
+  
+      setShowSnackbar(true);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload avatar.");
+    }
+  };
+  
+
+ return (
+    <>
       <Card>
-        <CardContent
-          style={{
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
+        <CardContent sx={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <Avatar alt="User Profile" src={preview || "/static/img/avatar.jpg"} />
-  
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            id="avatar-upload"
-            onChange={handleFileChange}
-          />
-  
+          <input type="file" accept="image/*" id="avatar-upload" style={{ display: "none" }} onChange={handleFileChange} />
           <label htmlFor="avatar-upload">
-            <Button
-              component="span" 
-              variant="outlined"
-              color="primary"
-              startIcon={<CloudUploadIcon />}
-              sx={{ mt: 1, mb: 2 }}
-            >
+            <Button component="span" variant="outlined" color="primary" startIcon={<CloudUploadIcon />} sx={{ mt: 1, mb: 2 }}>
               Upload Avatar
             </Button>
           </label>
-  
-          <Typography variant="h5">
-            {user.firstName} {user.lastName}
-          </Typography>
+
+          <Typography variant="h5">{user.firstName} {user.lastName}</Typography>
           <Typography variant="subtitle1" color="textSecondary" mb={2}>
             {formatRole(user.userRole)}
           </Typography>
-  
+
           <Box width="100%" mt={2}>
-            <NextLink href="/account/profile" passHref>
-              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}>
-                <PersonIcon /> Personal Information
-              </Button>
-            </NextLink>
-            <NextLink href="/account/profile/organisation" passHref>
-              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
-                <BusinessIcon /> Organisation Information
-              </Button>
-            </NextLink>
-            <NextLink href="/account/profile/changePassword" passHref>
-              <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
-                <PasswordIcon /> Change Password
-              </Button>
-            </NextLink>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  };
+          <NextLink href="/account/profile" passHref>
+            <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5 }}>
+              <PersonIcon /> Personal Information
+            </Button>
+          </NextLink>
+          <NextLink href="/account/profile/organisation" passHref>
+            <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
+              <BusinessIcon /> Organisation Information
+            </Button>
+          </NextLink>
+          <NextLink href="/account/profile/changePassword" passHref>
+            <Button variant="outlined" color="primary" fullWidth sx={{ display: "flex", justifyContent: "flex-start", gap: 1, py: 1.5, mt: 1 }}>
+              <PasswordIcon /> Change Password
+            </Button>
+          </NextLink>
+        </Box>
+      </CardContent>
+    </Card>
+    <Snackbar
+        open={showSnackbar}
+        autoHideDuration={10000} // 10 seconds
+        onClose={() => setShowSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="info" variant="filled" onClose={() => setShowSnackbar(false)}>
+          Avatar updated! Please refresh the page in 10 seconds if you can't see the updated picture.
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
   
 const PersonalInformation = () => {
+  const { data: session } = useSession();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -291,101 +294,57 @@ const PersonalInformation = () => {
     county: "",
     postcode: "",
   });
-
-  const [lastSavedData, setLastSavedData] = useState<{
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    addressLine1: string;
-    addressLine2: string;
-    city: string;
-    county: string;
-    postcode: string;
-  } | null>(null);
+  const [lastSavedData, setLastSavedData] = useState<typeof formData | null>(null);
 
   useEffect(() => {
-    const storedData = localStorage.getItem("personalInfo");
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-      setFormData(parsedData);
-      setLastSavedData(parsedData);
-    }
-    
-    loadSavedData();
-  }, []);
-  
-  const loadSavedData = async () => {
-    try {
-      const response = await fetch("/api/auth/getProfile?userId=1");
-      if (!response.ok) throw new Error("Failed to fetch user data");
-  
-      const data = await response.json();
-      
-      const newData = { ...formData, ...data.user };
-      setFormData(newData);
-      setLastSavedData(newData);
-      
-      localStorage.setItem("personalInfo", JSON.stringify(newData));
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
+    if (!session?.user?.id) return;
 
-  interface FormData {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    addressLine1: string;
-    addressLine2: string;
-    city: string;
-    county: string;
-    postcode: string;
-  }
+    const loadSavedData = async () => {
+      try {
+        const response = await fetch(`/api/auth/getProfile?userId=${session.user.id}`);
+        if (!response.ok) throw new Error("Failed to fetch user data");
+        const data = await response.json();
+        const newData = { ...formData, ...data.user };
+        setFormData(newData);
+        setLastSavedData(newData);
+        localStorage.setItem("personalInfo", JSON.stringify(newData));
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    loadSavedData();
+  }, [session]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const updatedData: FormData = { ...formData, [e.target.name]: e.target.value };
+    const updatedData = { ...formData, [name]: value };
     setFormData(updatedData);
     localStorage.setItem("personalInfo", JSON.stringify(updatedData));
   };
 
   const handleSaveChanges = async () => {
+    if (!session?.user?.id) return;
     try {
-      console.log("Sending data:", JSON.stringify({ userId: 1, ...formData }));
-      
       const response = await fetch("/api/auth/updateProfile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: 1, ...formData }),
+        body: JSON.stringify({ userId: session.user.id, ...formData }),
       });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to update profile: ${errorData.message || response.statusText}`);
-      }
-  
-      const data = await response.json();
+      if (!response.ok) throw new Error("Failed to update profile");
       alert("Profile information saved!");
       setLastSavedData(formData);
       localStorage.setItem("personalInfo", JSON.stringify(formData));
-      
       window.dispatchEvent(new Event("profileUpdated"));
-      
-      const tempKey = "temp-" + new Date().getTime();
-      localStorage.setItem(tempKey, "temp");
-      localStorage.removeItem(tempKey);
     } catch (error) {
-      console.error("Error updating profile:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      alert(`Error saving profile: ${errorMessage}`);
+      console.error(error);
+      alert("Error saving profile.");
     }
   };
-  
+
   const handleCancel = () => {
     if (lastSavedData) {
-      setFormData(lastSavedData); 
+      setFormData(lastSavedData);
       localStorage.setItem("personalInfo", JSON.stringify(lastSavedData));
     }
     alert("Changes discarded.");
@@ -396,157 +355,77 @@ const PersonalInformation = () => {
       <CardContent>
         <Typography variant="h6">Personal Information</Typography>
         <Divider />
-
+        {/* --- Fields --- */}
         <Box mt={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="First Name"
-                name="firstName"
-                fullWidth
-                variant="outlined"
-                value={formData.firstName}
-                onChange={handleInputChange}
-              />
+              <TextField label="First Name" name="firstName" fullWidth variant="outlined" value={formData.firstName} onChange={handleInputChange} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="Last Name"
-                name="lastName"
-                fullWidth
-                variant="outlined"
-                value={formData.lastName}
-                onChange={handleInputChange}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box mt={3}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Email"
-                name="email"
-                fullWidth
-                variant="outlined"
-                value={formData.email}
-                onChange={handleInputChange}
-              />
+              <TextField label="Last Name" name="lastName" fullWidth variant="outlined" value={formData.lastName} onChange={handleInputChange} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="Phone Number"
-                name="phoneNumber"
-                fullWidth
-                variant="outlined"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-              />
+              <TextField label="Email" name="email" fullWidth variant="outlined" value={formData.email} onChange={handleInputChange} />
             </Grid>
-          </Grid>
-        </Box>
-
-        <Box mt={3}>
-          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField label="Phone Number" name="phoneNumber" fullWidth variant="outlined" value={formData.phoneNumber} onChange={handleInputChange} />
+            </Grid>
             <Grid item xs={12}>
               <TextField label="Address Line 1" name="addressLine1" fullWidth variant="outlined" value={formData.addressLine1} onChange={handleInputChange} />
             </Grid>
-          </Grid>
-        </Box>
-
-        <Box mt={3}>
-          <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField label="Address Line 2" name="addressLine2" fullWidth variant="outlined" value={formData.addressLine2} onChange={handleInputChange} />
             </Grid>
-          </Grid>
-        </Box>
-
-        <Box mt={3}>
-          <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <TextField
-                label="City"
-                name="city"
-                fullWidth
-                variant="outlined"
-                value={formData.city}
-                onChange={handleInputChange}
-              />
+              <TextField label="City" name="city" fullWidth variant="outlined" value={formData.city} onChange={handleInputChange} />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField
-                label="County"
-                name="county"
-                fullWidth
-                variant="outlined"
-                value={formData.county}
-                onChange={handleInputChange}
-              />
+              <TextField label="County" name="county" fullWidth variant="outlined" value={formData.county} onChange={handleInputChange} />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField
-                label="Postcode"
-                name="postcode"
-                fullWidth
-                variant="outlined"
-                value={formData.postcode}
-                onChange={handleInputChange}
-              />
+              <TextField label="Postcode" name="postcode" fullWidth variant="outlined" value={formData.postcode} onChange={handleInputChange} />
             </Grid>
           </Grid>
         </Box>
 
+        {/* --- Save/Cancel Buttons --- */}
         <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSaveChanges}
-          >
-            Save Changes
-          </Button>
-          <Button variant="contained" color="secondary" onClick={handleCancel}>
-            Cancel
-          </Button>
+          <Button variant="contained" color="primary" onClick={handleSaveChanges}>Save Changes</Button>
+          <Button variant="contained" color="secondary" onClick={handleCancel}>Cancel</Button>
         </Box>
       </CardContent>
     </Card>
   );
 };
 
+
 const Skills = () => {
+  const { data: session } = useSession();
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedSkills = localStorage.getItem("userSkills");
-    if (storedSkills) {
-      setSkills(JSON.parse(storedSkills));
-      setIsLoading(false);
-    }
-    
+    if (!session?.user?.id) return;
+
+    const fetchSkills = async () => {
+      try {
+        const response = await fetch(`/api/auth/getProfile?userId=${session.user.id}`);
+        if (!response.ok) throw new Error("Failed to fetch user data");
+        const data = await response.json();
+        if (data.user.specialisation) {
+          setSkills(data.user.specialisation);
+          localStorage.setItem("userSkills", JSON.stringify(data.user.specialisation));
+        }
+      } catch (error) {
+        console.error("Error fetching skills:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchSkills();
-  }, []);
-
-  const fetchSkills = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/auth/getProfile?userId=1");
-      if (!response.ok) throw new Error("Failed to fetch user data");
-
-      const data = await response.json();
-      if (data.user.specialisation && Array.isArray(data.user.specialisation)) {
-        setSkills(data.user.specialisation);
-        localStorage.setItem("userSkills", JSON.stringify(data.user.specialisation));
-      } 
-    } catch (error) {
-      console.error("Error fetching skills:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [session]);
 
   const handleAddSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -564,35 +443,18 @@ const Skills = () => {
   };
 
   const handleSaveSkills = async () => {
+    if (!session?.user?.id) return;
     try {
-      setIsLoading(true);
-      console.log("Sending skills data:", JSON.stringify({ userId: 1, specialisation: skills }));
-      
       const response = await fetch("/api/auth/updateProfile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userId: 1,
-          specialisation: skills 
-        }),
+        body: JSON.stringify({ userId: session.user.id, specialisation: skills }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to save skills: ${errorData.message || response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log("Success response:", data);
+      if (!response.ok) throw new Error("Failed to save skills");
       alert("Skills saved successfully!");
-      
-      localStorage.setItem("userSkills", JSON.stringify(skills));
     } catch (error) {
       console.error("Error saving skills:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      alert(`Error saving skills: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
+      alert("Error saving skills.");
     }
   };
 
@@ -602,39 +464,72 @@ const Skills = () => {
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">Specialisation</Typography>
           <Box display="flex" alignItems="center" gap={1}>
-            <TextField
-              value={newSkill}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setNewSkill(e.target.value)
+          <Autocomplete
+              freeSolo
+              options={suggestedSkills}
+              inputValue={newSkill}
+              onInputChange={(event, newInputValue) => {
+                setNewSkill(newInputValue);
+              }}
+              onChange={(event, value) => {
+                if (value) {
+                  setNewSkill(value); // when clicking a suggestion
+                }
+              }}
+              sx={{ width: 300 }}
+              filterOptions={(options, state) =>
+                state.inputValue === "" ? [] : options.filter((option) =>
+                  option.toLowerCase().startsWith(state.inputValue.toLowerCase())
+                )
               }
-              placeholder="Add a skill"
-              size="small"
-              variant="outlined"
+              renderInput={(params) => (
+                <TextField {...params} label="Add a skill" size="small" variant="outlined" />
+              )}
             />
             <Button
               variant="contained"
               color="primary"
-              onClick={handleAddSkill}
+              onClick={() => {
+                const skillToAdd = newSkill.trim();
+                if (skillToAdd && !skills.includes(skillToAdd)) {
+                  const updatedSkills = [...skills, skillToAdd];
+                  setSkills(updatedSkills);
+                  setNewSkill(""); // clear input after adding
+                  localStorage.setItem("userSkills", JSON.stringify(updatedSkills));
+                }
+              }}
               disabled={!newSkill.trim()}
             >
               Add
             </Button>
           </Box>
         </Box>
+  
         <Divider sx={{ my: 2 }} />
+  
         <Box display="flex" flexWrap="wrap" gap={1}>
           {isLoading ? (
             <Typography>Loading...</Typography>
           ) : (
-            skills.map((skill: string, index: number) => (
-              <Chip key={index} label={skill} color="primary" onDelete={() => handleDeleteSkill(skill)} />
+            skills.map((skill, index) => (
+              <Chip
+                key={index}
+                label={skill}
+                color="primary"
+                onDelete={() => {
+                  const updatedSkills = skills.filter((s) => s !== skill);
+                  setSkills(updatedSkills);
+                  localStorage.setItem("userSkills", JSON.stringify(updatedSkills));
+                }}
+              />
             ))
           )}
         </Box>
+  
         <Box mt={2} display="flex" justifyContent="flex-end">
-          <Button 
-            variant="contained" 
-            color="primary" 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={handleSaveSkills}
             disabled={isLoading}
           >
@@ -643,85 +538,60 @@ const Skills = () => {
         </Box>
       </CardContent>
     </Card>
-  );
-};
+  )};
+  
 
 const Description = () => {
+  const { data: session } = useSession();
   const [description, setDescription] = useState("");
   const [lastSavedDescription, setLastSavedDescription] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedDescription = localStorage.getItem("userDescription");
-    if (storedDescription) {
-      setDescription(storedDescription);
-      setLastSavedDescription(storedDescription);
-      setIsLoading(false);
-    }
-    
-    fetchDescription();
-  }, []);
+    if (!session?.user?.id) return;
 
-  const fetchDescription = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/auth/getProfile?userId=1");
-      if (!response.ok) throw new Error("Failed to fetch user data");
-
-      const data = await response.json();
-      if (data.user.description) {
-        setDescription(data.user.description);
-        setLastSavedDescription(data.user.description);
-        localStorage.setItem("userDescription", data.user.description);
+    const fetchDescription = async () => {
+      try {
+        const response = await fetch(`/api/auth/getProfile?userId=${session.user.id}`);
+        if (!response.ok) throw new Error("Failed to fetch description");
+        const data = await response.json();
+        if (data.user.description) {
+          setDescription(data.user.description);
+          setLastSavedDescription(data.user.description);
+          localStorage.setItem("userDescription", data.user.description);
+        }
+      } catch (error) {
+        console.error("Error fetching description:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching description:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value);
-    localStorage.setItem("userDescription", e.target.value);
-  };
+    fetchDescription();
+  }, [session]);
 
   const handleSaveChanges = async () => {
+    if (!session?.user?.id) return;
     try {
-        setIsLoading(true);
-        const response = await fetch("/api/auth/updateProfile", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                userId: 1,
-                description,
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error("Failed to update profile description");
-        }
-
-        const data = await response.json();
-        alert("Description saved!");
-        setLastSavedDescription(description);
-        
-        localStorage.setItem("userDescription", description);
-        console.log("Updated User Description:", data.user);
+      const response = await fetch("/api/auth/updateProfile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: session.user.id, description }),
+      });
+      if (!response.ok) throw new Error("Failed to save description");
+      alert("Description saved!");
+      setLastSavedDescription(description);
+      localStorage.setItem("userDescription", description);
     } catch (error) {
-        console.error("Error updating profile description:", error);
-        alert("Error saving description. Please try again.");
-    } finally {
-        setIsLoading(false);
+      console.error("Error saving description:", error);
+      alert("Error saving description.");
     }
   };
 
   const handleCancel = () => {
     setDescription(lastSavedDescription);
     localStorage.setItem("userDescription", lastSavedDescription);
-    alert("Changes discarded. Restored last saved description.");
+    alert("Changes discarded.");
   };
 
   return (
@@ -732,31 +602,13 @@ const Description = () => {
         {isLoading ? (
           <Typography>Loading...</Typography>
         ) : (
-          <TextField
-            multiline
-            rows={4}
-            fullWidth
-            placeholder="Enter description here"
-            variant="outlined"
-            value={description}
-            onChange={handleDescriptionChange}
-          />
+          <TextField multiline rows={4} fullWidth variant="outlined" value={description} onChange={(e) => setDescription(e.target.value)} />
         )}
         <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleSaveChanges}
-            disabled={isLoading}
-          >
+          <Button variant="contained" color="primary" onClick={handleSaveChanges} disabled={isLoading}>
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>
-          <Button 
-            variant="contained" 
-            color="secondary" 
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
+          <Button variant="contained" color="secondary" onClick={handleCancel} disabled={isLoading}>
             Cancel
           </Button>
         </Box>
@@ -765,7 +617,18 @@ const Description = () => {
   );
 };
 
+
 const ProfilePage = () => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <Typography>Loading profile...</Typography>; 
+  }
+
+  if (!session) {
+    return <Typography>You must be signed in to view your profile.</Typography>; 
+  }
+
   return (
     <>
       <Typography variant="h4">Personal Profile</Typography>
@@ -773,7 +636,9 @@ const ProfilePage = () => {
         <NextLink href="/">Home</NextLink>
         <Typography color="textPrimary">Personal Profile</Typography>
       </Breadcrumbs>
+
       <ProfileCompletion />
+      
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Box display="flex" gap={3} mb={3}>
@@ -791,4 +656,5 @@ const ProfilePage = () => {
     </>
   );
 };
+
 export default ProfilePage;
