@@ -552,6 +552,8 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   );
 }
 
+
+
 function DateFilterMenu({
   startDate,
   endDate,
@@ -863,14 +865,16 @@ function Controls() {
         >
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleOpenSettings}
-          sx={{ ml: "auto" }}
-        >
-          Manage Settings
-        </Button>
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleOpenSettings}
+            sx={{ ml: "auto" }}
+          >
+            Manage Settings
+          </Button>
+
       </SearchBarContainer>
 
       <Modal

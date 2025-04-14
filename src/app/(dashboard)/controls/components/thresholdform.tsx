@@ -1,20 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Modal,
-} from "@mui/material";
+import { Box, Button, TextField, Typography, Modal } from "@mui/material";
 
 interface ThresholdFormProps {
   open: boolean;
   handleClose: () => void;
   channelId: number;
   channelName: string;
-  defaultThresholds: { fieldName: string; minValue: number; maxValue: number; unit: string }[];
+  defaultThresholds: {
+    fieldName: string;
+    minValue: number;
+    maxValue: number;
+    unit: string;
+  }[];
   channelFields: string[];
   onSave: () => void;
 }
@@ -44,7 +43,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/controls/thresholds?channelId=${channelId}`);
+        const response = await fetch(
+          `/api/controls/thresholds?channelId=${channelId}`
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -53,16 +54,22 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
 
         // Initialize fields for all channelFields
         const initializedFields = channelFields.map((fieldName) => {
-          const threshold = thresholds.find((t: any) => t.fieldName === fieldName);
-          const defaultThreshold = defaultThresholds.find((t) => t.fieldName === fieldName);
+          const threshold = thresholds.find(
+            (t: any) => t.fieldName === fieldName
+          );
+          const defaultThreshold = defaultThresholds.find(
+            (t) => t.fieldName === fieldName
+          );
           return {
             fieldName,
-            minValue: threshold?.minValue?.toString() ||
-                      defaultThreshold?.minValue?.toString() ||
-                      "",
-            maxValue: threshold?.maxValue?.toString() ||
-                      defaultThreshold?.maxValue?.toString() ||
-                      "",
+            minValue:
+              threshold?.minValue?.toString() ||
+              defaultThreshold?.minValue?.toString() ||
+              "",
+            maxValue:
+              threshold?.maxValue?.toString() ||
+              defaultThreshold?.maxValue?.toString() ||
+              "",
           };
         });
 
@@ -130,6 +137,53 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     } catch (error) {
       console.error("Error saving thresholds:", error);
       setError("Failed to save thresholds. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetToDefault = async () => {
+    // Add confirmation dialog
+    if (
+      !window.confirm(
+        "Are you sure you want to reset to default? This will delete all custom thresholds for this channel."
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Send POST request with empty thresholds array to clear thresholds
+      const response = await fetch("/api/controls/thresholds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId, thresholds: [] }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Reset fields to defaultThresholds
+      const resetFields = channelFields.map((fieldName) => {
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === fieldName
+        );
+        return {
+          fieldName,
+          minValue: defaultThreshold?.minValue?.toString() || "",
+          maxValue: defaultThreshold?.maxValue?.toString() || "",
+        };
+      });
+
+      setFields(resetFields);
+      alert("Thresholds reset to default successfully!");
+    } catch (error) {
+      console.error("Error resetting thresholds:", error);
+      setError("Failed to reset thresholds. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -233,6 +287,14 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
                 disabled={loading}
               >
                 {loading ? "Saving..." : "Save Thresholds"}
+              </Button>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={handleResetToDefault}
+                disabled={loading}
+              >
+                {loading ? "Resetting..." : "Reset to Default"}
               </Button>
               <Button
                 variant="outlined"
