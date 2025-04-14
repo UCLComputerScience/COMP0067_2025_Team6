@@ -33,17 +33,26 @@ export const authOptions: NextAuthOptions = {
 
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          const error = new Error("Missing credentials");
+          (error as any).name = "MissingCredentials";
+          throw error;
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
 
-        if (user && credentials.password === user.password) {
-          if (user.status !== "ACTIVE") {
-            return null;
-          }
+        if (!user || credentials.password !== user.password) {
+          const error = new Error("Invalid login details");
+          (error as any).name = "InvalidCredentials";
+          throw error;
+        }
+        
+        if (user.status !== "ACTIVE") {
+          const error = new Error("This account has been deactivated. Please contact Admin.");
+          (error as any).name = "DeactivatedAccount";
+          throw error;
+        }
 
           // Log the login event into UsageHistory table
           await prisma.usageHistory.create({
@@ -65,7 +74,7 @@ export const authOptions: NextAuthOptions = {
             userRole: user.userRole,
             status: user.status,
           };
-        }
+        
         return null;
       },
     }),
