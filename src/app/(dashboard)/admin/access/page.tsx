@@ -334,7 +334,25 @@ function EnhancedTable() {
 
       if (response.ok) {
         const data = await response.json();
-        const mappedUsers = data.map((user) => ({
+        interface UserApiResponse {
+          id: string;
+          firstName: string;
+          lastName: string;
+          organisation?: string;
+          userRole: string;
+          status: string;
+        }
+
+        interface MappedUser extends RowType {
+          id: string;
+          firstname: string;
+          lastname: string;
+          usertype: string;
+          role: string;
+          status: string;
+        }
+
+        const mappedUsers: MappedUser[] = (data as UserApiResponse[]).map((user: UserApiResponse) => ({
           id: user.id,
           firstname: user.firstName,
           lastname: user.lastName,
@@ -421,7 +439,8 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error deactivating users:", error);
-      showFeedback(`Failed to deactivate users: ${error.message}`, "error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to deactivate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -478,7 +497,8 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error activating users:", error);
-      showFeedback(`Failed to activate users: ${error.message}`, "error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to activate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -650,7 +670,8 @@ function EnhancedTable() {
         );
       } catch (error) {
         console.error("Error updating roles:", error);
-        showFeedback(`Error updating roles: ${error.message}`, "error");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        showFeedback(`Error updating roles: ${errorMessage}`, "error");
       } finally {
         setLoading(false);
       }

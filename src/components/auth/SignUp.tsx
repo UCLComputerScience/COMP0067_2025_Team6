@@ -52,7 +52,7 @@ function SignUp() {
           .max(255)
           .required("Required"),
         confirmPassword: Yup.string().oneOf(
-          [Yup.ref("password"), null],
+          [Yup.ref("password"), undefined],
           "Passwords must match"
         ),
       })}
