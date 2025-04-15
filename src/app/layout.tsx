@@ -45,8 +45,11 @@ function RootLayout({ children }: { children: React.ReactNode }) {
           <Provider store={store}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <MuiThemeProvider theme={createTheme(theme)}>
-                {/* Add the SessionProvider here to provide session context to the entire app */}
-                <SessionProvider>{children}</SessionProvider>
+                <SessionProvider>
+                  <ThemeProvider>
+                    {children}
+                  </ThemeProvider>
+                </SessionProvider>
               </MuiThemeProvider>
             </LocalizationProvider>
           </Provider>

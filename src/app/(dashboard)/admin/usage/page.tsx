@@ -55,7 +55,7 @@ const ToolbarTitle = styled.div`
   min-width: 150px;
 `;
 
-function descendingComparator(a: RowType, b: RowType, orderBy: string) {
+function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -65,7 +65,7 @@ function descendingComparator(a: RowType, b: RowType, orderBy: string) {
   return 0;
 }
 
-function getComparator(order: "desc" | "asc", orderBy: string) {
+function getComparator(order: "desc" | "asc", orderBy: keyof RowType) {
   return order === "desc"
     ? (a: RowType, b: RowType) => descendingComparator(a, b, orderBy)
     : (a: RowType, b: RowType) => -descendingComparator(a, b, orderBy);
@@ -136,9 +136,9 @@ function createLogData(
 const EnhancedTableHead: React.FC<{
   order: "desc" | "asc";
   orderBy: string;
-  onRequestSort: (e: any, property: string) => void;
+  onRequestSort: (e: any, property: keyof RowType) => void;
 }> = ({ order, orderBy, onRequestSort }) => {
-  const createSortHandler = (property: string) => (event: any) => {
+  const createSortHandler = (property: keyof RowType) => (event: any) => {
     onRequestSort(event, property);
   };
 
@@ -154,7 +154,7 @@ const EnhancedTableHead: React.FC<{
             <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : "asc"}
-              onClick={createSortHandler(headCell.id)}
+              onClick={createSortHandler(headCell.id as keyof RowType)}
             >
               {headCell.label}
             </TableSortLabel>
@@ -167,11 +167,11 @@ const EnhancedTableHead: React.FC<{
 
 function EnhancedTable({ logs }: { logs: RowType[] }) {
   const [order, setOrder] = React.useState<"desc" | "asc">("asc");
-  const [orderBy, setOrderBy] = React.useState("timestamp");
+  const [orderBy, setOrderBy] = React.useState<keyof RowType>("timestamp");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-  const handleRequestSort = (event: any, property: string) => {
+  const handleRequestSort = (event: any, property: keyof RowType) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);

@@ -272,8 +272,6 @@ function EnhancedTable() {
   const [instrumentAccess, setInstrumentAccess] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
-  const [regionFilter, setRegionFilter] = React.useState("All");
-  const [projectFilter, setProjectFilter] = React.useState("All");
   const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
   const [users, setUsers] = React.useState<Array<RowType>>([]);
   const [loading, setLoading] = React.useState(true);
@@ -351,7 +349,25 @@ function EnhancedTable() {
 
       if (response.ok) {
         const data = await response.json();
-        const mappedUsers = data.map((user) => ({
+        interface UserApiResponse {
+          id: string;
+          firstName: string;
+          lastName: string;
+          organisation?: string;
+          userRole: string;
+          status: string;
+        }
+
+        interface MappedUser extends RowType {
+          id: string;
+          firstname: string;
+          lastname: string;
+          usertype: string;
+          role: string;
+          status: string;
+        }
+
+        const mappedUsers: MappedUser[] = (data as UserApiResponse[]).map((user: UserApiResponse) => ({
           id: user.id,
           firstname: user.firstName,
           lastname: user.lastName,
@@ -422,11 +438,11 @@ function EnhancedTable() {
   }, [reloadUsers]);
   // --- END ADDED ---
 
-  // Function to manually refresh data
-  const handleRefreshData = () => {
-    showFeedback("Refreshing user data...", "info");
-    setReloadUsers((prev) => !prev);
-  };
+  // // Function to manually refresh data
+  // const handleRefreshData = () => {
+  //   showFeedback("Refreshing user data...", "info");
+  //   setReloadUsers((prev) => !prev);
+  // };
 
   const handleDeactivateUsers = async () => {
     if (selectedUsers.length === 0) return;
@@ -482,7 +498,8 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error deactivating users:", error);
-      showFeedback(`Failed to deactivate users: ${error.message}`, "error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to deactivate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -539,7 +556,8 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error activating users:", error);
-      showFeedback(`Failed to activate users: ${error.message}`, "error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to activate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -814,7 +832,8 @@ function EnhancedTable() {
       setSelected([]);
     } catch (error) {
       console.error("Error updating:", error);
-      showFeedback(`Error updating: ${error.message}`, "error");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Error updating: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
       handleCloseDialog();
@@ -947,40 +966,6 @@ function EnhancedTable() {
             <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Region</InputLabel>
-          <Select
-            value={regionFilter}
-            label="Region"
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add region options */}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Project</InputLabel>
-          <Select
-            value={projectFilter}
-            label="Project"
-            onChange={(e) => setProjectFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add project options */}
-          </Select>
-        </FormControl>
-        <Button variant="contained" color="primary">
-          Go
-        </Button>
-        {/* Added refresh button for manual data refresh */}
-        <Button
-          variant="outlined"
-          onClick={handleRefreshData}
-          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh Data"}
-        </Button>
       </SearchContainer>
 
       <Paper>

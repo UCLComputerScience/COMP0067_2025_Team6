@@ -110,10 +110,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = () => {
-    auth0Client?.logout();
-    dispatch({ type: SIGN_OUT });
+    localStorage.removeItem("personalInfo");
+    localStorage.removeItem("userSkills");
+    localStorage.removeItem("userDescription");
+  
+    auth0Client?.logout({
+      returnTo: window.location.origin,
+    });
+  
+    window.location.href = "/";
   };
-
   const resetPassword = (email: string) => {};
 
   return (

@@ -1,4 +1,5 @@
 import AuthGuard from "@/components/guards/AuthGuard"; // Import your AuthGuard
+import { ReactNode } from "react"; // Import ReactNode
 
 const Alerts = ({ children }: { children: ReactNode }) => {
   console.log("Alerts Page - Required Roles:", [

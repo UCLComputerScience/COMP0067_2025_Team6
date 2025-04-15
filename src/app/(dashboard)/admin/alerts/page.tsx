@@ -158,14 +158,15 @@ function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   } else if (orderBy === "priority") {
     // Custom order: LOW (1), MODERATE (2), HIGH (3)
     const priorityOrder = { LOW: 1, MODERATE: 2, HIGH: 3 };
-    return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+    return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+           (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
   } else if (orderBy === "desc") {
     // Alphabetical sorting for Description
     return b.desc.localeCompare(a.desc);
   } else if (orderBy === "status") {
     // Custom order: UNRESOLVED (0), RESOLVED (1)
     const statusOrder = { UNRESOLVED: 0, RESOLVED: 1 };
-    return (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0);
+    return (statusOrder[b.status as keyof typeof statusOrder] || 0) - (statusOrder[a.status as keyof typeof statusOrder] || 0);
   } else if (orderBy === "date") {
     // Chronological sorting for Date & Time
     return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -260,7 +261,7 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
               <TableSortLabel
                 active={orderBy === headCell.id}
                 direction={orderBy === headCell.id ? order : "asc"}
-                onClick={createSortHandler(headCell.id)}
+                onClick={createSortHandler(headCell.id as keyof RowType)}
               >
                 {headCell.label}
               </TableSortLabel>
@@ -496,8 +497,8 @@ function EnhancedTable() {
       event?: React.MouseEvent<HTMLElement>
     ) => {
       setSelectedRange(range);
-      let newStartDate = null;
-      let newEndDate = new Date();
+      let newStartDate: Date | null = null;
+      let newEndDate: Date | null = new Date();
 
       switch (range) {
         case "7days":
