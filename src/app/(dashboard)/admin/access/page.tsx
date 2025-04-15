@@ -279,6 +279,21 @@ function EnhancedTable() {
   const [loading, setLoading] = React.useState(true);
   const [reloadUsers, setReloadUsers] = useState(false); // New state to trigger re-fetch
 
+  // -- ADDED--
+  // New state for Access tab
+  const [accessForm, setAccessForm] = React.useState({
+    labId: "",
+    channelId: "",
+    grantedBy: "",
+  });
+  const [labs, setLabs] = React.useState<
+    Array<{ id: number; labLocation: string }>
+  >([]);
+  const [channels, setChannels] = React.useState<
+    Array<{ id: number; name: string }>
+  >([]);
+  // --- End ADDED ----
+
   // Added state for user feedback
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -357,11 +372,55 @@ function EnhancedTable() {
     }
   };
 
+  // --- ADDED ---
+  // Fetch labs for Access tab
+  const fetchLabs = async () => {
+    try {
+      const response = await fetch("/api/access/labs");
+      if (response.ok) {
+        const data = await response.json();
+        setLabs(data);
+      } else {
+        console.error("Failed to fetch labs:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching labs:", error);
+    }
+  };
+
+  // Fetch channels for Access tab
+  const fetchChannels = async () => {
+    try {
+      const response = await fetch("/api/access/channels"); // Adjusted to match provided route
+      if (response.ok) {
+        const data = await response.json();
+        setChannels(data);
+      } else {
+        console.error("Failed to fetch channels:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching channels:", error);
+    }
+  };
+  // --- END ADDED ---
+
+  // to be uncommented
+  // Run fetchUsers on component mount and when reloadUsers changes
+  // useEffect(() => {
+  //   console.log("Fetching users...");
+  //   fetchUsers();
+  // }, [reloadUsers]);
+
+  // --- ADDED
   // Run fetchUsers on component mount and when reloadUsers changes
   useEffect(() => {
-    console.log("Fetching users...");
+    // --- MODIFIED ---
+    console.log("Fetching data...");
     fetchUsers();
+    fetchLabs();
+    fetchChannels();
   }, [reloadUsers]);
+  // --- END ADDED ---
 
   // Function to manually refresh data
   const handleRefreshData = () => {
@@ -564,6 +623,9 @@ function EnhancedTable() {
     setSelectedUsers([row.id]);
     const rawRole = getRawRoleValue(row.role);
     setSelectedRole(rawRole);
+    // --- ADDED ---
+    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    // --- END ADDED ---
     setOpenDialog(true);
   };
 
@@ -593,7 +655,9 @@ function EnhancedTable() {
         setSelectedRole("STANDARD_USER"); //default value
       }
     }
-
+    // --- ADDED ---
+    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    // --- END ADDED ---
     setOpenDialog(true);
   };
 
@@ -602,21 +666,78 @@ function EnhancedTable() {
     setEditingRow(null);
     setSelectedUsers([]);
     setCurrentTab(0);
+    // --- ADDED ---
+    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    // --- END ADDED ---
   };
 
+  //to uncomment
+  // const handleSaveChanges = async () => {
+  //   if (selectedUsers.length > 0) {
+  //     try {
+  //       console.log(
+  //         "Updating roles for selected users:",
+  //         selectedUsers,
+  //         selectedRole
+  //       );
+
+  //       // Get the current user's session
+  //       const session = await getSession();
+  //       console.log("Current session:", session);
+
+  //       const response = await fetch("/api/auth/users", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           userIds: selectedUsers,
+  //           role: selectedRole,
+  //           currentUserEmail: session?.user?.email,
+  //         }),
+  //       });
+
+  //       if (!response.ok) {
+  //         const errorText = await response.text();
+  //         try {
+  //           const errorJson = JSON.parse(errorText);
+  //           throw new Error(
+  //             `Failed to update roles: ${
+  //               errorJson.error || errorJson.message || errorText
+  //             }`
+  //           );
+  //         } catch (parseError) {
+  //           throw new Error(`Failed to update roles: ${errorText}`);
+  //         }
+  //       }
+
+  //       // Trigger a re-fetch
+  //       setReloadUsers((prev) => !prev);
+  //       setSelected([]);
+  //       showFeedback(
+  //         `Successfully updated role for ${selectedUsers.length} user(s)`,
+  //         "success"
+  //       );
+  //     } catch (error) {
+  //       console.error("Error updating roles:", error);
+  //       showFeedback(`Error updating roles: ${error.message}`, "error");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+  //   handleCloseDialog();
+  // };
+
   const handleSaveChanges = async () => {
-    if (selectedUsers.length > 0) {
-      try {
-        console.log(
-          "Updating roles for selected users:",
-          selectedUsers,
-          selectedRole
-        );
+    if (selectedUsers.length === 0) return;
 
-        // Get the current user's session
-        const session = await getSession();
-        console.log("Current session:", session);
+    try {
+      setLoading(true);
+      const session = await getSession();
 
+      // Handle role update (User Role tab)
+      if (currentTab === 0) {
+        console.log("Updating roles for users:", selectedUsers, selectedRole);
         const response = await fetch("/api/auth/users", {
           method: "POST",
           headers: {
@@ -643,26 +764,72 @@ function EnhancedTable() {
           }
         }
 
-        // Trigger a re-fetch
-        setReloadUsers((prev) => !prev);
-        setSelected([]);
         showFeedback(
           `Successfully updated role for ${selectedUsers.length} user(s)`,
           "success"
         );
-      } catch (error) {
-        console.error("Error updating roles:", error);
-        showFeedback(`Error updating roles: ${error.message}`, "error");
-      } finally {
-        setLoading(false);
       }
+
+      // Handle access update (Resource Access tab)
+      if (currentTab === 2) {
+        console.log("Updating access for users:", selectedUsers, accessForm);
+        const accessData = {
+          userIds: selectedUsers,
+          labId: accessForm.labId ? parseInt(accessForm.labId) : null,
+          channelId: accessForm.channelId
+            ? parseInt(accessForm.channelId)
+            : null,
+          grantedBy: session?.user?.id ? parseInt(session.user.id) : null,
+        };
+
+        const response = await fetch("/api/access/user_access", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(accessData),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(
+              `Failed to update access: ${
+                errorJson.error || errorJson.message || errorText
+              }`
+            );
+          } catch (parseError) {
+            throw new Error(`Failed to update access: ${errorText}`);
+          }
+        }
+
+        showFeedback(
+          `Successfully granted access for ${selectedUsers.length} user(s)`,
+          "success"
+        );
+      }
+
+      setReloadUsers((prev) => !prev); // Triggers re-fetch
+      setSelected([]);
+    } catch (error) {
+      console.error("Error updating:", error);
+      showFeedback(`Error updating: ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+      handleCloseDialog();
     }
-    handleCloseDialog();
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
+
+  // --- ADDED ---
+  const handleAccessFormChange = (field: string, value: string) => {
+    setAccessForm((prev) => ({ ...prev, [field]: value }));
+  };
+  // --- END ADDED ---
 
   const handleRequestSort = (event: any, property: string) => {
     const isAsc = orderBy === property && order === "asc";
@@ -919,6 +1086,9 @@ function EnhancedTable() {
           <Tabs value={currentTab} onChange={handleTabChange}>
             <Tab label="User Role" />
             <Tab label="User Status" />
+            {/* // --- ADDED --- */}
+            <Tab label="Resource Access" />
+            {/* // --- END ADDED --- */}
           </Tabs>
 
           {currentTab === 0 && (
@@ -983,11 +1153,64 @@ function EnhancedTable() {
                 )}
             </Box>
           )}
+          {/* // --- ADDED --- */}
+          {currentTab === 2 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body1" gutterBottom>
+                Grant access to resources:
+              </Typography>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Lab</InputLabel>
+                <Select
+                  value={accessForm.labId}
+                  onChange={(e) =>
+                    handleAccessFormChange("labId", e.target.value)
+                  }
+                  label="Lab"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {labs.map((lab) => (
+                    <MenuItem key={lab.id} value={lab.id}>
+                      {lab.labLocation}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Channel</InputLabel>
+                <Select
+                  value={accessForm.channelId}
+                  onChange={(e) =>
+                    handleAccessFormChange("channelId", e.target.value)
+                  }
+                  label="Channel"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {channels.map((channel) => (
+                    <MenuItem key={channel.id} value={channel.id}>
+                      {channel.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+          {/* // --- END ADDED --- */}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveChanges} color="primary">
-            Save
+          <Button onClick={handleCloseDialog} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveChanges}
+            color="primary"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : "Save"}
           </Button>
         </DialogActions>
       </Dialog>

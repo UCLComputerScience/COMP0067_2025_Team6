@@ -202,7 +202,9 @@ function SensorField({
 function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
   const [sliderValues, setSliderValues] = useState<number[][]>([]);
-  const [initialSliderValues, setInitialSliderValues] = useState<number[][]>([]); // Track initial values
+  const [initialSliderValues, setInitialSliderValues] = useState<number[][]>(
+    []
+  ); // Track initial values
   const [hasChanges, setHasChanges] = useState(false); // Track if sliders have changed
   const [saving, setSaving] = useState(false); // Track save operation
   const [error, setError] = useState<string | null>(null);
@@ -504,8 +506,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
           );
         })}
 
-
-
         <Box sx={{ display: "flex", gap: 2, mb: 2, mt: 2 }}>
           <Box
             sx={{
@@ -551,8 +551,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
     </Card>
   );
 }
-
-
 
 function DateFilterMenu({
   startDate,
@@ -866,15 +864,14 @@ function Controls() {
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
 
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenSettings}
-            sx={{ ml: "auto" }}
-          >
-            Manage Settings
-          </Button>
-
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleOpenSettings}
+          sx={{ ml: "auto" }}
+        >
+          Manage Settings
+        </Button>
       </SearchBarContainer>
 
       <Modal
