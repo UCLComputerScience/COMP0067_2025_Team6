@@ -746,7 +746,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       const { minValue, maxValue, unit } = threshold;
 
       if (latestValue < minValue || latestValue > maxValue) {
-        const alertDescription = `${field.label} exceeded threshold: ${latestValue}${unit} (Range: ${minValue}${unit} - ${maxValue}${unit})`;
+        const alertDescription = `${field.label} has exceeded the threshold: ${latestValue}${unit} (Range: ${minValue}${unit} - ${maxValue}${unit})`;
 
         try {
           const response = await fetch("/api/controls/alerts", {
