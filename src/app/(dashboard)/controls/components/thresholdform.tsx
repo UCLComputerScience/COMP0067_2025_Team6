@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, TextField, Typography, Modal } from "@mui/material";
 
+interface ThresholdField {
+  fieldName: string;
+  minValue: string;
+  maxValue: string;
+}
+
 interface ThresholdFormProps {
   open: boolean;
   handleClose: () => void;
@@ -16,12 +22,6 @@ interface ThresholdFormProps {
   }[];
   channelFields: string[];
   onSave: () => void;
-}
-
-interface ThresholdField {
-  fieldName: string;
-  minValue: string;
-  maxValue: string;
 }
 
 const ThresholdForm: React.FC<ThresholdFormProps> = ({
@@ -47,7 +47,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           `/api/controls/thresholds?channelId=${channelId}`
         );
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`Failed to fetch thresholds: ${response.status}`);
         }
         const data = await response.json();
         const thresholds = data.thresholds || [];
@@ -98,22 +98,31 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     setError(null);
     setLoading(true);
 
-    // Validate fields
-    const invalidFields = fields.filter((field) => {
-      const min = field.minValue === "" ? NaN : Number(field.minValue);
-      const max = field.maxValue === "" ? NaN : Number(field.maxValue);
-      return !field.fieldName || isNaN(min) || isNaN(max) || min >= max;
-    });
+    // Validate only filled fields
+    const invalidFields = fields
+      .filter((field) => field.minValue !== "" || field.maxValue !== "") // Only check fields with at least one value
+      .filter((field) => {
+        const min = field.minValue === "" ? NaN : Number(field.minValue);
+        const max = field.maxValue === "" ? NaN : Number(field.maxValue);
+        return (
+          (field.minValue !== "" && (isNaN(min) || field.maxValue === "")) ||
+          (field.maxValue !== "" && (isNaN(max) || field.minValue === "")) ||
+          (!isNaN(min) && !isNaN(max) && min >= max)
+        );
+      });
 
     if (invalidFields.length > 0) {
+      const invalidNames = invalidFields
+        .map((field) => field.fieldName)
+        .join(", ");
       setError(
-        "All fields must have valid numeric min/max values, with min < max."
+        `Invalid thresholds for fields: ${invalidNames}. Both min and max must be numeric and min must be less than max, or both must be empty.`
       );
       setLoading(false);
       return;
     }
 
-    // Only send fields with non-empty minValue and maxValue
+    // Prepare submission fields
     const submissionFields = fields
       .filter((field) => field.minValue !== "" && field.maxValue !== "")
       .map((field) => ({
@@ -129,21 +138,23 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         body: JSON.stringify({ channelId, thresholds: submissionFields }),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to save thresholds: ${response.status}`
+        );
       }
       alert("Thresholds saved successfully!");
       onSave();
       handleClose();
     } catch (error) {
       console.error("Error saving thresholds:", error);
-      setError("Failed to save thresholds. Please try again.");
+      setError(error.message || "Failed to save thresholds. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResetToDefault = async () => {
-    // Add confirmation dialog
     if (
       !window.confirm(
         "Are you sure you want to reset to default? This will delete all custom thresholds for this channel."
@@ -156,7 +167,6 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     setLoading(true);
 
     try {
-      // Send POST request with empty thresholds array to clear thresholds
       const response = await fetch("/api/controls/thresholds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,10 +174,12 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `Failed to reset thresholds: ${response.status}`
+        );
       }
 
-      // Reset fields to defaultThresholds
       const resetFields = channelFields.map((fieldName) => {
         const defaultThreshold = defaultThresholds.find(
           (t) => t.fieldName === fieldName
@@ -183,7 +195,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       alert("Thresholds reset to default successfully!");
     } catch (error) {
       console.error("Error resetting thresholds:", error);
-      setError("Failed to reset thresholds. Please try again.");
+      setError(
+        error.message || "Failed to reset thresholds. Please try again."
+      );
     } finally {
       setLoading(false);
     }

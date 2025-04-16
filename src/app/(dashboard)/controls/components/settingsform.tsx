@@ -16,20 +16,20 @@ import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 
 const BoxStyled = styled(Box)(spacing);
 
+interface Threshold {
+  fieldName: string;
+  minValue: string;
+  maxValue: string;
+  unit: string;
+}
+
 interface SettingsFormProps {
   handleClose: () => void;
   onSave?: () => void;
 }
 
 function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
-  const [fields, setFields] = useState<
-    {
-      fieldName: string;
-      minValue: string | number;
-      maxValue: string | number;
-      unit: string;
-    }[]
-  >([]);
+  const [fields, setFields] = useState<Threshold[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -38,7 +38,11 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     severity: "error" | "warning" | "info" | "success";
   }>({ open: false, message: "", severity: "info" });
 
-  const handleFieldChange = (index: number, key: string, value: string) => {
+  const handleFieldChange = (
+    index: number,
+    key: keyof Threshold,
+    value: string
+  ) => {
     const updatedFields = [...fields];
     updatedFields[index] = { ...updatedFields[index], [key]: value };
     setFields(updatedFields);
@@ -67,15 +71,15 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       try {
         const response = await fetch("/api/controls/settings");
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`Failed to fetch thresholds: ${response.status}`);
         }
         const data = await response.json();
         if (data.fields && Array.isArray(data.fields)) {
           setFields(
             data.fields.map((field: any) => ({
-              fieldName: field.fieldName,
-              minValue: field.minValue.toString(),
-              maxValue: field.maxValue.toString(),
+              fieldName: field.fieldName || "",
+              minValue: field.minValue != null ? field.minValue.toString() : "",
+              maxValue: field.maxValue != null ? field.maxValue.toString() : "",
               unit: field.unit || "",
             }))
           );
@@ -97,174 +101,43 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     fetchSettings();
   }, []);
 
+  const validateFields = () => {
+    if (fields.length === 0) {
+      return null; // Allow empty fields to delete all thresholds
+    }
+
+    for (let i = 0; i < fields.length; i++) {
+      const field = fields[i];
+      if (!field.fieldName.trim()) {
+        return `Field ${i + 1}: Name is required and cannot be empty`;
+      }
+      const min = Number(field.minValue);
+      const max = Number(field.maxValue);
+      if (field.minValue === "" || isNaN(min)) {
+        return `Field ${i + 1}: Min value must be a valid number`;
+      }
+      if (field.maxValue === "" || isNaN(max)) {
+        return `Field ${i + 1}: Max value must be a valid number`;
+      }
+      if (min >= max) {
+        return `Field ${i + 1}: Min value must be less than max value`;
+      }
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    // Validate input fields
-    if (fields.length > 0) {
-      const invalidFields = fields.filter((field) => {
-        const min = field.minValue === "" ? NaN : Number(field.minValue);
-        const max = field.maxValue === "" ? NaN : Number(field.maxValue);
-        return !field.fieldName || isNaN(min) || isNaN(max) || min >= max;
-      });
-
-      if (invalidFields.length > 0) {
-        setError(
-          "All fields must have a valid name and numeric min/max values, with min less than max."
-        );
-        setSnackbar({
-          open: true,
-          message:
-            "All fields must have a valid name and numeric min/max values, with min less than max.",
-          severity: "error",
-        });
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Validate against latest channel values
-    try {
-      // Fetch all channels
-      const channelsResponse = await fetch("/api/controls/channels");
-      if (!channelsResponse.ok) {
-        throw new Error(`HTTP error! Status: ${channelsResponse.status}`);
-      }
-      const channelsData = await channelsResponse.json();
-      console.log("Fetched channels:", channelsData); // DEBUG: Log channels
-
-      // Check custom thresholds
-      const customThresholds: { [channelId: number]: any[] } = {};
-      for (const channel of channelsData) {
-        const thresholdResponse = await fetch(
-          `/api/controls/thresholds?channelId=${channel.id}`
-        );
-        if (thresholdResponse.ok) {
-          const data = await thresholdResponse.json();
-          customThresholds[channel.id] = data.thresholds || [];
-        } else {
-          console.warn(
-            `Failed to fetch thresholds for channel ${channel.id}: Status ${thresholdResponse.status}`
-          );
-          customThresholds[channel.id] = [];
-        }
-      }
-      console.log("Custom thresholds:", customThresholds); // DEBUG: Log thresholds
-
-      // Validate thresholds
-      let affectedControls = 0;
-      const violations: string[] = [];
-
-      for (const channel of channelsData) {
-        console.log(`Processing channel ${channel.id} (${channel.name})`); // DEBUG: Log channel
-        const response = await fetch(channel.ApiKey[0]?.api);
-        if (!response.ok || !channel.ApiKey[0]?.api) {
-          console.warn(
-            `Failed to fetch feed for channel ${channel.id}: Status ${
-              response.status || "No API key"
-            }`
-          );
-          continue;
-        }
-        const { feeds } = await response.json();
-        if (!feeds || feeds.length === 0) {
-          console.warn(`No feeds found for channel ${channel.id}`);
-          continue;
-        }
-        const latestFeed = feeds[feeds.length - 1];
-        console.log(`Latest feed for channel ${channel.id}:`, latestFeed); // DEBUG: Log feed
-
-        const channelViolations: string[] = [];
-        fields.forEach((field) => {
-          // Skip if channel has custom threshold
-          const hasCustomThreshold = customThresholds[channel.id]?.some(
-            (t: any) => t.fieldName.toLowerCase() === field.fieldName.toLowerCase()
-          );
-          if (hasCustomThreshold) {
-            console.log(
-              `Skipping validation for ${field.fieldName} in channel ${channel.id} due to custom threshold`
-            ); // DEBUG: Log skip
-            return;
-          }
-
-          // Match fieldName to channel fields (case-insensitive)
-          const fieldKey = Object.keys(channel)
-            .filter((key) => key.startsWith("field") && channel[key])
-            .find(
-              (key) =>
-                channel[key].toLowerCase() === field.fieldName.toLowerCase()
-            );
-          console.log(
-            `Checking field ${field.fieldName} in channel ${channel.id}: key=${fieldKey}`
-          ); // DEBUG: Log field match
-
-          if (fieldKey && latestFeed[fieldKey] !== undefined) {
-            const latestValue = parseFloat(latestFeed[fieldKey]);
-            const minValue = Number(field.minValue);
-            const maxValue = Number(field.maxValue);
-            console.log(
-              `Validating ${field.fieldName}: latestValue=${latestValue}, min=${minValue}, max=${maxValue}`
-            ); // DEBUG: Log values
-
-            if (
-              !isNaN(latestValue) &&
-              (latestValue < minValue || latestValue > maxValue)
-            ) {
-              channelViolations.push(
-                `${field.fieldName}: ${latestValue} is outside ${minValue}-${maxValue}`
-              );
-              console.log(
-                `Violation detected for ${field.fieldName} in channel ${channel.id}`
-              ); // DEBUG: Log violation
-            }
-          } else {
-            console.warn(
-              `Field ${field.fieldName} not found or no value in channel ${channel.id} (key=${fieldKey})`
-            ); // DEBUG: Log missing field/value
-          }
-        });
-
-        if (channelViolations.length > 0) {
-          affectedControls++;
-          violations.push(
-            `Channel ${channel.name} (ID: ${channel.id}): ${channelViolations.join(
-              ", "
-            )}`
-          );
-        }
-      }
-
-      console.log("Total violations:", violations); // DEBUG: Log violations
-      console.log("Affected controls:", affectedControls); // DEBUG: Log count
-
-      // Show pop-ups
-      if (violations.length > 0) {
-        setSnackbar({
-          open: true,
-          message: `Warning: The following channels have values exceeding the new default thresholds:\n${violations.join(
-            "\n"
-          )}`,
-          severity: "warning",
-        });
-
-        setTimeout(() => {
-          setSnackbar({
-            open: true,
-            message: `${affectedControls} controls will be affected by these threshold changes.`,
-            severity: "info",
-          });
-        }, 500);
-      } else {
-        console.log("No violations detected"); // DEBUG: Log no violations
-      }
-    } catch (error) {
-      console.error("Error during validation:", error);
-      setError("Failed to validate thresholds. Please try again.");
+    // Client-side validation
+    const validationError = validateFields();
+    if (validationError) {
+      setError(validationError);
       setSnackbar({
         open: true,
-        message: "Failed to validate thresholds.",
+        message: validationError,
         severity: "error",
       });
       setLoading(false);
@@ -274,10 +147,10 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     // Submit thresholds
     try {
       const submissionFields = fields.map((field) => ({
-        fieldName: field.fieldName,
+        fieldName: field.fieldName.trim(),
         minValue: Number(field.minValue),
         maxValue: Number(field.maxValue),
-        unit: field.unit || null,
+        unit: field.unit.trim() || null,
       }));
 
       const response = await fetch("/api/controls/settings", {
@@ -285,9 +158,20 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fields: submissionFields }),
       });
+
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        let errorMessage = "Failed to save thresholds. Please try again.";
+        if (errorData.error) {
+          errorMessage = errorData.error;
+          if (errorData.details) {
+            errorMessage +=
+              "\nDetails: " + JSON.stringify(errorData.details, null, 2);
+          }
+        }
+        throw new Error(errorMessage);
       }
+
       setSnackbar({
         open: true,
         message:
@@ -300,10 +184,10 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       handleClose();
     } catch (error) {
       console.error("Error saving default thresholds:", error);
-      setError("Failed to save default thresholds. Please try again.");
+      setError(error.message || "Failed to save thresholds. Please try again.");
       setSnackbar({
         open: true,
-        message: "Failed to save default thresholds.",
+        message: error.message || "Failed to save thresholds.",
         severity: "error",
       });
     } finally {
@@ -326,7 +210,6 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       <Typography variant="h4" mb={5}>
         Default Threshold Settings
       </Typography>
-      <div></div>
       {error && (
         <Typography color="error" mb={2}>
           {error}

@@ -538,7 +538,7 @@ function EnhancedTable() {
       setLoading(true);
       const timestamp = new Date().getTime();
       const response = await fetch(
-        `/admin/alerts/api/channel?_t=${timestamp}`,
+        `/api/alerts/channel?_t=${timestamp}`,
         {
           cache: "no-store",
           headers: {
@@ -659,7 +659,7 @@ function EnhancedTable() {
   const confirmDelete = async () => {
     if (deleteId === null) return;
     try {
-      const response = await fetch(`/admin/alerts/api/${deleteId}/delete`, {
+      const response = await fetch(`/api/alerts/${deleteId}/delete`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -694,7 +694,7 @@ function EnhancedTable() {
   const confirmResolve = async () => {
     if (resolveId === null) return;
     try {
-      const response = await fetch(`/admin/alerts/api/${resolveId}/update`, {
+      const response = await fetch(`/api/alerts/${resolveId}/update`, {
         method: "PATCH",
       });
       if (response.ok) {
@@ -739,7 +739,7 @@ function EnhancedTable() {
   const confirmBulkDelete = async () => {
     try {
       const deletePromises = selected.map((id) =>
-        fetch(`/admin/alerts/api/${id}/delete`, { method: "DELETE" }).then(
+        fetch(`/api/alerts/${id}/delete`, { method: "DELETE" }).then(
           (response) => {
             if (!response.ok) throw new Error(`Failed to delete alert ${id}.`);
             return id;
@@ -791,7 +791,7 @@ function EnhancedTable() {
       }
   
       const resolvePromises = unresolvedIds.map((id) =>
-        fetch(`/admin/alerts/api/${id}/update`, { method: "PATCH" }).then(
+        fetch(`/api/alerts/${id}/update`, { method: "PATCH" }).then(
           async (response) => {
             if (!response.ok) {
               const errorData = await response.json();
