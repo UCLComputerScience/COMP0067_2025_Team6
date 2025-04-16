@@ -1,3 +1,135 @@
+// import { PrismaClient } from "@prisma/client";
+// import { NextRequest, NextResponse } from "next/server";
+
+// const prisma = new PrismaClient();
+
+// export async function POST(req: NextRequest) {
+//   try {
+//     const { userIds, labId, channelId, grantedBy } = await req.json();
+
+//     // Validate input
+//     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+//       return NextResponse.json(
+//         { message: "Invalid or empty userIds" },
+//         { status: 400 }
+//       );
+//     }
+
+//     // Validate labId and channelId if provided
+//     if (labId && isNaN(parseInt(labId))) {
+//       return NextResponse.json(
+//         { message: "Invalid labId" },
+//         { status: 400 }
+//       );
+//     }
+//     if (channelId && isNaN(parseInt(channelId))) {
+//       return NextResponse.json(
+//         { message: "Invalid channelId" },
+//         { status: 400 }
+//       );
+//     }
+//     if (grantedBy && isNaN(parseInt(grantedBy))) {
+//       return NextResponse.json(
+//         { message: "Invalid grantedBy" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const parsedLabId = labId ? parseInt(labId) : null;
+//     const parsedChannelId = channelId ? parseInt(channelId) : null;
+//     const parsedGrantedBy = grantedBy ? parseInt(grantedBy) : null;
+
+//     // Check for existing access records and collect new ones to create
+//     const accessToCreate = [];
+//     const alreadyGranted = [];
+
+//     for (const userId of userIds) {
+//       const parsedUserId = parseInt(userId);
+//       if (isNaN(parsedUserId)) {
+//         return NextResponse.json(
+//           { message: `Invalid userId: ${userId}` },
+//           { status: 400 }
+//         );
+//       }
+
+//       // Check if access already exists
+//       const existingAccess = await prisma.access.findFirst({
+//         where: {
+//           userId: parsedUserId,
+//           labId: parsedLabId,
+//           channelId: parsedChannelId,
+//         },
+//       });
+
+//       if (existingAccess) {
+//         alreadyGranted.push(userId);
+//       } else {
+//         accessToCreate.push({
+//           userId: parsedUserId,
+//           labId: parsedLabId,
+//           channelId: parsedChannelId,
+//           grantedBy: parsedGrantedBy,
+//           createdAt: new Date(),
+//           updatedAt: new Date(),
+//         });
+//       }
+//     }
+
+//     // If all users already have access, return early
+//     if (accessToCreate.length === 0) {
+//       return NextResponse.json(
+//         {
+//           message: `Access already granted for user(s): ${alreadyGranted.join(", ")}`,
+//         },
+//         { status: 409 } // Conflict status
+//       );
+//     }
+
+//     // Create new access records in a transaction
+//     const accessRecords = await prisma.$transaction(
+//       accessToCreate.map((data) =>
+//         prisma.access.create({
+//           data,
+//         })
+//       )
+//     );
+
+//     // Prepare response
+//     let responseMessage = `Access granted successfully for ${accessRecords.length} user(s)`;
+//     if (alreadyGranted.length > 0) {
+//       responseMessage += `. Note: Access already granted for user(s): ${alreadyGranted.join(", ")}`;
+//     }
+
+//     return NextResponse.json(
+//       {
+//         message: responseMessage,
+//         accessRecords,
+//       },
+//       { status: 201 }
+//     );
+//   } catch (error) {
+//     console.error("API Error:", error);
+//     if (error instanceof Error && error.message.includes("Unique constraint")) {
+//       return NextResponse.json(
+//         {
+//           message: "Access already exists for one or more users",
+//           error: error.message,
+//         },
+//         { status: 409 }
+//       );
+//     }
+//     return NextResponse.json(
+//       {
+//         message: "Internal server error",
+//         error: error instanceof Error ? error.message : "Unknown error",
+//       },
+//       { status: 500 }
+//     );
+//   } finally {
+//     await prisma.$disconnect();
+//   }
+// }
+
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,6 +139,7 @@ export async function POST(req: NextRequest) {
   try {
     const { userIds, labId, channelId, grantedBy } = await req.json();
 
+    // Validate input
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json(
         { message: "Invalid or empty userIds" },
@@ -14,27 +147,114 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create access records for each user
+    // Validate labId and channelId if provided
+    if (labId && isNaN(parseInt(labId))) {
+      return NextResponse.json(
+        { message: "Invalid labId" },
+        { status: 400 }
+      );
+    }
+    if (channelId && isNaN(parseInt(channelId))) {
+      return NextResponse.json(
+        { message: "Invalid channelId" },
+        { status: 400 }
+      );
+    }
+    if (grantedBy && isNaN(parseInt(grantedBy))) {
+      return NextResponse.json(
+        { message: "Invalid grantedBy" },
+        { status: 400 }
+      );
+    }
+
+    const parsedLabId = labId ? parseInt(labId) : null;
+    const parsedChannelId = channelId ? parseInt(channelId) : null;
+    const parsedGrantedBy = grantedBy ? parseInt(grantedBy) : null;
+
+    // Check for existing access records and collect new ones to create
+    const accessToCreate = [];
+    const alreadyGranted = [];
+
+    for (const userId of userIds) {
+      const parsedUserId = parseInt(userId);
+      if (isNaN(parsedUserId)) {
+        return NextResponse.json(
+          { message: `Invalid userId: ${userId}` },
+          { status: 400 }
+        );
+      }
+
+      // Check if access already exists
+      const existingAccess = await prisma.access.findFirst({
+        where: {
+          userId: parsedUserId,
+          labId: parsedLabId,
+          channelId: parsedChannelId,
+        },
+      });
+
+      if (existingAccess) {
+        alreadyGranted.push(userId);
+      } else {
+        accessToCreate.push({
+          userId: parsedUserId,
+          labId: parsedLabId,
+          channelId: parsedChannelId,
+          grantedBy: parsedGrantedBy,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
+
+    // If all users already have access, return early
+    if (accessToCreate.length === 0) {
+      return NextResponse.json(
+        {
+          message: `Access already granted for ${alreadyGranted.length} user(s)`,
+        },
+        { status: 409 } // Conflict status
+      );
+    }
+
+    // Create new access records in a transaction
     const accessRecords = await prisma.$transaction(
-      userIds.map((userId: string) =>
+      accessToCreate.map((data) =>
         prisma.access.create({
-          data: {
-            userId: parseInt(userId),
-            labId: labId ? parseInt(labId) : null,
-            channelId: channelId ? parseInt(channelId) : null,
-            grantedBy: grantedBy ? parseInt(grantedBy) : null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+          data,
         })
       )
     );
 
-    return NextResponse.json(accessRecords, { status: 201 });
+    // Prepare response
+    let responseMessage = `Access granted successfully for ${accessRecords.length} user(s)`;
+    if (alreadyGranted.length > 0) {
+      responseMessage += `. Note: Access already granted for ${alreadyGranted.length} user(s)`;
+    }
+
+    return NextResponse.json(
+      {
+        message: responseMessage,
+        accessRecords,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("API Error:", error);
+    if (error instanceof Error && error.message.includes("Unique constraint")) {
+      return NextResponse.json(
+        {
+          message: "Access already exists for one or more users",
+          error: error.message,
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
-      { message: "Internal server error", error: error.message },
+      {
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   } finally {

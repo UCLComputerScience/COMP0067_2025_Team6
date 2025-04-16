@@ -732,7 +732,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
 
   const checkThresholdViolations = async (fields: any[], newData: any) => {
     const latestFeed = newData.feeds[newData.feeds.length - 1];
-    const entryId = latestFeed.entry_id; // Matches feed data structure
+    const entryId = latestFeed.entry_id; 
 
     for (const field of fields) {
       const threshold =
@@ -741,7 +741,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       if (!threshold || !field.latestValue) continue; // Skip if no threshold or value
 
       const latestValue = parseFloat(field.latestValue);
-      if (isNaN(latestValue)) continue; // Skip invalid values
+      if (isNaN(latestValue)) continue;
 
       const { minValue, maxValue, unit } = threshold;
 
@@ -800,7 +800,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
                 data.feeds[data.feeds.length - 1][key] &&
                 parseFloat(data.feeds[data.feeds.length - 1][key]).toFixed(2),
             }))
-            .filter((field) => field.label && field.latestValue); // Ensure valid fields
+            .filter((field) => field.label && field.latestValue); 
           await checkThresholdViolations(fields, data);
         }
       } catch (err) {
@@ -833,7 +833,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
               channelData.feeds[channelData.feeds.length - 1][key]
             ).toFixed(2),
         }))
-        .filter((field) => field.label && field.latestValue); // Ensure valid fields
+        .filter((field) => field.label && field.latestValue);
 
       const initialSliderValues = fields.map((field) => {
         const threshold = thresholds.find((t) => t.fieldName === field.label);
@@ -876,7 +876,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       label: channel[key],
       latestValue: latestFeed[key] && parseFloat(latestFeed[key]).toFixed(2),
     }))
-    .filter((field) => field.label && field.latestValue); // Ensure valid fields
+    .filter((field) => field.label && field.latestValue); 
 
   return (
     <Card

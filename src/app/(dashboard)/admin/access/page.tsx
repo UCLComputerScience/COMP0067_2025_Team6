@@ -39,8 +39,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  CircularProgress, // Added for loading indicator
-  Snackbar, // Added for user feedback
+  CircularProgress,
+  Snackbar,
   Alert,
 } from "@mui/material";
 import { orange } from "@mui/material/colors";
@@ -100,6 +100,7 @@ const SearchContainer = styled.div`
   gap: 16px;
   margin-bottom: 16px;
   align-items: center;
+  justify-content: space-between;
 `;
 
 function createData(
@@ -227,10 +228,9 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
 
 type EnhancedTableToolbarProps = {
   numSelected: number;
-  onManageAccess: () => void;
 };
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const { numSelected, onManageAccess } = props;
+  const { numSelected } = props;
 
   return (
     <Toolbar>
@@ -245,16 +245,6 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
           </Typography>
         )}
       </ToolbarTitle>
-      <Spacer />
-      <Button
-        variant="contained"
-        color="primary"
-        size="small"
-        disabled={numSelected === 0}
-        onClick={onManageAccess}
-      >
-        Manage Access
-      </Button>
     </Toolbar>
   );
 };
@@ -267,20 +257,24 @@ function EnhancedTable() {
   const [rowsPerPage, setRowsPerPage] = React.useState(6);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<RowType | null>(null);
-  const [selectedUsers, setSelectedUsers] = React.useState<Array<string>>([]); //keeps selected users for multiple update
+  const [selectedUsers, setSelectedUsers] = React.useState<Array<string>>([]);
   const [currentTab, setCurrentTab] = React.useState(0);
   const [instrumentAccess, setInstrumentAccess] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
-  const [regionFilter, setRegionFilter] = React.useState("All");
-  const [projectFilter, setProjectFilter] = React.useState("All");
-  const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
+  const [selectedRole, setSelectedRole] = React.useState("");
   const [users, setUsers] = React.useState<Array<RowType>>([]);
   const [loading, setLoading] = React.useState(true);
-  const [reloadUsers, setReloadUsers] = useState(false); // New state to trigger re-fetch
-
-  // -- ADDED--
-  // New state for Access tab
+  const [reloadUsers, setReloadUsers] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [confirmDialogAction, setConfirmDialogAction] = React.useState<
+    "activate" | "deactivate"
+  >("deactivate");
   const [accessForm, setAccessForm] = React.useState({
     labId: "",
     channelId: "",
@@ -292,27 +286,11 @@ function EnhancedTable() {
   const [channels, setChannels] = React.useState<
     Array<{ id: number; name: string }>
   >([]);
-  // --- End ADDED ----
 
-  // Added state for user feedback
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error" | "info" | "warning",
-  });
-
-  // Confirmation dialog state
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [confirmDialogAction, setConfirmDialogAction] = React.useState<
-    "activate" | "deactivate"
-  >("deactivate");
-
-  // Close snackbar
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Show feedback to user
   const showFeedback = (
     message: string,
     severity: "success" | "error" | "info" | "warning"
@@ -335,14 +313,12 @@ function EnhancedTable() {
     }
   };
 
-  // Fetch users function - single implementation
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       const response = await fetch(`/api/auth/users?_t=${timestamp}`, {
-        cache: "no-store", // Force server to revalidate the data
+        cache: "no-store",
         headers: {
           pragma: "no-cache",
           "cache-control": "no-cache",
@@ -351,14 +327,34 @@ function EnhancedTable() {
 
       if (response.ok) {
         const data = await response.json();
-        const mappedUsers = data.map((user) => ({
-          id: user.id,
-          firstname: user.firstName,
-          lastname: user.lastName,
-          usertype: user.organisation || "Standard",
-          role: formatRole(user.userRole),
-          status: formatStatus(user.status),
-        }));
+        interface UserApiResponse {
+          id: string;
+          firstName: string;
+          lastName: string;
+          organisation?: string;
+          userRole: string;
+          status: string;
+        }
+
+        interface MappedUser extends RowType {
+          id: string;
+          firstname: string;
+          lastname: string;
+          usertype: string;
+          role: string;
+          status: string;
+        }
+
+        const mappedUsers: MappedUser[] = (data as UserApiResponse[]).map(
+          (user: UserApiResponse) => ({
+            id: user.id,
+            firstname: user.firstName,
+            lastname: user.lastName,
+            usertype: user.organisation || "Standard",
+            role: formatRole(user.userRole),
+            status: formatStatus(user.status),
+          })
+        );
 
         setUsers(mappedUsers);
         console.log("Users fetched successfully:", mappedUsers);
@@ -372,8 +368,6 @@ function EnhancedTable() {
     }
   };
 
-  // --- ADDED ---
-  // Fetch labs for Access tab
   const fetchLabs = async () => {
     try {
       const response = await fetch("/api/access/labs");
@@ -388,10 +382,9 @@ function EnhancedTable() {
     }
   };
 
-  // Fetch channels for Access tab
   const fetchChannels = async () => {
     try {
-      const response = await fetch("/api/access/channels"); // Adjusted to match provided route
+      const response = await fetch("/api/access/channels");
       if (response.ok) {
         const data = await response.json();
         setChannels(data);
@@ -402,31 +395,13 @@ function EnhancedTable() {
       console.error("Error fetching channels:", error);
     }
   };
-  // --- END ADDED ---
 
-  // to be uncommented
-  // Run fetchUsers on component mount and when reloadUsers changes
-  // useEffect(() => {
-  //   console.log("Fetching users...");
-  //   fetchUsers();
-  // }, [reloadUsers]);
-
-  // --- ADDED
-  // Run fetchUsers on component mount and when reloadUsers changes
   useEffect(() => {
-    // --- MODIFIED ---
     console.log("Fetching data...");
     fetchUsers();
     fetchLabs();
     fetchChannels();
   }, [reloadUsers]);
-  // --- END ADDED ---
-
-  // Function to manually refresh data
-  const handleRefreshData = () => {
-    showFeedback("Refreshing user data...", "info");
-    setReloadUsers((prev) => !prev);
-  };
 
   const handleDeactivateUsers = async () => {
     if (selectedUsers.length === 0) return;
@@ -441,9 +416,8 @@ function EnhancedTable() {
       });
 
       if (!response.ok) {
-        const errorText = await response.text(); // Get the error message from the response body
+        const errorText = await response.text();
         try {
-          // Attempt to parse as JSON, in case the server sends a JSON error response
           const errorJson = JSON.parse(errorText);
           throw new Error(
             `Failed to deactivate users: ${
@@ -451,7 +425,6 @@ function EnhancedTable() {
             }`
           );
         } catch (parseError) {
-          // If response isn't JSON, just throw the text error message
           throw new Error(`Failed to deactivate users: ${errorText}`);
         }
       }
@@ -459,19 +432,7 @@ function EnhancedTable() {
       const result = await response.json();
       console.log("Users deactivated successfully:", result);
 
-      // Trigger a re-fetch instead of manually updating state
       setReloadUsers((prev) => !prev);
-
-      // // Update local state
-      // setUsers((prevUsers) =>
-      //   prevUsers.map((user) =>
-      //     selectedUsers.includes(user.id)
-      //       ? { ...user, status: "Inactive" }
-      //       : user
-      //   )
-      // );
-
-      // Cleanup
       setSelected([]);
       setSelectedUsers([]);
       closeConfirmationDialog();
@@ -482,7 +443,9 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error deactivating users:", error);
-      showFeedback(`Failed to deactivate users: ${error.message}`, "error");
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to deactivate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
@@ -518,17 +481,7 @@ function EnhancedTable() {
       const result = await response.json();
       console.log("Users activated successfully:", result);
 
-      // Trigger a re-fetch instead of manually updating state
       setReloadUsers((prev) => !prev);
-
-      // // Update local state
-      // setUsers((prevUsers) =>
-      //   prevUsers.map((user) =>
-      //     selectedUsers.includes(user.id) ? { ...user, status: "Active" } : user
-      //   )
-      // );
-
-      // Cleanup
       setSelected([]);
       setSelectedUsers([]);
       closeConfirmationDialog();
@@ -539,19 +492,19 @@ function EnhancedTable() {
       );
     } catch (error) {
       console.error("Error activating users:", error);
-      showFeedback(`Failed to activate users: ${error.message}`, "error");
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to activate users: ${errorMessage}`, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Open confirmation dialog
   const openConfirmationDialog = (action: "activate" | "deactivate") => {
     setConfirmDialogAction(action);
     setConfirmDialogOpen(true);
   };
 
-  // Close confirmation dialog
   const closeConfirmationDialog = () => {
     setConfirmDialogOpen(false);
   };
@@ -571,61 +524,12 @@ function EnhancedTable() {
     }
   };
 
-  // React.useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     try {
-  //       const response = await fetch("/api/auth/users");
-  //       if (response.ok) {
-  //         const data = await response.json();
-  //         interface UserApiResponse {
-  //           id: string;
-  //           firstName: string;
-  //           lastName: string;
-  //           organisation?: string;
-  //           role: string;
-  //         }
-
-  //         interface MappedUser extends RowType {
-  //           id: string;
-  //           firstname: string;
-  //           lastname: string;
-  //           usertype: string;
-  //           role: string;
-  //           status: string;
-  //         }
-
-  //         const mappedUsers: MappedUser[] = data.map(
-  //           (user: UserApiResponse) => ({
-  //             id: user.id,
-  //             firstname: user.firstName,
-  //             lastname: user.lastName,
-  //             usertype: user.organisation || "Standard",
-  //             role: formatRole(user.role),
-  //             status: "Active",
-  //           })
-  //         );
-  //         setUsers(mappedUsers);
-  //       } else {
-  //         console.error("Failed to fetch users");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching users:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchUsers();
-  // }, []);
-
   const handleEditClick = (row: RowType) => {
     setEditingRow(row);
     setSelectedUsers([row.id]);
     const rawRole = getRawRoleValue(row.role);
     setSelectedRole(rawRole);
-    // --- ADDED ---
     setAccessForm({ labId: "", channelId: "", grantedBy: "" });
-    // --- END ADDED ---
     setOpenDialog(true);
   };
 
@@ -652,12 +556,10 @@ function EnhancedTable() {
         const rawRole = getRawRoleValue(firstSelectedUser.role);
         setSelectedRole(rawRole);
       } else {
-        setSelectedRole("STANDARD_USER"); //default value
+        setSelectedRole("STANDARD_USER");
       }
     }
-    // --- ADDED ---
     setAccessForm({ labId: "", channelId: "", grantedBy: "" });
-    // --- END ADDED ---
     setOpenDialog(true);
   };
 
@@ -666,76 +568,16 @@ function EnhancedTable() {
     setEditingRow(null);
     setSelectedUsers([]);
     setCurrentTab(0);
-    // --- ADDED ---
     setAccessForm({ labId: "", channelId: "", grantedBy: "" });
-    // --- END ADDED ---
   };
-
-  //to uncomment
-  // const handleSaveChanges = async () => {
-  //   if (selectedUsers.length > 0) {
-  //     try {
-  //       console.log(
-  //         "Updating roles for selected users:",
-  //         selectedUsers,
-  //         selectedRole
-  //       );
-
-  //       // Get the current user's session
-  //       const session = await getSession();
-  //       console.log("Current session:", session);
-
-  //       const response = await fetch("/api/auth/users", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({
-  //           userIds: selectedUsers,
-  //           role: selectedRole,
-  //           currentUserEmail: session?.user?.email,
-  //         }),
-  //       });
-
-  //       if (!response.ok) {
-  //         const errorText = await response.text();
-  //         try {
-  //           const errorJson = JSON.parse(errorText);
-  //           throw new Error(
-  //             `Failed to update roles: ${
-  //               errorJson.error || errorJson.message || errorText
-  //             }`
-  //           );
-  //         } catch (parseError) {
-  //           throw new Error(`Failed to update roles: ${errorText}`);
-  //         }
-  //       }
-
-  //       // Trigger a re-fetch
-  //       setReloadUsers((prev) => !prev);
-  //       setSelected([]);
-  //       showFeedback(
-  //         `Successfully updated role for ${selectedUsers.length} user(s)`,
-  //         "success"
-  //       );
-  //     } catch (error) {
-  //       console.error("Error updating roles:", error);
-  //       showFeedback(`Error updating roles: ${error.message}`, "error");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  //   handleCloseDialog();
-  // };
 
   const handleSaveChanges = async () => {
     if (selectedUsers.length === 0) return;
-
+  
     try {
       setLoading(true);
       const session = await getSession();
-
-      // Handle role update (User Role tab)
+  
       if (currentTab === 0) {
         console.log("Updating roles for users:", selectedUsers, selectedRole);
         const response = await fetch("/api/auth/users", {
@@ -749,7 +591,7 @@ function EnhancedTable() {
             currentUserEmail: session?.user?.email,
           }),
         });
-
+  
         if (!response.ok) {
           const errorText = await response.text();
           try {
@@ -763,25 +605,22 @@ function EnhancedTable() {
             throw new Error(`Failed to update roles: ${errorText}`);
           }
         }
-
+  
         showFeedback(
           `Successfully updated role for ${selectedUsers.length} user(s)`,
           "success"
         );
       }
-
-      // Handle access update (Resource Access tab)
+  
       if (currentTab === 2) {
         console.log("Updating access for users:", selectedUsers, accessForm);
         const accessData = {
           userIds: selectedUsers,
           labId: accessForm.labId ? parseInt(accessForm.labId) : null,
-          channelId: accessForm.channelId
-            ? parseInt(accessForm.channelId)
-            : null,
+          channelId: accessForm.channelId ? parseInt(accessForm.channelId) : null,
           grantedBy: session?.user?.id ? parseInt(session.user.id) : null,
         };
-
+  
         const response = await fetch("/api/access/user_access", {
           method: "POST",
           headers: {
@@ -789,32 +628,27 @@ function EnhancedTable() {
           },
           body: JSON.stringify(accessData),
         });
-
+  
+        const result = await response.json();
+  
         if (!response.ok) {
-          const errorText = await response.text();
-          try {
-            const errorJson = JSON.parse(errorText);
-            throw new Error(
-              `Failed to update access: ${
-                errorJson.error || errorJson.message || errorText
-              }`
-            );
-          } catch (parseError) {
-            throw new Error(`Failed to update access: ${errorText}`);
+          if (response.status === 409) {
+            showFeedback(result.message, "warning");
+          } else {
+            throw new Error(result.message || `Failed to update access: ${response.statusText}`);
           }
+        } else {
+          showFeedback(result.message, "success");
         }
-
-        showFeedback(
-          `Successfully granted access for ${selectedUsers.length} user(s)`,
-          "success"
-        );
       }
-
-      setReloadUsers((prev) => !prev); // Triggers re-fetch
+  
+      setReloadUsers((prev) => !prev);
       setSelected([]);
     } catch (error) {
       console.error("Error updating:", error);
-      showFeedback(`Error updating: ${error.message}`, "error");
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(errorMessage, "error");
     } finally {
       setLoading(false);
       handleCloseDialog();
@@ -825,11 +659,9 @@ function EnhancedTable() {
     setCurrentTab(newValue);
   };
 
-  // --- ADDED ---
   const handleAccessFormChange = (field: string, value: string) => {
     setAccessForm((prev) => ({ ...prev, [field]: value }));
   };
-  // --- END ADDED ---
 
   const handleRequestSort = (event: any, property: string) => {
     const isAsc = orderBy === property && order === "asc";
@@ -885,7 +717,6 @@ function EnhancedTable() {
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
-  // Check if all selected users are active or inactive
   const areAllSelectedUsersActive = () => {
     if (selectedUsers.length === 0) return false;
 
@@ -947,47 +778,20 @@ function EnhancedTable() {
             <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Region</InputLabel>
-          <Select
-            value={regionFilter}
-            label="Region"
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add region options */}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Project</InputLabel>
-          <Select
-            value={projectFilter}
-            label="Project"
-            onChange={(e) => setProjectFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add project options */}
-          </Select>
-        </FormControl>
-        <Button variant="contained" color="primary">
-          Go
-        </Button>
-        {/* Added refresh button for manual data refresh */}
+        <Box sx={{ flexGrow: 1 }} />
         <Button
-          variant="outlined"
-          onClick={handleRefreshData}
-          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
-          disabled={loading}
+          variant="contained"
+          color="primary"
+          size="small"
+          disabled={selected.length === 0}
+          onClick={handleManageAccess}
         >
-          {loading ? "Refreshing..." : "Refresh Data"}
+          Manage Access
         </Button>
       </SearchContainer>
 
       <Paper>
-        <EnhancedTableToolbar
-          numSelected={selected.length}
-          onManageAccess={handleManageAccess}
-        />
+      <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -1086,14 +890,11 @@ function EnhancedTable() {
           <Tabs value={currentTab} onChange={handleTabChange}>
             <Tab label="User Role" />
             <Tab label="User Status" />
-            {/* // --- ADDED --- */}
             <Tab label="Resource Access" />
-            {/* // --- END ADDED --- */}
           </Tabs>
 
           {currentTab === 0 && (
             <Box sx={{ mt: 2 }}>
-              {/* User Role Selection */}
               <FormControl fullWidth margin="dense">
                 <InputLabel>User Role</InputLabel>
                 <Select
@@ -1112,7 +913,6 @@ function EnhancedTable() {
 
           {currentTab === 1 && (
             <Box sx={{ mt: 2 }}>
-              {/* User Status Management */}
               <Typography variant="body1" gutterBottom>
                 Manage user status:
               </Typography>
@@ -1153,7 +953,7 @@ function EnhancedTable() {
                 )}
             </Box>
           )}
-          {/* // --- ADDED --- */}
+
           {currentTab === 2 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body1" gutterBottom>
@@ -1199,23 +999,15 @@ function EnhancedTable() {
               </FormControl>
             </Box>
           )}
-          {/* // --- END ADDED --- */}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveChanges}
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : "Save"}
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveChanges} color="primary">
+            Save
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Confirmation Dialog for Activation/Deactivation */}
       <Dialog open={confirmDialogOpen} onClose={closeConfirmationDialog}>
         <DialogTitle>
           {confirmDialogAction === "deactivate"
@@ -1254,6 +1046,20 @@ function EnhancedTable() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
@@ -1561,6 +1367,8 @@ export default Products;
 //   const [instrumentAccess, setInstrumentAccess] = React.useState("");
 //   const [searchTerm, setSearchTerm] = React.useState("");
 //   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
+//   const [regionFilter, setRegionFilter] = React.useState("All");
+//   const [projectFilter, setProjectFilter] = React.useState("All");
 //   const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
 //   const [users, setUsers] = React.useState<Array<RowType>>([]);
 //   const [loading, setLoading] = React.useState(true);
@@ -1638,25 +1446,7 @@ export default Products;
 
 //       if (response.ok) {
 //         const data = await response.json();
-//         interface UserApiResponse {
-//           id: string;
-//           firstName: string;
-//           lastName: string;
-//           organisation?: string;
-//           userRole: string;
-//           status: string;
-//         }
-
-//         interface MappedUser extends RowType {
-//           id: string;
-//           firstname: string;
-//           lastname: string;
-//           usertype: string;
-//           role: string;
-//           status: string;
-//         }
-
-//         const mappedUsers: MappedUser[] = (data as UserApiResponse[]).map((user: UserApiResponse) => ({
+//         const mappedUsers = data.map((user) => ({
 //           id: user.id,
 //           firstname: user.firstName,
 //           lastname: user.lastName,
@@ -1727,11 +1517,11 @@ export default Products;
 //   }, [reloadUsers]);
 //   // --- END ADDED ---
 
-//   // // Function to manually refresh data
-//   // const handleRefreshData = () => {
-//   //   showFeedback("Refreshing user data...", "info");
-//   //   setReloadUsers((prev) => !prev);
-//   // };
+//   // Function to manually refresh data
+//   const handleRefreshData = () => {
+//     showFeedback("Refreshing user data...", "info");
+//     setReloadUsers((prev) => !prev);
+//   };
 
 //   const handleDeactivateUsers = async () => {
 //     if (selectedUsers.length === 0) return;
@@ -1787,8 +1577,7 @@ export default Products;
 //       );
 //     } catch (error) {
 //       console.error("Error deactivating users:", error);
-//       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-//       showFeedback(`Failed to deactivate users: ${errorMessage}`, "error");
+//       showFeedback(`Failed to deactivate users: ${error.message}`, "error");
 //     } finally {
 //       setLoading(false);
 //     }
@@ -1845,8 +1634,7 @@ export default Products;
 //       );
 //     } catch (error) {
 //       console.error("Error activating users:", error);
-//       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-//       showFeedback(`Failed to activate users: ${errorMessage}`, "error");
+//       showFeedback(`Failed to activate users: ${error.message}`, "error");
 //     } finally {
 //       setLoading(false);
 //     }
@@ -2121,8 +1909,7 @@ export default Products;
 //       setSelected([]);
 //     } catch (error) {
 //       console.error("Error updating:", error);
-//         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-//       showFeedback(`Error updating: ${errorMessage}`, "error");
+//       showFeedback(`Error updating: ${error.message}`, "error");
 //     } finally {
 //       setLoading(false);
 //       handleCloseDialog();
@@ -2255,6 +2042,40 @@ export default Products;
 //             <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
 //           </Select>
 //         </FormControl>
+//         <FormControl size="small" sx={{ minWidth: 150 }}>
+//           <InputLabel>Region</InputLabel>
+//           <Select
+//             value={regionFilter}
+//             label="Region"
+//             onChange={(e) => setRegionFilter(e.target.value)}
+//           >
+//             <MenuItem value="All">All</MenuItem>
+//             {/* Add region options */}
+//           </Select>
+//         </FormControl>
+//         <FormControl size="small" sx={{ minWidth: 150 }}>
+//           <InputLabel>Project</InputLabel>
+//           <Select
+//             value={projectFilter}
+//             label="Project"
+//             onChange={(e) => setProjectFilter(e.target.value)}
+//           >
+//             <MenuItem value="All">All</MenuItem>
+//             {/* Add project options */}
+//           </Select>
+//         </FormControl>
+//         <Button variant="contained" color="primary">
+//           Go
+//         </Button>
+//         {/* Added refresh button for manual data refresh */}
+//         <Button
+//           variant="outlined"
+//           onClick={handleRefreshData}
+//           startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+//           disabled={loading}
+//         >
+//           {loading ? "Refreshing..." : "Refresh Data"}
+//         </Button>
 //       </SearchContainer>
 
 //       <Paper>
