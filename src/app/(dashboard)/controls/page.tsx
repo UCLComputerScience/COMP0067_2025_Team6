@@ -552,25 +552,227 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
   );
 }
 
+
+// function DateFilterMenu({
+//   startDate,
+//   endDate,
+//   setStartDate,
+//   setEndDate,
+//   selectedRange,
+//   setSelectedRange,
+//   dateField,
+//   setDateField,
+// }: {
+//   startDate: Date | null;
+//   endDate: Date | null;
+//   setStartDate: (date: Date | null) => void;
+//   setEndDate: (date: Date | null) => void;
+//   selectedRange: string;
+//   setSelectedRange: (range: string) => void;
+//   dateField: "createdAt" | "updatedAt";
+//   setDateField: (field: "createdAt" | "updatedAt") => void;
+// }) {
+//   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+//   const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
+
+//   const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+//     setMenuAnchorEl(event.currentTarget);
+//   };
+
+//   const handleMenuClose = () => {
+//     setMenuAnchorEl(null);
+//   };
+
+//   const handleRangeSelect = (
+//     range: string,
+//     event?: React.MouseEvent<HTMLElement>
+//   ) => {
+//     setSelectedRange(range);
+//     let newStartDate = null;
+//     let newEndDate = new Date();
+
+//     switch (range) {
+//       case "7days":
+//         newStartDate = new Date();
+//         newStartDate.setDate(newStartDate.getDate() - 7);
+//         newStartDate = startOfDay(newStartDate);
+//         newEndDate = endOfDay(newEndDate);
+//         break;
+//       case "30days":
+//         newStartDate = new Date();
+//         newStartDate.setDate(newStartDate.getDate() - 30);
+//         newStartDate = startOfDay(newStartDate);
+//         newEndDate = endOfDay(newEndDate);
+//         break;
+//       case "year":
+//         newStartDate = new Date();
+//         newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+//         newStartDate = startOfDay(newStartDate);
+//         newEndDate = endOfDay(newEndDate);
+//         break;
+//       case "all":
+//         newStartDate = null;
+//         newEndDate = null;
+//         break;
+//       case "custom":
+//         if (event) {
+//           setPopoverAnchorEl(event.currentTarget);
+//         }
+//         return;
+//     }
+
+//     setStartDate(newStartDate);
+//     setEndDate(newEndDate);
+//     setMenuAnchorEl(null);
+//   };
+
+//   const handlePopoverClose = () => {
+//     setPopoverAnchorEl(null);
+//   };
+
+//   const handleApplyCustomRange = () => {
+//     setSelectedRange("custom");
+//     if (startDate) setStartDate(startOfDay(startDate));
+//     if (endDate) setEndDate(endOfDay(endDate));
+//     setPopoverAnchorEl(null);
+//   };
+
+//   const handleResetDateFilter = () => {
+//     setStartDate(null);
+//     setEndDate(null);
+//     setSelectedRange("all");
+//     setDateField("updatedAt"); // Reset dateField to default
+//     setPopoverAnchorEl(null);
+//   };
+
+//   const handleResetAllDateSettings = () => {
+//     setStartDate(null);
+//     setEndDate(null);
+//     setSelectedRange("all");
+//     setDateField("updatedAt"); // Reset dateField to default
+//     setMenuAnchorEl(null);
+//   };
+
+//   return (
+//     <>
+//       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+//         <FormControl size="small" sx={{ minWidth: 150 }}>
+//           <InputLabel>Filter By</InputLabel>
+//           <Select
+//             value={dateField}
+//             label="Filter By"
+//             onChange={(e) => setDateField(e.target.value as "createdAt" | "updatedAt")}
+//           >
+//             <MenuItem value="createdAt">Created At</MenuItem>
+//             <MenuItem value="updatedAt">Updated At</MenuItem>
+//           </Select>
+//         </FormControl>
+//         <Button
+//           variant="outlined"
+//           onClick={handleDateFilterClick}
+//           startIcon={<FilterListIcon />}
+//           sx={{ minWidth: 100 }}
+//         >
+//           {selectedRange === "7days"
+//             ? "Last 7 Days"
+//             : selectedRange === "30days"
+//             ? "Last 30 Days"
+//             : selectedRange === "year"
+//             ? "Last Year"
+//             : selectedRange === "custom"
+//             ? "Custom Range"
+//             : "All Time"}
+//         </Button>
+//       </Box>
+
+//       <Menu
+//         anchorEl={menuAnchorEl}
+//         open={Boolean(menuAnchorEl)}
+//         onClose={handleMenuClose}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//         transformOrigin={{ vertical: "top", horizontal: "left" }}
+//       >
+//         <MenuItem onClick={() => handleRangeSelect("7days")}>Last 7 Days</MenuItem>
+//         <MenuItem onClick={() => handleRangeSelect("30days")}>Last 30 Days</MenuItem>
+//         <MenuItem onClick={() => handleRangeSelect("year")}>Last Year</MenuItem>
+//         <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
+//         <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
+//           Custom Range
+//         </MenuItem>
+//         <MenuItem onClick={handleResetAllDateSettings}>Reset</MenuItem>
+//       </Menu>
+
+//       <Popover
+//         open={Boolean(popoverAnchorEl)}
+//         anchorEl={popoverAnchorEl}
+//         onClose={handlePopoverClose}
+//         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+//         transformOrigin={{ vertical: "top", horizontal: "left" }}
+//       >
+//         <Box sx={{ p: 2, minWidth: 300 }}>
+//           <Typography variant="h6" gutterBottom>
+//             Select Date Range
+//           </Typography>
+//           <LocalizationProvider dateAdapter={AdapterDateFns}>
+//             <Box sx={{ display: "flex", gap: 2 }}>
+//               <DatePicker
+//                 label="Start Date"
+//                 value={startDate}
+//                 onChange={(newValue) => setStartDate(newValue)}
+//                 slotProps={{ textField: { size: "small" } }}
+//                 format="dd/MM/yyyy"
+//               />
+//               <DatePicker
+//                 label="End Date"
+//                 value={endDate}
+//                 onChange={(newValue) => setEndDate(newValue)}
+//                 slotProps={{ textField: { size: "small" } }}
+//                 format="dd/MM/yyyy"
+//               />
+//             </Box>
+//           </LocalizationProvider>
+//           <Box
+//             sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}
+//           >
+//             <Button onClick={handleResetDateFilter} color="secondary">
+//               Reset
+//             </Button>
+//             <Button onClick={handlePopoverClose}>Cancel</Button>
+//             <Button onClick={handleApplyCustomRange} variant="contained">
+//               Apply
+//             </Button>
+//           </Box>
+//         </Box>
+//       </Popover>
+//     </>
+//   );
+// }
+
 function DateFilterMenu({
-  startDate,
-  endDate,
-  setStartDate,
-  setEndDate,
+  createdStartDate,
+  createdEndDate,
+  updatedStartDate,
+  updatedEndDate,
+  setCreatedStartDate,
+  setCreatedEndDate,
+  setUpdatedStartDate,
+  setUpdatedEndDate,
   selectedRange,
   setSelectedRange,
 }: {
-  startDate: Date | null;
-  endDate: Date | null;
-  setStartDate: (date: Date | null) => void;
-  setEndDate: (date: Date | null) => void;
+  createdStartDate: Date | null;
+  createdEndDate: Date | null;
+  updatedStartDate: Date | null;
+  updatedEndDate: Date | null;
+  setCreatedStartDate: (date: Date | null) => void;
+  setCreatedEndDate: (date: Date | null) => void;
+  setUpdatedStartDate: (date: Date | null) => void;
+  setUpdatedEndDate: (date: Date | null) => void;
   selectedRange: string;
   setSelectedRange: (range: string) => void;
 }) {
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
-  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(
-    null
-  );
+  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
 
   const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchorEl(event.currentTarget);
@@ -618,8 +820,11 @@ function DateFilterMenu({
         return;
     }
 
-    setStartDate(newStartDate);
-    setEndDate(newEndDate);
+    // Apply the same range to both createdAt and updatedAt
+    setCreatedStartDate(newStartDate);
+    setCreatedEndDate(newEndDate);
+    setUpdatedStartDate(newStartDate);
+    setUpdatedEndDate(newEndDate);
     setMenuAnchorEl(null);
   };
 
@@ -629,8 +834,19 @@ function DateFilterMenu({
 
   const handleApplyCustomRange = () => {
     setSelectedRange("custom");
-    if (startDate) setStartDate(startOfDay(startDate));
-    if (endDate) setEndDate(endOfDay(endDate));
+    if (createdStartDate) setCreatedStartDate(startOfDay(createdStartDate));
+    if (createdEndDate) setCreatedEndDate(endOfDay(createdEndDate));
+    if (updatedStartDate) setUpdatedStartDate(startOfDay(updatedStartDate));
+    if (updatedEndDate) setUpdatedEndDate(endOfDay(updatedEndDate));
+    setPopoverAnchorEl(null);
+  };
+
+  const handleResetDateFilter = () => {
+    setCreatedStartDate(null);
+    setCreatedEndDate(null);
+    setUpdatedStartDate(null);
+    setUpdatedEndDate(null);
+    setSelectedRange("all");
     setPopoverAnchorEl(null);
   };
 
@@ -640,7 +856,7 @@ function DateFilterMenu({
         variant="outlined"
         onClick={handleDateFilterClick}
         startIcon={<FilterListIcon />}
-        sx={{ minWidth: 100 }}
+        sx={{ minWidth: 150 }}
       >
         {selectedRange === "7days"
           ? "Last 7 Days"
@@ -660,12 +876,8 @@ function DateFilterMenu({
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <MenuItem onClick={() => handleRangeSelect("7days")}>
-          Last 7 Days
-        </MenuItem>
-        <MenuItem onClick={() => handleRangeSelect("30days")}>
-          Last 30 Days
-        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("7days")}>Last 7 Days</MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("30days")}>Last 30 Days</MenuItem>
         <MenuItem onClick={() => handleRangeSelect("year")}>Last Year</MenuItem>
         <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
         <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
@@ -680,31 +892,60 @@ function DateFilterMenu({
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <Box sx={{ p: 2, minWidth: 300 }}>
+        <Box sx={{ p: 2, minWidth: 350 }}>
           <Typography variant="h6" gutterBottom>
-            Select Date Range
+            Select Date Ranges
           </Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <DatePicker
-                label="Start Date"
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue)}
-                slotProps={{ textField: { size: "small" } }}
-                format="dd/MM/yyyy"
-              />
-              <DatePicker
-                label="End Date"
-                value={endDate}
-                onChange={(newValue) => setEndDate(newValue)}
-                slotProps={{ textField: { size: "small" } }}
-                format="dd/MM/yyyy"
-              />
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Created Date Range
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <DatePicker
+                  label="Start Date"
+                  value={createdStartDate}
+                  onChange={(newValue) => setCreatedStartDate(newValue)}
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yyyy"
+                />
+                <DatePicker
+                  label="End Date"
+                  value={createdEndDate}
+                  onChange={(newValue) => setCreatedEndDate(newValue)}
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yyyy"
+                />
+              </Box>
+            </Box>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Updated Date Range
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <DatePicker
+                  label="Start Date"
+                  value={updatedStartDate}
+                  onChange={(newValue) => setUpdatedStartDate(newValue)}
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yyyy"
+                />
+                <DatePicker
+                  label="End Date"
+                  value={updatedEndDate}
+                  onChange={(newValue) => setUpdatedEndDate(newValue)}
+                  slotProps={{ textField: { size: "small" } }}
+                  format="dd/MM/yyyy"
+                />
+              </Box>
             </Box>
           </LocalizationProvider>
           <Box
             sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}
           >
+            <Button onClick={handleResetDateFilter} color="secondary">
+              Reset
+            </Button>
             <Button onClick={handlePopoverClose}>Cancel</Button>
             <Button onClick={handleApplyCustomRange} variant="contained">
               Apply
@@ -716,11 +957,217 @@ function DateFilterMenu({
   );
 }
 
+// function Controls() {
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [channelIdFilter, setChannelIdFilter] = useState<number | "">("");
+//   const [startDate, setStartDate] = useState<Date | null>(null);
+//   const [endDate, setEndDate] = useState<Date | null>(null);
+//   const [selectedRange, setSelectedRange] = useState("all");
+//   const [dateField, setDateField] = useState<"createdAt" | "updatedAt">("updatedAt"); // New state
+//   const [channels, setChannels] = useState<Channel[]>([]);
+//   const [defaultThresholds, setDefaultThresholds] = useState<
+//     { fieldName: string; minValue: number; maxValue: number; unit: string }[]
+//   >([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState<string | null>(null);
+//   const [openSettings, setOpenSettings] = useState(false);
+//   const [isRefreshing, setIsRefreshing] = useState(false);
+
+//   const handleOpenSettings = () => setOpenSettings(true);
+//   const handleCloseSettings = () => setOpenSettings(false);
+
+//   const fetchData = async () => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const [channelsResponse, thresholdsResponse] = await Promise.all([
+//         fetch("/api/controls/channels", { cache: "no-store" }),
+//         fetch("/api/controls/settings", { cache: "no-store" }),
+//       ]);
+
+//       if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
+//       if (!thresholdsResponse.ok)
+//         throw new Error("Failed to fetch default thresholds");
+
+//       const channelsData = await channelsResponse.json();
+//       const thresholdsData = await thresholdsResponse.json();
+
+//       setChannels(channelsData);
+//       setDefaultThresholds(thresholdsData.fields || []);
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//       setIsRefreshing(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchData();
+//   }, []);
+
+//   const handleSettingsSave = () => {
+//     fetchData();
+//   };
+
+//   const handleRefresh = () => {
+//     setIsRefreshing(true);
+//     setSearchTerm("");
+//     setChannelIdFilter("");
+//     setStartDate(null);
+//     setEndDate(null);
+//     setSelectedRange("all");
+//     setDateField("updatedAt"); // Reset date field
+//     fetchData();
+//   };
+
+//   // Filter channels based on search term, channel ID, and date range
+//   const filteredChannels = channels.filter((channel) => {
+//     const matchesSearch =
+//       searchTerm === "" ||
+//       channel.name.toLowerCase().includes(searchTerm.toLowerCase());
+//     const matchesChannelId =
+//       channelIdFilter === "" || channel.id === channelIdFilter;
+//     const channelDate = new Date(channel[dateField]); // Use selected date field
+//     const matchesDate =
+//       (!startDate || channelDate >= startOfDay(startDate)) &&
+//       (!endDate || channelDate <= endOfDay(endDate));
+//     return matchesSearch && matchesChannelId && matchesDate;
+//   });
+
+//   // Get unique Channel IDs for the filter dropdown
+//   const channelIds = [...new Set(channels.map((channel) => channel.id))].sort(
+//     (a, b) => a - b
+//   );
+
+//   if (loading) return <Typography>Loading...</Typography>;
+//   if (error) return <Typography color="error">{error}</Typography>;
+
+//   return (
+//     <>
+//       <Typography variant="h3" gutterBottom display="inline">
+//         Controls
+//       </Typography>
+
+//       <Breadcrumbs aria-label="Breadcrumb" mt={2}>
+//         <Link component={NextLink} href="/">
+//           Dashboard
+//         </Link>
+//         <Typography>Controls</Typography>
+//       </Breadcrumbs>
+
+//       <Divider my={6} />
+
+//       <SearchBarContainer>
+//         <TextField
+//           placeholder="Search by name"
+//           variant="outlined"
+//           size="small"
+//           value={searchTerm}
+//           onChange={(e) => setSearchTerm(e.target.value)}
+//           InputProps={{
+//             startAdornment: <SearchIcon color="action" />,
+//           }}
+//           sx={{ minWidth: 300 }}
+//         />
+//         <FormControl size="small" sx={{ minWidth: 150 }}>
+//           <InputLabel>Channel ID</InputLabel>
+//           <Select
+//             value={channelIdFilter}
+//             label="Channel ID"
+//             onChange={(e) => setChannelIdFilter(e.target.value as number | "")}
+//           >
+//             <MenuItem value="">
+//               <em>All</em>
+//             </MenuItem>
+//             {channelIds.map((id) => (
+//               <MenuItem key={id} value={id}>
+//                 {id}
+//               </MenuItem>
+//             ))}
+//           </Select>
+//         </FormControl>
+//         <DateFilterMenu
+//           startDate={startDate}
+//           endDate={endDate}
+//           setStartDate={setStartDate}
+//           setEndDate={setEndDate}
+//           selectedRange={selectedRange}
+//           setSelectedRange={setSelectedRange}
+//           dateField={dateField}
+//           setDateField={setDateField}
+//         />
+//         <Button
+//           variant="outlined"
+//           onClick={handleRefresh}
+//           startIcon={
+//             isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />
+//           }
+//           disabled={isRefreshing}
+//           sx={{ minWidth: 100 }}
+//         >
+//           {isRefreshing ? "Refreshing..." : "Refresh"}
+//         </Button>
+
+//         <Button
+//           variant="contained"
+//           color="primary"
+//           onClick={handleOpenSettings}
+//           sx={{ ml: "auto" }}
+//         >
+//           Manage Settings
+//         </Button>
+//       </SearchBarContainer>
+
+//       <Modal
+//         open={openSettings}
+//         onClose={handleCloseSettings}
+//         aria-labelledby="settings-modal-title"
+//         sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+//       >
+//         <Box
+//           sx={{
+//             bgcolor: "background.paper",
+//             p: 4,
+//             borderRadius: 2,
+//             boxShadow: 24,
+//             maxWidth: 800,
+//             width: "100%",
+//           }}
+//         >
+//           <SettingsForm
+//             handleClose={handleCloseSettings}
+//             onSave={handleSettingsSave}
+//           />
+//         </Box>
+//       </Modal>
+
+//       <Box sx={{ mb: 5, padding: 2 }}>
+//         <Grid container spacing={6}>
+//           {filteredChannels.map((channel) => (
+//             <Grid item xs={12} key={channel.id}>
+//               <LabCard
+//                 channelId={channel.id}
+//                 name={channel.name}
+//                 apiKey={channel.ApiKey[0]?.api || ""}
+//                 defaultThresholds={defaultThresholds}
+//               />
+//             </Grid>
+//           ))}
+//         </Grid>
+//       </Box>
+//     </>
+//   );
+// }
+
+
 function Controls() {
   const [searchTerm, setSearchTerm] = useState("");
   const [channelIdFilter, setChannelIdFilter] = useState<number | "">("");
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [createdStartDate, setCreatedStartDate] = useState<Date | null>(null);
+  const [createdEndDate, setCreatedEndDate] = useState<Date | null>(null);
+  const [updatedStartDate, setUpdatedStartDate] = useState<Date | null>(null);
+  const [updatedEndDate, setUpdatedEndDate] = useState<Date | null>(null);
   const [selectedRange, setSelectedRange] = useState("all");
   const [channels, setChannels] = useState<Channel[]>([]);
   const [defaultThresholds, setDefaultThresholds] = useState<
@@ -772,27 +1219,31 @@ function Controls() {
     setIsRefreshing(true);
     setSearchTerm("");
     setChannelIdFilter("");
-    setStartDate(null);
-    setEndDate(null);
+    setCreatedStartDate(null);
+    setCreatedEndDate(null);
+    setUpdatedStartDate(null);
+    setUpdatedEndDate(null);
     setSelectedRange("all");
     fetchData();
   };
 
-  // Filter channels based on search term, channel ID, and date range
   const filteredChannels = channels.filter((channel) => {
     const matchesSearch =
       searchTerm === "" ||
       channel.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesChannelId =
       channelIdFilter === "" || channel.id === channelIdFilter;
-    const channelUpdatedAt = new Date(channel.updatedAt);
-    const matchesDate =
-      (!startDate || channelUpdatedAt >= startOfDay(startDate)) &&
-      (!endDate || channelUpdatedAt <= endOfDay(endDate));
-    return matchesSearch && matchesChannelId && matchesDate;
+    const createdDate = new Date(channel.createdAt);
+    const updatedDate = new Date(channel.updatedAt);
+    const matchesCreatedDate =
+      (!createdStartDate || createdDate >= startOfDay(createdStartDate)) &&
+      (!createdEndDate || createdDate <= endOfDay(createdEndDate));
+    const matchesUpdatedDate =
+      (!updatedStartDate || updatedDate >= startOfDay(updatedStartDate)) &&
+      (!updatedEndDate || updatedDate <= endOfDay(updatedEndDate));
+    return matchesSearch && matchesChannelId && matchesCreatedDate && matchesUpdatedDate;
   });
 
-  // Get unique Channel IDs for the filter dropdown
   const channelIds = [...new Set(channels.map((channel) => channel.id))].sort(
     (a, b) => a - b
   );
@@ -845,10 +1296,14 @@ function Controls() {
           </Select>
         </FormControl>
         <DateFilterMenu
-          startDate={startDate}
-          endDate={endDate}
-          setStartDate={setStartDate}
-          setEndDate={setEndDate}
+          createdStartDate={createdStartDate}
+          createdEndDate={createdEndDate}
+          updatedStartDate={updatedStartDate}
+          updatedEndDate={updatedEndDate}
+          setCreatedStartDate={setCreatedStartDate}
+          setCreatedEndDate={setCreatedEndDate}
+          setUpdatedStartDate={setUpdatedStartDate}
+          setUpdatedEndDate={setUpdatedEndDate}
           selectedRange={selectedRange}
           setSelectedRange={setSelectedRange}
         />
@@ -863,7 +1318,6 @@ function Controls() {
         >
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </Button>
-
         <Button
           variant="contained"
           color="primary"
@@ -915,4 +1369,5 @@ function Controls() {
   );
 }
 
+export default Controls;
 export default Controls;
