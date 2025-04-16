@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; 
 
-// Handle PATCH request (mark as resolved)
+
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   const id = Number(params.id); // Convert string to number if your ID is numeric
   if (isNaN(id)) {

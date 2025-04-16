@@ -7,6 +7,7 @@ import NextLink from "next/link";
 // import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
 
 import {
+  Alert,
   Box,
   Breadcrumbs as MuiBreadcrumbs,
   Button,
@@ -38,6 +39,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Snackbar,
   CircularProgress,
   Popover,
 } from "@mui/material";
@@ -102,9 +104,11 @@ const ToolbarTitle = styled.div`
 
 const SearchContainer = styled.div`
   display: flex;
+  justify-content: space-between; /* Changed to space-between */
+  align-items: center;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: center;
+  width: 100%; /* Ensure it spans the full width */
 `;
 
 type AlertType = {
@@ -148,7 +152,6 @@ function createRowFromAlert(alert: AlertType): RowType {
   };
 }
 
-// Place this before the `EnhancedTable` component
 function DateFilterMenu({
   startDate,
   endDate,
@@ -462,23 +465,10 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
 
 type EnhancedTableToolbarProps = {
   numSelected: number;
-  onManageAlertsClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  anchorEl: HTMLElement | null;
-  handleMenuClose: () => void;
-  handleBulkDelete: () => void;
-  handleBulkResolve: () => void;
 };
+
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  // Here was 'let'
-  const {
-    numSelected,
-    onManageAlertsClick,
-    anchorEl,
-    handleMenuClose,
-    handleBulkDelete,
-    handleBulkResolve,
-  } = props;
-  const open = Boolean(anchorEl);
+  const { numSelected } = props;
 
   return (
     <Toolbar>
@@ -494,43 +484,11 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         )}
       </ToolbarTitle>
       <Spacer />
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          disabled={numSelected === 0}
-          onClick={onManageAlertsClick}
-          aria-controls={open ? "manage-alerts-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-          sx={{ minWidth: "110px", minHeight: "35px" }} // Makes the button longer
-        >
-          Manage Alerts
-        </Button>
-        <Menu
-          id="manage-alerts-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <MenuItem onClick={handleBulkDelete}>
-            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-            Delete
-          </MenuItem>
-          <MenuItem onClick={handleBulkResolve}>
-            <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
-            Mark as Resolved
-          </MenuItem>
-        </Menu>
-        <Tooltip title="Filter list">
-          <IconButton aria-label="Filter list" size="large">
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      </div>
+      <Tooltip title="Filter list">
+        <IconButton aria-label="Filter list" size="large">
+          <FilterListIcon />
+        </IconButton>
+      </Tooltip>
     </Toolbar>
   );
 };
@@ -554,13 +512,31 @@ function EnhancedTable() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [priorityFilter, setPriorityFilter] = React.useState("All");
   const [statusFilter, setStatusFilter] = React.useState("All");
-  const [reloadAlerts, setReloadAlerts] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [selectedRange, setSelectedRange] = React.useState("all");
   const [descriptionDialogOpen, setDescriptionDialogOpen] =
     React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowType | null>(null);
+  // Add snackbar state
+  const [snackbar, setSnackbar] = React.useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  // Function to show snackbar
+  const showFeedback = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Function to close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const fetchAlerts = async () => {
     try {
@@ -576,16 +552,14 @@ function EnhancedTable() {
           },
         }
       );
-      console.log("Response status:", response.status);
       if (!response.ok)
         throw new Error(`HTTP error! Status: ${response.status}`);
       const data: AlertType[] = await response.json();
-      console.log("Raw API data:", data);
       const formattedRows = data.map(createRowFromAlert);
-      console.log("Formatted rows:", formattedRows);
       setRows(formattedRows);
     } catch (error) {
       console.error("Failed to fetch alerts:", error);
+      showFeedback("Failed to fetch alerts.", "error");
     } finally {
       setLoading(false);
     }
@@ -593,23 +567,12 @@ function EnhancedTable() {
 
   useEffect(() => {
     fetchAlerts();
-  }, [reloadAlerts]);
+  }, []);
 
   const handleRequestSort = (event: any, property: keyof RowType) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
-  };
-
-  const handleRefreshData = () => {
-    console.log("Refreshing alert data...");
-    setSearchTerm("");
-    setPriorityFilter("All");
-    setStatusFilter("All");
-    setStartDate(null);
-    setEndDate(null);
-    setSelectedRange("all");
-    setReloadAlerts((prev) => !prev);
   };
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -705,20 +668,18 @@ function EnhancedTable() {
         method: "DELETE",
       });
       if (response.ok) {
-        setRows(rows.filter((row) => row.id !== deleteId));
+        await fetchAlerts();
         setSelected(
           selected.filter((selectedId) => selectedId !== deleteId.toString())
         );
-        console.log(`Alert deleted successfully.`);
-        alert(`Alert deleted successfully.`);
+        showFeedback("Alert deleted successfully.", "success");
       } else {
         const errorData = await response.json();
-        console.error("Failed to delete alert:", errorData.error);
-        alert("Unable to delete alert.");
+        showFeedback(`Failed to delete alert: ${errorData.error}`, "error");
       }
     } catch (error) {
       console.error("Error deleting alert:", error);
-      alert("Something went wrong. Please try again.");
+      showFeedback("Something went wrong. Please try again.", "error");
     } finally {
       setDeleteDialogOpen(false);
       setDeleteId(null);
@@ -728,7 +689,7 @@ function EnhancedTable() {
   const handleMarkAsResolved = async (id: number) => {
     const row = rows.find((r) => r.id === id);
     if (row && row.status === "RESOLVED") {
-      alert(`Alert is already resolved.`);
+      showFeedback("Alert is already resolved.", "info");
       return;
     }
     setResolveId(id);
@@ -742,42 +703,31 @@ function EnhancedTable() {
         method: "PATCH",
       });
       if (response.ok) {
-        const updatedAlert = await response.json();
-        setRows(
-          rows.map((row) =>
-            row.id === resolveId
-              ? { ...row, status: updatedAlert.alertStatus }
-              : row
-          )
-        );
-        console.log(`Alert ${resolveId} marked as resolved.`);
-        alert(`Alert successfully marked as resolved.`);
+        await fetchAlerts();
+        showFeedback("Alert successfully marked as resolved.", "success");
       } else {
         const errorData = await response.json();
-        console.error("Failed to mark alert as resolved:", errorData.error);
-        alert("Unable to mark alert as resolved.");
+        showFeedback(
+          `Failed to mark alert as resolved: ${errorData.error}`,
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error marking alert as resolved:", error);
-      alert("Something went wrong. Please try again.");
+      showFeedback("Something went wrong. Please try again.", "error");
     } finally {
       setResolveDialogOpen(false);
       setResolveId(null);
     }
   };
-  // Added menu handlers
+
   const handleManageAlertsClick = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
-    console.log(
-      "Manage Alerts clicked, setting anchorEl:",
-      event.currentTarget
-    );
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuClose = () => {
-    console.log("Closing menu, setting anchorEl to null");
     setAnchorEl(null);
   };
 
@@ -791,19 +741,24 @@ function EnhancedTable() {
       const deletePromises = selected.map((id) =>
         fetch(`/admin/alerts/api/${id}/delete`, { method: "DELETE" }).then(
           (response) => {
-            if (!response.ok)
-              throw new Error(`Failed to delete alert. Please try again.`);
+            if (!response.ok) throw new Error(`Failed to delete alert ${id}.`);
             return id;
           }
         )
       );
       await Promise.all(deletePromises);
-      setRows(rows.filter((row) => !selected.includes(row.id.toString())));
+      await fetchAlerts();
       setSelected([]);
-      alert(`Successfully deleted ${selected.length} alert(s).`);
+      showFeedback(
+        `Successfully deleted ${selected.length} alert(s).`,
+        "success"
+      );
     } catch (error) {
       console.error("Error during bulk delete:", error);
-      alert("An error occurred while deleting alerts. Please try again.");
+      showFeedback(
+        "An error occurred while deleting alerts. Please try again.",
+        "error"
+      );
     } finally {
       setBulkDeleteDialogOpen(false);
       handleMenuClose();
@@ -817,27 +772,24 @@ function EnhancedTable() {
 
   const confirmBulkResolve = async () => {
     try {
-      // Count already resolved alerts
       const alreadyResolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status === "RESOLVED";
       });
       const alreadyResolvedCount = alreadyResolvedIds.length;
 
-      // Filter out unresolved alerts to process
       const unresolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status !== "RESOLVED";
       });
 
       if (unresolvedIds.length === 0) {
-        alert(`All selected alert(s) already resolved.`);
+        showFeedback("All selected alert(s) already resolved.", "info");
         setBulkResolveDialogOpen(false);
         handleMenuClose();
         return;
       }
 
-      // Send PATCH requests for all unresolved alerts
       const resolvePromises = unresolvedIds.map((id) =>
         fetch(`/admin/alerts/api/${id}/update`, { method: "PATCH" }).then(
           async (response) => {
@@ -849,64 +801,25 @@ function EnhancedTable() {
                 }`
               );
             }
-            const updatedAlert = await response.json();
-            return { id, status: updatedAlert.alertStatus };
+            return id;
           }
         )
       );
 
-      // Wait for all requests to complete
-      const results = await Promise.allSettled(resolvePromises);
-
-      // Process results
-      const updatedRows = [...rows];
-      let successCount = 0;
-      let failureCount = 0;
-
-      results.forEach((result, index) => {
-        const selectedId = unresolvedIds[index];
-        if (result.status === "fulfilled") {
-          const rowIndex = updatedRows.findIndex(
-            (r) => r.id.toString() === selectedId
-          );
-          if (rowIndex !== -1) {
-            updatedRows[rowIndex] = {
-              ...updatedRows[rowIndex],
-              status: result.value.status,
-            };
-            successCount++;
-          }
-        } else {
-          console.error(`Error resolving alert ${selectedId}:`, result.reason);
-          failureCount++;
-        }
-      });
-
-      // Update state
-      setRows(updatedRows);
+      await Promise.all(resolvePromises);
+      await fetchAlerts();
       setSelected([]);
 
-      // Provide detailed user feedback
-      const totalSelected = selected.length;
-      if (successCount > 0 || alreadyResolvedCount > 0 || failureCount > 0) {
-        let message = "";
-        if (successCount > 0) {
-          message += `Successfully resolved ${successCount} alert(s). `;
-        }
-        if (alreadyResolvedCount > 0) {
-          message += `${alreadyResolvedCount} alert(s) already resolved. `;
-        }
-        if (failureCount > 0) {
-          message += `${failureCount} alert(s) failed to resolve. Please try again.`;
-        }
-        alert(message.trim());
-      } else {
-        alert("No alerts were processed due to an unexpected issue.");
+      let message = `Successfully resolved ${unresolvedIds.length} alert(s). `;
+      if (alreadyResolvedCount > 0) {
+        message += `${alreadyResolvedCount} alert(s) already resolved.`;
       }
+      showFeedback(message.trim(), "success");
     } catch (error) {
       console.error("Unexpected error during bulk resolve:", error);
-      alert(
-        "An unexpected error occurred while resolving alerts. Please try again."
+      showFeedback(
+        "An unexpected error occurred while resolving alerts. Please try again.",
+        "error"
       );
     } finally {
       setBulkResolveDialogOpen(false);
@@ -918,71 +831,89 @@ function EnhancedTable() {
   if (!loading && rows.length === 0)
     return <Typography>No alerts found.</Typography>;
 
-  console.log("Rendering table with rows:", rows);
-
   return (
     <div>
       <SearchContainer>
-        <TextField
-          placeholder="Search by description or channel"
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{ startAdornment: <SearchIcon color="action" /> }}
-          sx={{ minWidth: 300 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Priority</InputLabel>
-          <Select
-            value={priorityFilter}
-            label="Priority"
-            onChange={(e) => setPriorityFilter(e.target.value)}
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <TextField
+            placeholder="Search by description or channel"
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: <SearchIcon color="action" /> }}
+            sx={{ minWidth: 300 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Priority</InputLabel>
+            <Select
+              value={priorityFilter}
+              label="Priority"
+              onChange={(e) => setPriorityFilter(e.target.value)}
+            >
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="HIGH">High</MenuItem>
+              <MenuItem value="MODERATE">Moderate</MenuItem>
+              <MenuItem value="LOW">Low</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="RESOLVED">Resolved</MenuItem>
+              <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
+            </Select>
+          </FormControl>
+          <DateFilterMenu
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
+        </Box>
+        {/* Add Manage Alerts button and menu */}
+        <Box>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            disabled={selected.length === 0}
+            onClick={handleManageAlertsClick}
+            aria-controls={Boolean(anchorEl) ? "manage-alerts-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={Boolean(anchorEl) ? "true" : undefined}
+            sx={{ minWidth: "110px", minHeight: "35px" }}
           >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-            <MenuItem value="MODERATE">Moderate</MenuItem>
-            <MenuItem value="LOW">Low</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={statusFilter}
-            label="Status"
-            onChange={(e) => setStatusFilter(e.target.value)}
+            Manage Alerts
+          </Button>
+          <Menu
+            id="manage-alerts-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="RESOLVED">Resolved</MenuItem>
-            <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
-          </Select>
-        </FormControl>
-        <DateFilterMenu
-          startDate={startDate}
-          endDate={endDate}
-          setStartDate={setStartDate}
-          setEndDate={setEndDate}
-          selectedRange={selectedRange}
-          setSelectedRange={setSelectedRange}
-        />
-        <Button
-          variant="outlined"
-          onClick={handleRefreshData}
-          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh Data"}
-        </Button>
+            <MenuItem onClick={handleBulkDelete}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Delete
+            </MenuItem>
+            <MenuItem onClick={handleBulkResolve}>
+              <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
+              Mark as Resolved
+            </MenuItem>
+          </Menu>
+        </Box>
       </SearchContainer>
       <Paper>
-        <EnhancedTableToolbar
-          numSelected={selected.length}
-          onManageAlertsClick={handleManageAlertsClick}
-          anchorEl={anchorEl}
-          handleMenuClose={handleMenuClose}
-          handleBulkDelete={handleBulkDelete}
-          handleBulkResolve={handleBulkResolve}
-        />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -1014,7 +945,7 @@ function EnhancedTable() {
                       tabIndex={-1}
                       key={`${row.id || "unknown"}-${index}`}
                       selected={isItemSelected}
-                      onClick={() => handleRowClick(row)} // This triggers the popup
+                      onClick={() => handleRowClick(row)}
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox">
@@ -1022,7 +953,7 @@ function EnhancedTable() {
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
                           onClick={(event) => {
-                            event.stopPropagation(); // Prevent row click event
+                            event.stopPropagation();
                             handleClick(event, row.id.toString());
                           }}
                         />
@@ -1090,7 +1021,7 @@ function EnhancedTable() {
                             aria-label="delete"
                             size="large"
                             onClick={(event) => {
-                              event.stopPropagation(); // Prevent row click event
+                              event.stopPropagation();
                               handleDelete(row.id);
                             }}
                           >
@@ -1100,7 +1031,7 @@ function EnhancedTable() {
                             aria-label="details"
                             size="large"
                             onClick={(event) => {
-                              event.stopPropagation(); // Prevent row click event
+                              event.stopPropagation();
                               handleMarkAsResolved(row.id);
                             }}
                           >
@@ -1133,7 +1064,6 @@ function EnhancedTable() {
         open={descriptionDialogOpen}
         row={selectedRow}
         onClose={handleDescriptionDialogClose}
-        // No onApprove or onCancel props yet
       />
       <Dialog
         open={deleteDialogOpen}
@@ -1174,7 +1104,7 @@ function EnhancedTable() {
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the selected alerts?
+            Are you sure you want to delete the selected alert(s)?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -1204,10 +1134,23 @@ function EnhancedTable() {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Add Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
-
 function OrderList() {
   return (
     <React.Fragment>

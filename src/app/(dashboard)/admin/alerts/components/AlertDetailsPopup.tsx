@@ -59,12 +59,16 @@ interface AlertDetailsPopupProps {
   open: boolean;
   row: RowType | null;
   onClose: () => void;
+  handleDelete: (id: number) => void; // Add handleDelete prop
+  handleMarkAsResolved: (id: number) => void; // Add handleMarkAsResolved prop
 }
 
 const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   open,
   row,
   onClose,
+  handleDelete,
+  handleMarkAsResolved,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -116,11 +120,23 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem
+            onClick={() => {
+              handleDelete(row.id);
+              handleMenuClose();
+              // onClose(); // Optionally close popup after action
+            }}
+          >
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
             Delete
           </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem
+            onClick={() => {
+              handleMarkAsResolved(row.id);
+              handleMenuClose();
+              // onClose(); // Optionally close popup after action
+            }}
+          >
             <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
             Mark as Resolved
           </MenuItem>

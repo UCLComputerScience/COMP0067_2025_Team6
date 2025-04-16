@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma"; // Adjust based on your Prisma setup
+import prisma from "@/lib/prisma";
 
-// Handle DELETE request (delete an alert)
+
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   const id = Number(params.id); // Convert string to number if your ID is numeric
   if (isNaN(id)) {
