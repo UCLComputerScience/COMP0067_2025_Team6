@@ -13,7 +13,7 @@ model Alerts {
   alertDescription String        @db.VarChar(255)
   alertDate        DateTime      @db.Timestamp(6)
   priority         PriorityType?
-  alertStatus      AlertStatus
+  alertStatus      AlertStatus   @default(UNRESOLVED)
   feed             Feed          @relation(fields: [entryId], references: [entryId], onDelete: NoAction, onUpdate: NoAction)
 }
 
