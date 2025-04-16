@@ -27,18 +27,27 @@ const HeaderCard = styled(MuiCard)`
   border: 1px solid ${grey[300]};
 `;
 
-const AccessCard = styled(MuiCard)`
+const LabsCard = styled(MuiCard)`
+  ${spacing}
+  margin: 8px 16px;
+  overflow: visible;
+  border: 1px solid ${grey[300]};
+  display: flex;
+  flex-direction: column;
+`;
+
+const ChannelsCard = styled(MuiCard)`
   ${spacing}
   margin: 8px 16px 16px 16px;
   overflow: visible;
   border: 1px solid ${grey[300]};
-  flex: 1;
+  display: flex;
+  flex-direction: column;
 `;
 
 const StatusChip = styled(MuiChip)`
   ${spacing}
-  background: ${(props) =>
-    props.label === "ACTIVE" ? "#4caf50" : "#f44336"};
+  background: ${(props) => (props.label === "ACTIVE" ? "#4caf50" : "#f44336")};
   color: white;
 `;
 
@@ -93,6 +102,14 @@ const UserInfoPopup: React.FC<UserInfoPopupProps> = ({
   };
 
   if (!user) return null;
+
+  // Filter access entries for labs and channels
+  const labs = user.access.filter(
+    (access) => access.labId && access.labLocation
+  );
+  const channels = user.access.filter(
+    (access) => access.channelId && access.channelName
+  );
 
   return (
     <Dialog
@@ -182,40 +199,76 @@ const UserInfoPopup: React.FC<UserInfoPopupProps> = ({
         </CardContent>
       </HeaderCard>
 
-      <AccessCard>
-        <CardContent sx={{ flex: 1 }}>
-          <Typography variant="h6" color="textSecondary">
-            Assigned Access
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            {user.access.length > 0 ? (
-              <Grid container spacing={2}>
-                {user.access.map((access, index) => (
-                  <Grid item xs={12} key={index}>
-                    <Typography sx={{ fontSize: "1rem" }}>
-                      {access.labId && access.labLocation && (
-                        <>
-                          <strong>Lab:</strong> {access.labLocation} (ID: {access.labId})
-                        </>
-                      )}
-                      {access.labId && access.labLocation && access.channelId && access.channelName && " | "}
-                      {access.channelId && access.channelName && (
-                        <>
-                          <strong>Channel:</strong> {access.channelName} (ID: {access.channelId})
-                        </>
-                      )}
-                    </Typography>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Typography sx={{ fontSize: "1rem" }}>
-                No lab or channel access assigned
-              </Typography>
-            )}
-          </Box>
-        </CardContent>
-      </AccessCard>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <LabsCard sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <CardContent
+            sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            <Typography variant="h6" color="textSecondary">
+              Assigned Labs
+            </Typography>
+            <Box sx={{ mt: 2, flex: 1, overflow: "auto" }}>
+              {labs.length > 0 ? (
+                <Grid container spacing={2}>
+                  {labs.map((access, index) => (
+                    <Grid item xs={12} key={`lab-${index}`}>
+                      <Typography sx={{ fontSize: "1rem" }}>
+                        <strong>
+                          {index + 1}. Lab {access.labId}:
+                        </strong>{" "}
+                        {access.labLocation}
+                      </Typography>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Typography sx={{ fontSize: "1rem" }}>
+                  No labs assigned
+                </Typography>
+              )}
+            </Box>
+          </CardContent>
+        </LabsCard>
+
+        <ChannelsCard
+          sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+        >
+          <CardContent
+            sx={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            <Typography variant="h6" color="textSecondary">
+              Assigned Channels
+            </Typography>
+            <Box sx={{ mt: 2, flex: 1, overflow: "auto" }}>
+              {channels.length > 0 ? (
+                <Grid container spacing={2}>
+                  {channels.map((access, index) => (
+                    <Grid item xs={12} key={`channel-${index}`}>
+                      <Typography sx={{ fontSize: "1rem" }}>
+                        <strong>
+                          {index + 1}. Channel {access.channelId}:
+                        </strong>{" "}
+                        {access.channelName}
+                      </Typography>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Typography sx={{ fontSize: "1rem" }}>
+                  No channels assigned
+                </Typography>
+              )}
+            </Box>
+          </CardContent>
+        </ChannelsCard>
+      </Box>
 
       <Box
         sx={{

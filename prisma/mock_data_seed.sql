@@ -17,8 +17,8 @@ DELETE FROM "Labs";
 INSERT INTO "Labs" (
   "id", "labLocation", "managerId"
 ) VALUES
-  (1, 'Lab 1 - Main Facility', 3), -- Lab 1
-  (2, 'Lab 2 - Secondary Site', 4); -- Lab 2
+  (1, 'Main Facility', 3), -- Lab 1
+  (2, 'Secondary Site', 4); -- Lab 2
 
 -- Insert into Channel table (aligned with earlier data)
 INSERT INTO "Channel" (

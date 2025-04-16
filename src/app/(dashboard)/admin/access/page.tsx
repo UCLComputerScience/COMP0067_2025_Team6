@@ -5,7 +5,6 @@ import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
 import { getSession } from "next-auth/react";
-
 import {
   Box,
   Breadcrumbs as MuiBreadcrumbs,
@@ -51,26 +50,21 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
+import UserInfoPopup from "./components/UserInfoPopup";
 
 const Divider = styled(MuiDivider)(spacing);
-
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
-
 const Paper = styled(MuiPaper)(spacing);
-
 const Spacer = styled.div`
   flex: 1 1 100%;
 `;
-
 const ToolbarTitle = styled.div`
   min-width: 150px;
 `;
-
 const Customer = styled.div`
   display: flex;
   align-items: center;
 `;
-
 const ImageWrapper = styled.div`
   width: 50px;
   height: 50px;
@@ -79,22 +73,18 @@ const ImageWrapper = styled.div`
   align-items: center;
   justify-content: center;
 `;
-
 const Image = styled.img`
   max-width: 100%;
   max-height: 100%;
 `;
-
 const Rating = styled.div`
   display: flex;
   align-items: center;
   gap: ${(props) => props.theme.spacing(1)};
 `;
-
 const RatingIcon = styled(StarIcon)`
   color: ${() => orange[400]};
 `;
-
 const SearchContainer = styled.div`
   display: flex;
   gap: 16px;
@@ -123,6 +113,21 @@ type RowType = {
   status: string;
   role: string;
 };
+
+interface UserInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  organisation: string | null;
+  role: string;
+  status: string;
+  access: {
+    labId: number | null;
+    labLocation: string | null;
+    channelId: number | null;
+    channelName: string | null;
+  }[];
+}
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
   if (b[orderBy] < a[orderBy]) {
@@ -286,6 +291,9 @@ function EnhancedTable() {
   const [channels, setChannels] = React.useState<
     Array<{ id: number; name: string }>
   >([]);
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  const [selectedUserInfo, setSelectedUserInfo] =
+    React.useState<UserInfo | null>(null);
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
@@ -393,6 +401,25 @@ function EnhancedTable() {
       }
     } catch (error) {
       console.error("Error fetching channels:", error);
+    }
+  };
+
+  const fetchUserInfo = async (userId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/access/users/${userId}`);
+      if (response.ok) {
+        const userData = await response.json();
+        setSelectedUserInfo(userData);
+        setPopupOpen(true);
+      } else {
+        showFeedback("Failed to fetch user details", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      showFeedback("Error fetching user details", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -571,13 +598,18 @@ function EnhancedTable() {
     setAccessForm({ labId: "", channelId: "", grantedBy: "" });
   };
 
+  const handleClosePopup = () => {
+    setPopupOpen(false);
+    setSelectedUserInfo(null);
+  };
+
   const handleSaveChanges = async () => {
     if (selectedUsers.length === 0) return;
-  
+
     try {
       setLoading(true);
       const session = await getSession();
-  
+
       if (currentTab === 0) {
         console.log("Updating roles for users:", selectedUsers, selectedRole);
         const response = await fetch("/api/auth/users", {
@@ -591,7 +623,7 @@ function EnhancedTable() {
             currentUserEmail: session?.user?.email,
           }),
         });
-  
+
         if (!response.ok) {
           const errorText = await response.text();
           try {
@@ -605,22 +637,24 @@ function EnhancedTable() {
             throw new Error(`Failed to update roles: ${errorText}`);
           }
         }
-  
+
         showFeedback(
           `Successfully updated role for ${selectedUsers.length} user(s)`,
           "success"
         );
       }
-  
+
       if (currentTab === 2) {
         console.log("Updating access for users:", selectedUsers, accessForm);
         const accessData = {
           userIds: selectedUsers,
           labId: accessForm.labId ? parseInt(accessForm.labId) : null,
-          channelId: accessForm.channelId ? parseInt(accessForm.channelId) : null,
+          channelId: accessForm.channelId
+            ? parseInt(accessForm.channelId)
+            : null,
           grantedBy: session?.user?.id ? parseInt(session.user.id) : null,
         };
-  
+
         const response = await fetch("/api/access/user_access", {
           method: "POST",
           headers: {
@@ -628,20 +662,23 @@ function EnhancedTable() {
           },
           body: JSON.stringify(accessData),
         });
-  
+
         const result = await response.json();
-  
+
         if (!response.ok) {
           if (response.status === 409) {
             showFeedback(result.message, "warning");
           } else {
-            throw new Error(result.message || `Failed to update access: ${response.statusText}`);
+            throw new Error(
+              result.message ||
+                `Failed to update access: ${response.statusText}`
+            );
           }
         } else {
           showFeedback(result.message, "success");
         }
       }
-  
+
       setReloadUsers((prev) => !prev);
       setSelected([]);
     } catch (error) {
@@ -678,10 +715,11 @@ function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (
+  const handleCheckboxClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     id: string
   ) => {
+    event.stopPropagation();
     const selectedIndex = selected.indexOf(id);
     let newSelected: Array<string> = [];
 
@@ -699,6 +737,10 @@ function EnhancedTable() {
     }
 
     setSelected(newSelected);
+  };
+
+  const handleRowClick = (row: RowType) => {
+    fetchUserInfo(row.id);
   };
 
   const handleChangePage = (
@@ -791,7 +833,7 @@ function EnhancedTable() {
       </SearchContainer>
 
       <Paper>
-      <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -821,12 +863,16 @@ function EnhancedTable() {
                       tabIndex={-1}
                       key={`${row.id}-${index}`}
                       selected={isItemSelected}
+                      onClick={() => handleRowClick(row)}
+                      style={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id)}
+                          onClick={(event) =>
+                            handleCheckboxClick(event, row.id)
+                          }
                         />
                       </TableCell>
                       <TableCell component="th" id={labelId} scope="row">
@@ -853,7 +899,10 @@ function EnhancedTable() {
                       <TableCell align="right">
                         <IconButton
                           color="primary"
-                          onClick={() => handleEditClick(row)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick(row);
+                          }}
                         >
                           <EditIcon />
                         </IconButton>
@@ -879,6 +928,12 @@ function EnhancedTable() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+
+      <UserInfoPopup
+        open={popupOpen}
+        user={selectedUserInfo}
+        onClose={handleClosePopup}
+      />
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
