@@ -484,11 +484,6 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         )}
       </ToolbarTitle>
       <Spacer />
-      <Tooltip title="Filter list">
-        <IconButton aria-label="Filter list" size="large">
-          <FilterListIcon />
-        </IconButton>
-      </Tooltip>
     </Toolbar>
   );
 };
@@ -703,7 +698,12 @@ function EnhancedTable() {
         method: "PATCH",
       });
       if (response.ok) {
-        await fetchAlerts();
+        // Update the specific row's status locally
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.id === resolveId ? { ...row, status: "RESOLVED" } : row
+          )
+        );
         showFeedback("Alert successfully marked as resolved.", "success");
       } else {
         const errorData = await response.json();
@@ -777,19 +777,19 @@ function EnhancedTable() {
         return row && row.status === "RESOLVED";
       });
       const alreadyResolvedCount = alreadyResolvedIds.length;
-
+  
       const unresolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status !== "RESOLVED";
       });
-
+  
       if (unresolvedIds.length === 0) {
         showFeedback("All selected alert(s) already resolved.", "info");
         setBulkResolveDialogOpen(false);
         handleMenuClose();
         return;
       }
-
+  
       const resolvePromises = unresolvedIds.map((id) =>
         fetch(`/admin/alerts/api/${id}/update`, { method: "PATCH" }).then(
           async (response) => {
@@ -805,11 +805,20 @@ function EnhancedTable() {
           }
         )
       );
-
+  
       await Promise.all(resolvePromises);
-      await fetchAlerts();
+  
+      // Update rows locally
+      setRows((prevRows) =>
+        prevRows.map((row) =>
+          unresolvedIds.includes(row.id.toString())
+            ? { ...row, status: "RESOLVED" }
+            : row
+        )
+      );
+  
       setSelected([]);
-
+  
       let message = `Successfully resolved ${unresolvedIds.length} alert(s). `;
       if (alreadyResolvedCount > 0) {
         message += `${alreadyResolvedCount} alert(s) already resolved.`;
@@ -1064,6 +1073,9 @@ function EnhancedTable() {
         open={descriptionDialogOpen}
         row={selectedRow}
         onClose={handleDescriptionDialogClose}
+        handleDelete={handleDelete}
+        handleMarkAsResolved={handleMarkAsResolved}
+        refreshData={fetchAlerts}
       />
       <Dialog
         open={deleteDialogOpen}

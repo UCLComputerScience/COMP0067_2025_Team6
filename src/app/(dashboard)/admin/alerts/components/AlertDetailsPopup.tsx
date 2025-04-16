@@ -20,7 +20,7 @@ import { RowType } from "../page";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { green, red, blue, grey } from "@mui/material/colors";
+import { green, red, blue, grey, orange } from "@mui/material/colors";
 
 const HeaderCard = styled(MuiCard)`
   ${spacing}
@@ -124,7 +124,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
             onClick={() => {
               handleDelete(row.id);
               handleMenuClose();
-              // onClose(); // Optionally close popup after action
+              onClose(); 
             }}
           >
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
@@ -134,7 +134,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
             onClick={() => {
               handleMarkAsResolved(row.id);
               handleMenuClose();
-              // onClose(); // Optionally close popup after action
+              onClose();
             }}
           >
             <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
