@@ -62,7 +62,6 @@ model Labs {
   managerId   Int
   ApiKey      ApiKey[]
   user        User     @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  access      Access[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -147,19 +146,16 @@ model Threshold {
 model Access {
   id            Int      @id @default(autoincrement())
   userId        Int
-  labId         Int?
   channelId     Int?
   createdAt     DateTime @default(now()) @db.Timestamp(6)
   updatedAt     DateTime @updatedAt @db.Timestamp(6)
   grantedBy     Int?
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lab           Labs?    @relation(fields: [labId], references: [id], onDelete: Cascade)
   channel       Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
   grantedByUser User?    @relation("GrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
 
-  @@unique([userId, labId, channelId])
+  @@unique([userId, channelId])
   @@index([userId])
-  @@index([labId])
   @@index([channelId])
 }
 

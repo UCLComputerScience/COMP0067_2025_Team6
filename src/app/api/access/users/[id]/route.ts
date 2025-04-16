@@ -18,8 +18,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         status: true,
         access: {
           select: {
-            labId: true,
-            lab: { select: { labLocation: true } },
             channelId: true,
             channel: { select: { name: true } },
           },
@@ -31,28 +29,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Deduplicate access entries based on labId and channelId
-    const uniqueAccess: { labId: number | null; labLocation: string | null; channelId: number | null; channelName: string | null }[] = [];
-    const seenLabIds = new Set<number>();
+    // Deduplicate access entries based on channelId
+    const uniqueAccess: { channelId: number | null; channelName: string | null }[] = [];
     const seenChannelIds = new Set<number>();
 
     for (const a of user.access) {
-      // Handle labId
-      if (a.labId !== null && !seenLabIds.has(a.labId)) {
-        seenLabIds.add(a.labId);
-        uniqueAccess.push({
-          labId: a.labId,
-          labLocation: a.lab?.labLocation || null,
-          channelId: null,
-          channelName: null,
-        });
-      }
       // Handle channelId
       if (a.channelId !== null && !seenChannelIds.has(a.channelId)) {
         seenChannelIds.add(a.channelId);
         uniqueAccess.push({
-          labId: null,
-          labLocation: null,
           channelId: a.channelId,
           channelName: a.channel?.name || null,
         });

@@ -3,6 +3,8 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
+import { getSession } from "next-auth/react"; 
+import { useRouter } from "next/navigation";
 
 import { MessageCircle } from "lucide-react";
 import {
@@ -1271,22 +1273,64 @@ function Controls() {
   const [openSettings, setOpenSettings] = useState(false);
   const [sortField, setSortField] = useState<string>("id");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [userId, setUserId] = useState<string | null>(null); 
+  const router = useRouter(); 
+
+  // Fetch session data
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const session = await getSession();
+        console.log("Client-side session:", session);
+        if (session && session.user && session.user.id) {
+          setUserId(session.user.id);
+        } else {
+          setError("No active session found. Please log in.");
+          router.push("/auth/signin"); // Redirect to login page
+        }
+      } catch (err) {
+        console.error("Error fetching session:", err);
+        setError("Failed to fetch session data.");
+        router.push("/auth/signin");
+      }
+    };
+    fetchSession();
+  }, [router]);
 
   const handleOpenSettings = () => setOpenSettings(true);
   const handleCloseSettings = () => setOpenSettings(false);
 
   const fetchData = async () => {
+    if (!userId) {
+      setError("User ID not available. Please log in.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const [channelsResponse, thresholdsResponse] = await Promise.all([
-        fetch("/api/controls/channels", { cache: "no-store" }),
+        fetch(`/api/controls/channels?userId=${encodeURIComponent(userId)}`, {
+          cache: "no-store",
+          credentials: "include", // Include cookies for additional security
+        }),
         fetch("/api/controls/settings", { cache: "no-store" }),
       ]);
 
-      if (!channelsResponse.ok) throw new Error("Failed to fetch channels");
-      if (!thresholdsResponse.ok)
-        throw new Error("Failed to fetch default thresholds");
+      if (!channelsResponse.ok) {
+        const errorData = await channelsResponse.json();
+        console.error(
+          `Failed to fetch channels: Status ${channelsResponse.status}, Message: ${errorData.message}`
+        );
+        throw new Error(errorData.message || "Failed to fetch channels");
+      }
+      if (!thresholdsResponse.ok) {
+        const errorData = await thresholdsResponse.json();
+        console.error(
+          `Failed to fetch thresholds: Status ${thresholdsResponse.status}, Message: ${errorData.message}`
+        );
+        throw new Error(errorData.message || "Failed to fetch default thresholds");
+      }
 
       const channelsData = await channelsResponse.json();
       const thresholdsData = await thresholdsResponse.json();
@@ -1295,22 +1339,27 @@ function Controls() {
       setDefaultThresholds(thresholdsData.fields || []);
     } catch (err) {
       setError(err.message);
+      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData(); // Initial fetch
+    if (userId) {
+      fetchData(); // Initial fetch
+    }
 
     // Set up interval to fetch data
     const intervalId = setInterval(() => {
-      fetchData();
-    }, 5 * 60 * 1000); //Customize accordingly
+      if (userId) {
+        fetchData();
+      }
+    }, 5 * 60 * 1000); // Customize accordingly
 
     // Clean up interval
     return () => clearInterval(intervalId);
-  }, []);
+  }, [userId]);
 
   const handleSettingsSave = () => {
     fetchData();

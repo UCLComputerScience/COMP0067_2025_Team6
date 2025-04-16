@@ -112,7 +112,6 @@ type RowType = {
   usertype: string;
   status: string;
   role: string;
-  labCount?: number; 
   channelCount?: number;
 };
 
@@ -124,8 +123,6 @@ interface UserInfo {
   role: string;
   status: string;
   access: {
-    labId: number | null;
-    labLocation: string | null;
     channelId: number | null;
     channelName: string | null;
   }[];
@@ -176,7 +173,6 @@ const headCells: Array<HeadCell> = [
   { id: "usertype", alignment: "left", label: "Organisation", width: "15%" },
   { id: "role", alignment: "left", label: "Role", width: "15%" },
   { id: "status", alignment: "left", label: "Status", width: "15%" },
-  { id: "labCount", alignment: "left", label: "Number of Labs", width: "10%" },
   { id: "channelCount", alignment: "left", label: "Number of Channels", width: "10%" },
 ];
 
@@ -285,13 +281,9 @@ function EnhancedTable() {
     "activate" | "deactivate"
   >("deactivate");
   const [accessForm, setAccessForm] = React.useState({
-    labId: "",
     channelId: "",
     grantedBy: "",
   });
-  const [labs, setLabs] = React.useState<
-    Array<{ id: number; labLocation: string }>
-  >([]);
   const [channels, setChannels] = React.useState<
     Array<{ id: number; name: string }>
   >([]);
@@ -325,129 +317,110 @@ function EnhancedTable() {
     }
   };
 
- // In-memory cache for access data
-const accessCache: { [userId: string]: { labCount: number; channelCount: number } } = {};
+  // In-memory cache for access data
+  const accessCache: { [userId: string]: { channelCount: number } } = {};
 
-const fetchUsers = async () => {
-  try {
-    setLoading(true);
-    console.log("Fetching users from /api/auth/users...");
-    const timestamp = new Date().getTime();
-    const response = await fetch(`/api/auth/users?_t=${timestamp}`, {
-      cache: "no-store",
-      headers: {
-        pragma: "no-cache",
-        "cache-control": "no-cache",
-      },
-    });
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      console.log("Fetching users from /api/auth/users...");
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/auth/users?_t=${timestamp}`, {
+        cache: "no-store",
+        headers: {
+          pragma: "no-cache",
+          "cache-control": "no-cache",
+        },
+      });
 
-    if (!response.ok) {
-      console.error("Failed to fetch users:", response.status, response.statusText);
-      showFeedback("Failed to load users", "error");
-      setUsers([]);
-      return;
-    }
+      if (!response.ok) {
+        console.error("Failed to fetch users:", response.status, response.statusText);
+        showFeedback("Failed to load users", "error");
+        setUsers([]);
+        return;
+      }
 
-    const data = await response.json();
-    console.log("Users data received:", data);
+      const data = await response.json();
+      console.log("Users data received:", data);
 
-    if (!Array.isArray(data) || data.length === 0) {
-      console.warn("No users found");
-      showFeedback("No users found", "info");
-      setUsers([]);
-      return;
-    }
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn("No users found");
+        showFeedback("No users found", "info");
+        setUsers([]);
+        return;
+      }
 
-    interface UserApiResponse {
-      id: string;
-      firstName: string;
-      lastName: string;
-      organisation?: string;
-      userRole: string;
-      status: string;
-    }
+      interface UserApiResponse {
+        id: string;
+        firstName: string;
+        lastName: string;
+        organisation?: string;
+        userRole: string;
+        status: string;
+      }
 
-    interface MappedUser extends RowType {
-      id: string;
-      firstname: string;
-      lastname: string;
-      usertype: string;
-      role: string;
-      status: string;
-      labCount?: number;
-      channelCount?: number;
-    }
+      interface MappedUser extends RowType {
+        id: string;
+        firstname: string;
+        lastname: string;
+        usertype: string;
+        role: string;
+        status: string;
+        channelCount?: number;
+      }
 
-    const mappedUsers: MappedUser[] = await Promise.all(
-      (data as UserApiResponse[]).map(async (user: UserApiResponse) => {
-        const baseUser = {
-          id: user.id,
-          firstname: user.firstName,
-          lastname: user.lastName,
-          usertype: user.organisation || "Standard",
-          role: formatRole(user.userRole),
-          status: formatStatus(user.status),
-        };
+      const mappedUsers: MappedUser[] = await Promise.all(
+        (data as UserApiResponse[]).map(async (user: UserApiResponse) => {
+          const baseUser = {
+            id: user.id,
+            firstname: user.firstName,
+            lastname: user.lastName,
+            usertype: user.organisation || "Standard",
+            role: formatRole(user.userRole),
+            status: formatStatus(user.status),
+          };
 
-        // Check cache
-        if (accessCache[user.id]) {
-          console.log(`Using cached access for user ${user.id}`);
+          // Check cache
+          if (accessCache[user.id]) {
+            console.log(`Using cached access for user ${user.id}`);
+            return {
+              ...baseUser,
+              channelCount: accessCache[user.id].channelCount,
+            };
+          }
+
+          // Fetch access data
+          let channelCount = 0;
+          try {
+            console.log(`Fetching access for user ${user.id}...`);
+            const accessResponse = await fetch(`/api/access/users/${user.id}`);
+            if (accessResponse.ok) {
+              const userAccess = await accessResponse.json();
+              console.log(`Access data for user ${user.id}:`, userAccess);
+              channelCount = userAccess.access.filter((a: { channelId: number | null }) => a.channelId !== null).length;
+              accessCache[user.id] = { channelCount };
+            } else {
+              console.warn(`No access data for user ${user.id}:`, accessResponse.statusText);
+            }
+          } catch (error) {
+            console.error(`Error fetching access for user ${user.id}:`, error);
+          }
+
           return {
             ...baseUser,
-            labCount: accessCache[user.id].labCount,
-            channelCount: accessCache[user.id].channelCount,
+            channelCount,
           };
-        }
+        })
+      );
 
-        // Fetch access data
-        let labCount = 0;
-        let channelCount = 0;
-        try {
-          console.log(`Fetching access for user ${user.id}...`);
-          const accessResponse = await fetch(`/api/access/users/${user.id}`);
-          if (accessResponse.ok) {
-            const userAccess = await accessResponse.json();
-            console.log(`Access data for user ${user.id}:`, userAccess);
-            labCount = userAccess.access.filter((a: { labId: number | null }) => a.labId !== null).length;
-            channelCount = userAccess.access.filter((a: { channelId: number | null }) => a.channelId !== null).length;
-            accessCache[user.id] = { labCount, channelCount };
-          } else {
-            console.warn(`No access data for user ${user.id}:`, accessResponse.statusText);
-          }
-        } catch (error) {
-          console.error(`Error fetching access for user ${user.id}:`, error);
-        }
-
-        return {
-          ...baseUser,
-          labCount,
-          channelCount,
-        };
-      })
-    );
-
-    console.log("Mapped users:", mappedUsers);
-    setUsers(mappedUsers);
-  } catch (error) {
-    console.error("Error in fetchUsers:", error);
-    showFeedback("Error loading users", "error");
-    setUsers([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const fetchLabs = async () => {
-    try {
-      const response = await fetch("/api/access/labs");
-      if (response.ok) {
-        const data = await response.json();
-        setLabs(data);
-      } else {
-        console.error("Failed to fetch labs:", response.statusText);
-      }
+      console.log("Mapped users:", mappedUsers);
+      setUsers(mappedUsers);
     } catch (error) {
-      console.error("Error fetching labs:", error);
+      console.error("Error in fetchUsers:", error);
+      showFeedback("Error loading users", "error");
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -489,10 +462,8 @@ const fetchUsers = async () => {
     // Clear cache on reload
     Object.keys(accessCache).forEach((key) => delete accessCache[key]);
     fetchUsers();
-    fetchLabs();
     fetchChannels();
   }, [reloadUsers]);
-
 
   const handlePopupManageAccess = (userId: number) => {
     setSelectedUsers([userId.toString()]);
@@ -503,7 +474,7 @@ const fetchUsers = async () => {
     } else {
       setSelectedRole("STANDARD_USER");
     }
-    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    setAccessForm({ channelId: "", grantedBy: "" });
     setOpenDialog(true);
     setPopupOpen(false); // Close popup
   };
@@ -634,7 +605,7 @@ const fetchUsers = async () => {
     setSelectedUsers([row.id]);
     const rawRole = getRawRoleValue(row.role);
     setSelectedRole(rawRole);
-    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    setAccessForm({ channelId: "", grantedBy: "" });
     setOpenDialog(true);
   };
 
@@ -664,7 +635,7 @@ const fetchUsers = async () => {
         setSelectedRole("STANDARD_USER");
       }
     }
-    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    setAccessForm({ channelId: "", grantedBy: "" });
     setOpenDialog(true);
   };
 
@@ -673,7 +644,7 @@ const fetchUsers = async () => {
     setEditingRow(null);
     setSelectedUsers([]);
     setCurrentTab(0);
-    setAccessForm({ labId: "", channelId: "", grantedBy: "" });
+    setAccessForm({ channelId: "", grantedBy: "" });
   };
 
   const handleClosePopup = () => {
@@ -726,7 +697,6 @@ const fetchUsers = async () => {
         console.log("Updating access for users:", selectedUsers, accessForm);
         const accessData = {
           userIds: selectedUsers,
-          labId: accessForm.labId ? parseInt(accessForm.labId) : null,
           channelId: accessForm.channelId
             ? parseInt(accessForm.channelId)
             : null,
@@ -905,13 +875,20 @@ const fetchUsers = async () => {
           size="small"
           disabled={selected.length === 0}
           onClick={handleManageAccess}
+          sx={{
+            height: "32px", // Match TextField and Select height
+            minWidth: "120px", // Optional: ensure readable width
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           Manage Access
         </Button>
       </SearchContainer>
 
       <Paper>
-      <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -929,13 +906,13 @@ const fetchUsers = async () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={7} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={7} align="center">
                     <Typography>No users found</Typography>
                   </TableCell>
                 </TableRow>
@@ -984,9 +961,6 @@ const fetchUsers = async () => {
                           <Typography variant="body1">{row.status}</Typography>
                         </TableCell>
                         <TableCell align="left">
-                          <Typography variant="body1">{row.labCount ?? 0}</Typography>
-                        </TableCell>
-                        <TableCell align="left">
                           <Typography variant="body1">{row.channelCount ?? 0}</Typography>
                         </TableCell>
                         <TableCell align="right">
@@ -1006,7 +980,7 @@ const fetchUsers = async () => {
               )}
               {!loading && users.length > 0 && emptyRows > 0 && (
                 <TableRow style={{ height: 53 * emptyRows }}>
-                  <TableCell colSpan={8} />
+                  <TableCell colSpan={7} />
                 </TableRow>
               )}
             </TableBody>
@@ -1109,25 +1083,6 @@ const fetchUsers = async () => {
               <Typography variant="body1" gutterBottom>
                 Grant access to resources:
               </Typography>
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Lab</InputLabel>
-                <Select
-                  value={accessForm.labId}
-                  onChange={(e) =>
-                    handleAccessFormChange("labId", e.target.value)
-                  }
-                  label="Lab"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {labs.map((lab) => (
-                    <MenuItem key={lab.id} value={lab.id}>
-                      {lab.labLocation}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
               <FormControl fullWidth margin="dense">
                 <InputLabel>Channel</InputLabel>
                 <Select
@@ -1242,3 +1197,7 @@ function Products() {
 }
 
 export default Products;
+
+
+
+

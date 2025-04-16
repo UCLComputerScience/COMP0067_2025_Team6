@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const { userIds, labId, channelId, grantedBy } = await req.json();
+    const { userIds, channelId, grantedBy } = await req.json();
 
     // Validate input
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -15,13 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate labId and channelId if provided
-    if (labId && isNaN(parseInt(labId))) {
-      return NextResponse.json(
-        { message: "Invalid labId" },
-        { status: 400 }
-      );
-    }
+    // Validate channelId if provided
     if (channelId && isNaN(parseInt(channelId))) {
       return NextResponse.json(
         { message: "Invalid channelId" },
@@ -35,7 +29,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const parsedLabId = labId ? parseInt(labId) : null;
     const parsedChannelId = channelId ? parseInt(channelId) : null;
     const parsedGrantedBy = grantedBy ? parseInt(grantedBy) : null;
 
@@ -56,7 +49,6 @@ export async function POST(req: NextRequest) {
       const existingAccess = await prisma.access.findFirst({
         where: {
           userId: parsedUserId,
-          labId: parsedLabId,
           channelId: parsedChannelId,
         },
       });
@@ -66,7 +58,6 @@ export async function POST(req: NextRequest) {
       } else {
         accessToCreate.push({
           userId: parsedUserId,
-          labId: parsedLabId,
           channelId: parsedChannelId,
           grantedBy: parsedGrantedBy,
           createdAt: new Date(),
