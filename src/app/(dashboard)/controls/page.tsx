@@ -1312,7 +1312,7 @@ function Controls() {
       const [channelsResponse, thresholdsResponse] = await Promise.all([
         fetch(`/api/controls/channels?userId=${encodeURIComponent(userId)}`, {
           cache: "no-store",
-          credentials: "include", // Include cookies for additional security
+          credentials: "include", 
         }),
         fetch("/api/controls/settings", { cache: "no-store" }),
       ]);
