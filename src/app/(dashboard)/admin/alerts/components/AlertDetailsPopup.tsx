@@ -1,4 +1,3 @@
-// app/admin/alerts/components/AlertDetailsPopup.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -21,7 +20,7 @@ import { RowType } from "../page";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { green, orange, red, blue, grey } from "@mui/material/colors";
+import { green, red, blue, grey } from "@mui/material/colors";
 
 const HeaderCard = styled(MuiCard)`
   ${spacing}
@@ -51,7 +50,8 @@ const PriorityChip = styled(MuiChip)`
 
 const StatusChip = styled(MuiChip)`
   ${spacing}
-  background: ${(props) => (props.label === "RESOLVED" ? blue[500] : grey[500])};
+  background: ${(props) =>
+    props.label === "RESOLVED" ? blue[500] : grey[500]};
   color: white;
 `;
 
@@ -78,9 +78,6 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   };
 
   if (!row) return null;
-
-  // Placeholder for dynamic buttons (UI only)
-  const showApprovalButtons = row.priority === "HIGH" && row.status === "UNRESOLVED";
 
   return (
     <Dialog
@@ -149,18 +146,22 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
               </Grid>
               <Grid item xs={6}>
                 <Typography sx={{ fontSize: "1rem" }}>
-                  <strong>Priority:</strong> <PriorityChip size="small" label={row.priority} />
+                  <strong>Priority:</strong>{" "}
+                  <PriorityChip size="small" label={row.priority} />
                 </Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography sx={{ fontSize: "1rem" }}>
-                  <strong>Status:</strong> <StatusChip size="small" label={row.status} />
+                  <strong>Status:</strong>{" "}
+                  <StatusChip size="small" label={row.status} />
                 </Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography sx={{ fontSize: "1rem" }}>
                   <strong>Date:</strong>{" "}
-                  {row.date !== "Unknown" ? format(new Date(row.date), "dd/MM/yy HH:mm") : "Unknown"}
+                  {row.date !== "Unknown"
+                    ? format(new Date(row.date), "dd/MM/yy HH:mm")
+                    : "Unknown"}
                 </Typography>
               </Grid>
             </Grid>
@@ -168,7 +169,6 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
         </CardContent>
       </HeaderCard>
 
-      {/* Description Block */}
       <DescriptionCard>
         <CardContent sx={{ flex: 1 }}>
           <Typography variant="h6" color="textSecondary">
@@ -180,7 +180,6 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
         </CardContent>
       </DescriptionCard>
 
-      {/* Buttons with Standard Size */}
       <Box
         sx={{
           display: "flex",
@@ -189,29 +188,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           p: 4,
         }}
       >
-        {showApprovalButtons && (
-          <>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ minWidth: "100px" }}
-            >
-              Approve
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              sx={{ minWidth: "100px" }}
-            >
-              Reject
-            </Button>
-          </>
-        )}
-        <Button
-          variant="outlined"
-          onClick={onClose}
-          sx={{ minWidth: "100px" }}
-        >
+        <Button variant="outlined" onClick={onClose} sx={{ minWidth: "100px" }}>
           Cancel
         </Button>
       </Box>

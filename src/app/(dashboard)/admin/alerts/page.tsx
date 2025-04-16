@@ -148,6 +148,188 @@ function createRowFromAlert(alert: AlertType): RowType {
   };
 }
 
+// Place this before the `EnhancedTable` component
+function DateFilterMenu({
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate,
+  selectedRange,
+  setSelectedRange,
+}: {
+  startDate: Date | null;
+  endDate: Date | null;
+  setStartDate: (date: Date | null) => void;
+  setEndDate: (date: Date | null) => void;
+  selectedRange: string;
+  setSelectedRange: (range: string) => void;
+}) {
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(
+    null
+  );
+  const [popoverAnchorEl, setPopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+
+  const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+    console.log("Anchor element:", event.currentTarget);
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleRangeSelect = (
+    range: string,
+    event?: React.MouseEvent<HTMLElement>
+  ) => {
+    setSelectedRange(range);
+    let newStartDate: Date | null = null;
+    let newEndDate: Date | null = new Date();
+
+    switch (range) {
+      case "7days":
+        newStartDate = new Date();
+        newStartDate.setDate(newStartDate.getDate() - 7);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "30days":
+        newStartDate = new Date();
+        newStartDate.setDate(newStartDate.getDate() - 30);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "year":
+        newStartDate = new Date();
+        newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "all":
+        newStartDate = null;
+        newEndDate = null;
+        break;
+      case "custom":
+        if (event) {
+          setPopoverAnchorEl(event.currentTarget);
+        }
+        return;
+    }
+
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setMenuAnchorEl(null);
+  };
+
+  const handlePopoverClose = () => {
+    setPopoverAnchorEl(null);
+  };
+
+  const handleApplyCustomRange = () => {
+    setSelectedRange("custom");
+    if (startDate) setStartDate(startOfDay(startDate));
+    if (endDate) setEndDate(endOfDay(endDate));
+    setPopoverAnchorEl(null);
+  };
+
+  const handleResetDateFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedRange("all");
+    setPopoverAnchorEl(null);
+  };
+
+  return (
+    <>
+      <Button
+        variant="outlined"
+        onClick={handleDateFilterClick}
+        startIcon={<FilterListIcon />}
+      >
+        {selectedRange === "7days"
+          ? "Last 7 Days"
+          : selectedRange === "30days"
+          ? "Last 30 Days"
+          : selectedRange === "year"
+          ? "Last Year"
+          : selectedRange === "custom"
+          ? "Custom Range"
+          : "All Time"}
+      </Button>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <MenuItem onClick={() => handleRangeSelect("7days")}>
+          Last 7 Days
+        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("30days")}>
+          Last 30 Days
+        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("year")}>Last Year</MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
+        <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
+          Custom Range
+        </MenuItem>
+        <MenuItem onClick={handleResetDateFilter}>Reset</MenuItem>
+      </Menu>
+
+      <Popover
+        open={Boolean(popoverAnchorEl)}
+        anchorEl={popoverAnchorEl}
+        onClose={handlePopoverClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <Box sx={{ p: 2, minWidth: 300 }}>
+          <Typography variant="h6" gutterBottom>
+            Select Date Range
+          </Typography>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+                format="dd/MM/yy"
+              />
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+                format="dd/MM/yy"
+              />
+            </Box>
+          </LocalizationProvider>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            <Button onClick={handleResetDateFilter} color="secondary">
+              Reset
+            </Button>
+            <Button onClick={handlePopoverClose}>Cancel</Button>
+            <Button onClick={handleApplyCustomRange} variant="contained">
+              Apply
+            </Button>
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  );
+}
+
 function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   if (orderBy === "channelId") {
     // Numerical sorting for Channel ID
@@ -158,15 +340,20 @@ function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   } else if (orderBy === "priority") {
     // Custom order: LOW (1), MODERATE (2), HIGH (3)
     const priorityOrder = { LOW: 1, MODERATE: 2, HIGH: 3 };
-    return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
-           (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+    return (
+      (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) -
+      (priorityOrder[a.priority as keyof typeof priorityOrder] || 0)
+    );
   } else if (orderBy === "desc") {
     // Alphabetical sorting for Description
     return b.desc.localeCompare(a.desc);
   } else if (orderBy === "status") {
     // Custom order: UNRESOLVED (0), RESOLVED (1)
     const statusOrder = { UNRESOLVED: 0, RESOLVED: 1 };
-    return (statusOrder[b.status as keyof typeof statusOrder] || 0) - (statusOrder[a.status as keyof typeof statusOrder] || 0);
+    return (
+      (statusOrder[b.status as keyof typeof statusOrder] || 0) -
+      (statusOrder[a.status as keyof typeof statusOrder] || 0)
+    );
   } else if (orderBy === "date") {
     // Chronological sorting for Date & Time
     return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -416,6 +603,12 @@ function EnhancedTable() {
 
   const handleRefreshData = () => {
     console.log("Refreshing alert data...");
+    setSearchTerm("");
+    setPriorityFilter("All");
+    setStatusFilter("All");
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedRange("all");
     setReloadAlerts((prev) => !prev);
   };
 
@@ -474,164 +667,6 @@ function EnhancedTable() {
   const handleDescriptionDialogClose = () => {
     setDescriptionDialogOpen(false);
     setSelectedRow(null);
-  };
-
-  const DateFilterMenu = () => {
-    const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(
-      null
-    );
-    const [popoverAnchorEl, setPopoverAnchorEl] =
-      React.useState<HTMLElement | null>(null);
-
-    const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
-      console.log("Anchor element:", event.currentTarget);
-      setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-      setMenuAnchorEl(null);
-    };
-
-    const handleRangeSelect = (
-      range: string,
-      event?: React.MouseEvent<HTMLElement>
-    ) => {
-      setSelectedRange(range);
-      let newStartDate: Date | null = null;
-      let newEndDate: Date | null = new Date();
-
-      switch (range) {
-        case "7days":
-          newStartDate = new Date();
-          newStartDate.setDate(newStartDate.getDate() - 7);
-          newStartDate = startOfDay(newStartDate); // Start of day
-          newEndDate = endOfDay(newEndDate); // End of current day
-          break;
-        case "30days":
-          newStartDate = new Date();
-          newStartDate.setDate(newStartDate.getDate() - 30);
-          newStartDate = startOfDay(newStartDate);
-          newEndDate = endOfDay(newEndDate);
-          break;
-        case "year":
-          newStartDate = new Date();
-          newStartDate.setFullYear(newStartDate.getFullYear() - 1);
-          newStartDate = startOfDay(newStartDate);
-          newEndDate = endOfDay(newEndDate);
-          break;
-        case "all":
-          newStartDate = null;
-          newEndDate = null;
-          break;
-        case "custom":
-          if (event) {
-            setPopoverAnchorEl(event.currentTarget);
-          }
-          return;
-      }
-
-      setStartDate(newStartDate);
-      setEndDate(newEndDate);
-      setMenuAnchorEl(null);
-    };
-
-    const handlePopoverClose = () => {
-      setPopoverAnchorEl(null);
-    };
-
-    const handleApplyCustomRange = () => {
-      setSelectedRange("custom");
-      if (startDate) setStartDate(startOfDay(startDate));
-      if (endDate) setEndDate(endOfDay(endDate));
-      setPopoverAnchorEl(null);
-    };
-
-    return (
-      <>
-        <Button
-          variant="outlined"
-          onClick={handleDateFilterClick}
-          startIcon={<FilterListIcon />}
-        >
-          {selectedRange === "7days"
-            ? "Last 7 Days"
-            : selectedRange === "30days"
-            ? "Last 30 Days"
-            : selectedRange === "year"
-            ? "Last Year"
-            : selectedRange === "custom"
-            ? "Custom Range"
-            : "All Time"}
-        </Button>
-
-        <Menu
-          anchorEl={menuAnchorEl}
-          open={Boolean(menuAnchorEl)}
-          onClose={handleMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <MenuItem onClick={() => handleRangeSelect("7days")}>
-            Last 7 Days
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("30days")}>
-            Last 30 Days
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("year")}>
-            Last Year
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
-          <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
-            Custom Range
-          </MenuItem>
-        </Menu>
-
-        <Popover
-          open={Boolean(popoverAnchorEl)}
-          anchorEl={popoverAnchorEl}
-          onClose={handlePopoverClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, minWidth: 300 }}>
-            <Typography variant="h6" gutterBottom>
-              Select Date Range
-            </Typography>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <DatePicker
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(newValue) => setStartDate(newValue)}
-                  slotProps={{ textField: { size: "small" } }}
-                  format="dd/MM/yy"
-                />
-                <DatePicker
-                  label="End Date"
-                  value={endDate}
-                  onChange={(newValue) => setEndDate(newValue)}
-                  slotProps={{ textField: { size: "small" } }}
-                  format="dd/MM/yy"
-                />
-              </Box>
-            </LocalizationProvider>
-            <Box
-              sx={{
-                mt: 2,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 1,
-              }}
-            >
-              <Button onClick={handlePopoverClose}>Cancel</Button>
-              <Button onClick={handleApplyCustomRange} variant="contained">
-                Apply
-              </Button>
-            </Box>
-          </Box>
-        </Popover>
-      </>
-    );
   };
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
@@ -922,7 +957,14 @@ function EnhancedTable() {
             <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
           </Select>
         </FormControl>
-        <DateFilterMenu />
+        <DateFilterMenu
+          startDate={startDate}
+          endDate={endDate}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
+          selectedRange={selectedRange}
+          setSelectedRange={setSelectedRange}
+        />
         <Button
           variant="outlined"
           onClick={handleRefreshData}
@@ -970,18 +1012,19 @@ function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id || "unknown"}-${index}`} //originally: key={`${row.id}-${index}`}
+                      key={`${row.id || "unknown"}-${index}`}
                       selected={isItemSelected}
-                      onClick={() => handleRowClick(row)}
+                      onClick={() => handleRowClick(row)} // This triggers the popup
                       sx={{ cursor: "pointer" }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) =>
-                            handleClick(event, row.id.toString())
-                          }
+                          onClick={(event) => {
+                            event.stopPropagation(); // Prevent row click event
+                            handleClick(event, row.id.toString());
+                          }}
                         />
                       </TableCell>
                       <TableCell align="left">{row.channelId}</TableCell>
@@ -1023,7 +1066,7 @@ function EnhancedTable() {
                             mr={1}
                             mb={1}
                             label="Resolved"
-                            status="Resolved" // Pass status prop to style it
+                            status="Resolved"
                           />
                         )}
                         {row.status === "UNRESOLVED" && (
@@ -1032,7 +1075,7 @@ function EnhancedTable() {
                             mr={1}
                             mb={1}
                             label="Unresolved"
-                            status="Unresolved" // Pass status prop to style it
+                            status="Unresolved"
                           />
                         )}
                       </TableCell>
@@ -1046,14 +1089,20 @@ function EnhancedTable() {
                           <IconButton
                             aria-label="delete"
                             size="large"
-                            onClick={() => handleDelete(row.id)}
+                            onClick={(event) => {
+                              event.stopPropagation(); // Prevent row click event
+                              handleDelete(row.id);
+                            }}
                           >
                             <DeleteIcon />
                           </IconButton>
                           <IconButton
                             aria-label="details"
                             size="large"
-                            onClick={() => handleMarkAsResolved(row.id)}
+                            onClick={(event) => {
+                              event.stopPropagation(); // Prevent row click event
+                              handleMarkAsResolved(row.id);
+                            }}
                           >
                             <CheckCircleIcon />
                           </IconButton>
