@@ -1305,18 +1305,18 @@ function Controls() {
       setError("User ID not available. Please log in.");
       return;
     }
-
+  
     setLoading(true);
     setError(null);
     try {
       const [channelsResponse, thresholdsResponse] = await Promise.all([
         fetch(`/api/controls/channels?userId=${encodeURIComponent(userId)}`, {
           cache: "no-store",
-          credentials: "include", 
+          credentials: "include",
         }),
         fetch("/api/controls/settings", { cache: "no-store" }),
       ]);
-
+  
       if (!channelsResponse.ok) {
         const errorData = await channelsResponse.json();
         console.error(
@@ -1331,10 +1331,13 @@ function Controls() {
         );
         throw new Error(errorData.message || "Failed to fetch default thresholds");
       }
-
+  
       const channelsData = await channelsResponse.json();
       const thresholdsData = await thresholdsResponse.json();
-
+  
+      console.log("Channels Data:", channelsData); // Debug log
+      console.log("Thresholds Data:", thresholdsData); // Debug log
+  
       setChannels(channelsData);
       setDefaultThresholds(thresholdsData.fields || []);
     } catch (err) {
@@ -1506,16 +1509,19 @@ function Controls() {
 
       <Box sx={{ mb: 5, padding: 2 }}>
         <Grid container spacing={6}>
-          {filteredChannels.map((channel) => (
-            <Grid item xs={12} key={channel.id}>
-              <LabCard
-                channelId={channel.id}
-                name={channel.name}
-                apiKey={channel.ApiKey[0]?.api || ""}
-                defaultThresholds={defaultThresholds}
-              />
-            </Grid>
-          ))}
+          {filteredChannels.map((channel) => {
+            console.log(`Channel ${channel.id} ApiKey:`, channel.ApiKey);
+            return (
+              <Grid item={true} xs={12} key={channel.id}>
+                <LabCard
+                  channelId={channel.id}
+                  name={channel.name}
+                  apiKey={channel.ApiKey[0]?.api || ""}
+                  defaultThresholds={defaultThresholds}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       </Box>
     </>
