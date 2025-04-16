@@ -8,6 +8,12 @@ import { spacing } from "@mui/system";
 import { DataProps } from "@/types/devices";
 
 import {
+  Grid2 as Grid,
+  Divider as MuiDivider,
+  Typography as Typography,
+} from "@mui/material";
+
+import {
   Button,
   Dialog,
   DialogActions,
@@ -65,13 +71,13 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       const latitude = parseFloat(data.channel.latitude) || 0; // Default to 0 if latitude is missing
       const longitude = parseFloat(data.channel.longitude) || 0; // Default to 0 if longitude is missing
       const field1 = data.channel.field1 || null; // Default to null if field1 is missing
-      const field2 = data.channel.field2 || null; // Default to null if field2 is missing
-      const field3 = data.channel.field3 || null; // Default to null if field3 is missing
-      const field4 = data.channel.field4 || null; // Default to null if field4 is missing
-      const field5 = data.channel.field5 || null; // Default to null if field5 is missing
-      const field6 = data.channel.field6 || null; // Default to null if field6 is missing
-      const field7 = data.channel.field7 || null; // Default to null if field7 is missing
-      const field8 = data.channel.field8 || null; // Default to null if field8 is missing
+      const field2 = data.channel.field2 || null; 
+      const field3 = data.channel.field3 || null; 
+      const field4 = data.channel.field4 || null; 
+      const field5 = data.channel.field5 || null; 
+      const field6 = data.channel.field6 || null; 
+      const field7 = data.channel.field7 || null; 
+      const field8 = data.channel.field8 || null; 
       const created_at = new Date(data.channel.created_at) || new Date(); // Use current date if created_at is missing
       const updated_at = new Date(data.channel.updated_at) || new Date(); // Use current date if updated_at is missing
       const last_entry_id = Number(data.channel.last_entry_id) || 0; // Default to 0 if last_entry_id is missing
@@ -92,9 +98,9 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       if (res.ok) {
         const labLocation = await getLabLocation(name); 
         await logActivity("Device Added", labLocation, name);
-        setMessage("API added successfully!");
         setApi("");
         setData(`${api}`);
+        setOpen(false);
       } else {
         setMessage("Failed to add API.");
       }
@@ -104,7 +110,7 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
     }
 
     setLoading(false);
-    setOpen(false)
+    // setOpen(false)
   }
   const getLabLocation = async (deviceName: string) => {
     try {
@@ -143,7 +149,10 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
       <Button
         variant="contained"
         color="primary"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setMessage(""); // clear any previous message
+          setOpen(true);  // open the dialog
+        }}
       >
         Add
       </Button>
@@ -169,6 +178,11 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
             onChange={(e) => setApi(e.target.value)}
             required
           />
+          {message && (
+          <Typography color="error" role="alert">
+            {message}
+          </Typography>
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)} color="primary">
