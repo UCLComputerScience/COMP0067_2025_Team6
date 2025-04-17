@@ -39,9 +39,6 @@ const Typography = styled(MuiTypography)(spacing);
 
 const Lab1 = () => {
   const [selectedOption, setSelectedOption] = React.useState<string>("");
-  // const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
-  // const [channel_db, setChannel_db] = React.useState<ChannelProps>({} as ChannelProps);  // Channel data from db
-  // const [feeds_db, setFeeds_db] = React.useState<FeedPropsDb[]>([]);  // Feeds data from db
   const [apikeys, setApikeys] = React.useState<string[]>([]); // Apikeys data from db
   const [apidata, setApidata] = React.useState<DeviceProps[]>([]); // Data fetched from the API
   const [data, setData] = React.useState<string>("");
@@ -117,7 +114,7 @@ const Lab1 = () => {
     };
 
     fetchAllData();
-    const interval = setInterval(fetchAllData, 60000); // Poll every 5 sec
+    const interval = setInterval(fetchAllData, 60000); // Poll every 60 sec
 
     return () => clearInterval(interval); // Cleanup
   }, [selectedOption, apikeys]);
@@ -183,7 +180,7 @@ const Lab1 = () => {
             key={`${device.channel}-${device.field}`} // Change index key to id
             size={{
               xs: 12,
-              lg: 12,
+              lg: 6,
             }}
           >
             <LineChart

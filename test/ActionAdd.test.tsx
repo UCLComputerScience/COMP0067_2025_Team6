@@ -18,7 +18,7 @@ describe("FormDialog Component", () => {
   afterAll(() => {
     (console.error as jest.Mock).mockRestore();
   });
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -80,7 +80,7 @@ describe("FormDialog Component", () => {
     fireEvent.click(screen.getByText("Add", { selector: "button[type='submit']" }));
   
     await waitFor(() => {
-      expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+      expect(screen.getByText(/invalid api key./i)).toBeInTheDocument();
     });
   });
   

@@ -102,11 +102,11 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
         setData(`${api}`);
         setOpen(false);
       } else {
-        setMessage("Failed to add API.");
+        setMessage("API already exists.");
       }
     } catch (error) {
       console.error("Error:", error);
-      setMessage("Something went wrong.");
+      setMessage("Invalid API key.");
     }
 
     setLoading(false);
