@@ -127,7 +127,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         if (latestValue < effectiveMin || latestValue > effectiveMax) {
           const unit = defaultThreshold?.unit || "";
           warnings.push(
-            `${field.fieldName}: ${latestValue}${unit} outside range (${effectiveMin}${unit} - ${effectiveMax}${unit})`
+            `${field.fieldName} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
           );
         }
       }
@@ -196,7 +196,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     } catch (error) {
       console.error("Error saving thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
@@ -262,24 +264,24 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     ) {
       return;
     }
-  
+
     setError(null);
     setLoading(true);
-  
+
     try {
       const response = await fetch("/api/controls/thresholds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelId, thresholds: [] }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
           errorData.error || `Failed to reset thresholds: ${response.status}`
         );
       }
-  
+
       const resetFields = channelFields.map((fieldName) => {
         const defaultThreshold = defaultThresholds.find(
           (t) => t.fieldName === fieldName
@@ -290,7 +292,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           maxValue: defaultThreshold?.maxValue?.toString() || "",
         };
       });
-  
+
       setFields(resetFields);
       alert("Thresholds reset to default successfully!");
       onSave(); // Trigger onSave to refresh LabCard
@@ -333,8 +335,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         )}
         {potentialWarnings.length > 0 && (
           <Typography color="warning.main" mb={2}>
-            Warning: {" "}
-            {potentialWarnings.join("; ")}
+            Warning: {potentialWarnings.join("; ")}
           </Typography>
         )}
         {loading && <Typography mb={2}>Loading...</Typography>}
