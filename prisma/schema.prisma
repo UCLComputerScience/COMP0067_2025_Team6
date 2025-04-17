@@ -9,33 +9,34 @@ datasource db {
 
 model Alerts {
   id               Int           @id @default(autoincrement())
-  entryId          Int
-  priority         PriorityType?
+  entryId          Int?
   alertDescription String        @db.VarChar(255)
-  alertStatus      AlertStatus
   alertDate        DateTime      @db.Timestamp(6)
-  readStatus       ReadStatus
-  feed             Feed          @relation(fields: [entryId], references: [entryId], onDelete: NoAction, onUpdate: NoAction)
+  priority         PriorityType?
+  alertStatus      AlertStatus   @default(UNRESOLVED)
+  feed             Feed?          @relation(fields: [entryId], references: [entryId], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model Channel {
-  id          Int       @id
-  name        String    @db.VarChar
+  id          Int         @id
+  name        String      @db.VarChar
   latitude    Float
   longitude   Float
-  field1      String?   @db.VarChar(100)
-  field2      String?   @db.VarChar(100)
-  field3      String?   @db.VarChar(100)
-  field4      String?   @db.VarChar(100)
-  field5      String?   @db.VarChar(100)
-  field6      String?   @db.VarChar(100)
-  field7      String?   @db.VarChar(100)
-  field8      String?   @db.VarChar(100)
+  field1      String?     @db.VarChar(100)
+  field2      String?     @db.VarChar(100)
+  field3      String?     @db.VarChar(100)
+  field4      String?     @db.VarChar(100)
+  field5      String?     @db.VarChar(100)
+  field6      String?     @db.VarChar(100)
+  field7      String?     @db.VarChar(100)
+  field8      String?     @db.VarChar(100)
   lastEntryId Int
-  createdAt   DateTime? @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime? @default(now()) @db.Timestamp(6)
+  createdAt   DateTime?   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime?   @default(now()) @db.Timestamp(6)
   ApiKey      ApiKey[]
   feed        Feed[]
+  Threshold   Threshold[]
+  access      Access[]
 }
 
 model Feed {
@@ -52,21 +53,20 @@ model Feed {
   field7    String?  @db.VarChar(100)
   field8    String?  @db.VarChar(100)
   alerts    Alerts[]
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Labs {
   id          Int      @id @default(autoincrement())
   labLocation String   @db.VarChar(100)
   managerId   Int
-  user        User     @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   ApiKey      ApiKey[]
+  user        User     @relation(fields: [managerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model User {
   id                       Int            @id @default(autoincrement())
-  userRole                 Role           @default(STANDARD_USER)
   email                    String         @unique @db.VarChar(100)
   password                 String         @db.VarChar(255)
   firstName                String         @db.VarChar(50)
@@ -83,7 +83,6 @@ model User {
   city                     String?        @db.VarChar(100)
   county                   String?        @db.VarChar(100)
   postcode                 String?        @db.VarChar(20)
-  specialisation           String[]       @default([])
   description              String?        @db.VarChar(255)
   organisationRole         String?        @db.VarChar(50)
   organisationEmail        String?        @db.VarChar(100)
@@ -93,17 +92,21 @@ model User {
   organisationCity         String?        @db.VarChar(100)
   organisationCounty       String?        @db.VarChar(100)
   organisationPostcode     String?        @db.VarChar(20)
+  userRole                 Role           @default(STANDARD_USER)
   status                   UserStatus
+  specialisation           String[]       @default([])
   labs                     Labs[]
   usageHistory             UsageHistory[] @relation("UserUsageHistory")
+  access                   Access[]       @relation
+  grantedAccess            Access[]       @relation("GrantedBy")
 }
 
 model ApiKey {
   id        Int      @id @default(autoincrement())
-  channelId Int?
   api       String   @unique @db.VarChar
+  channelId Int?
   labId     Int?
-  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   lab       Labs?    @relation(fields: [labId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -113,8 +116,47 @@ model UsageHistory {
   userEmail String
   action    String
   metadata  Json?
+  user      User     @relation("UserUsageHistory", fields: [userEmail], references: [email])
+}
 
-  user User? @relation("UserUsageHistory", fields: [userEmail], references: [email])
+model DefaultThreshold {
+  id        Int      @id @default(autoincrement())
+  fieldName String   @unique
+  minValue  Float
+  maxValue  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  unit      String?
+}
+
+model Threshold {
+  id        Int      @id @default(autoincrement())
+  channelId Int
+  fieldName String
+  minValue  Float
+  maxValue  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  unit      String?
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, fieldName], name: "channelId_fieldName")
+}
+
+model Access {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  channelId     Int?
+  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime @updatedAt @db.Timestamp(6)
+  grantedBy     Int?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel       Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  grantedByUser User?    @relation("GrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+  @@index([channelId])
 }
 
 enum AlertStatus {
@@ -146,10 +188,10 @@ enum ReadStatus {
 }
 
 model ActivityLog {
-  id           Int      @id @default(autoincrement())
-  action       String   @db.VarChar(100)
-  user         String   @db.VarChar(100)
-  labLocation  String   @db.VarChar(100)
-  device       String?  @db.VarChar(100)
-  timestamp    DateTime @default(now()) @db.Timestamp(6)
+  id          Int      @id @default(autoincrement())
+  action      String   @db.VarChar(100)
+  user        String   @db.VarChar(100)
+  labLocation String   @db.VarChar(100)
+  device      String?  @db.VarChar(100)
+  timestamp   DateTime @default(now()) @db.Timestamp(6)
 }

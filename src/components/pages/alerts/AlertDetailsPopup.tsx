@@ -1,4 +1,3 @@
-// app/admin/alerts/components/AlertDetailsPopup.tsx
 import React, { useState } from "react";
 import {
   Box,
@@ -21,7 +20,7 @@ import { RowType } from "../page";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { green, orange, red, blue, grey } from "@mui/material/colors";
+import { green, red, blue, grey, orange } from "@mui/material/colors";
 
 const HeaderCard = styled(MuiCard)`
   ${spacing}
@@ -31,6 +30,13 @@ const HeaderCard = styled(MuiCard)`
 `;
 
 const DescriptionCard = styled(MuiCard)`
+  ${spacing}
+  margin: 8px 16px 8px 16px;
+  overflow: visible;
+  border: 1px solid ${grey[300]};
+`;
+
+const SensorCard = styled(MuiCard)`
   ${spacing}
   margin: 8px 16px 16px 16px;
   overflow: visible;
@@ -51,7 +57,8 @@ const PriorityChip = styled(MuiChip)`
 
 const StatusChip = styled(MuiChip)`
   ${spacing}
-  background: ${(props) => (props.label === "RESOLVED" ? blue[500] : grey[500])};
+  background: ${(props) =>
+    props.label === "RESOLVED" ? blue[500] : grey[500]};
   color: white;
 `;
 
@@ -59,12 +66,18 @@ interface AlertDetailsPopupProps {
   open: boolean;
   row: RowType | null;
   onClose: () => void;
+  handleDelete: (id: number) => void;
+  handleMarkAsResolved: (id: number) => void;
+  refreshData: () => void;
 }
 
 const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   open,
   row,
   onClose,
+  handleDelete,
+  handleMarkAsResolved,
+  refreshData,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -77,10 +90,35 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
     setAnchorEl(null);
   };
 
+  const handleMenuDelete = () => {
+    handleDelete(row!.id);
+    handleMenuClose();
+    onClose();
+  };
+
+  const handleMenuResolve = () => {
+    handleMarkAsResolved(row!.id);
+    handleMenuClose();
+    refreshData();
+    onClose();
+  };
+
   if (!row) return null;
 
-  // Placeholder for dynamic buttons (UI only)
-  const showApprovalButtons = row.priority === "HIGH" && row.status === "UNRESOLVED";
+  // Prepare sensor data for display
+  const sensorData = [];
+  const fields = ["field1", "field2", "field3", "field4", "field5", "field6", "field7", "field8"];
+  if (row.feed && row.channelFields) {
+    fields.forEach((field, index) => {
+      const value = row.feed[field as keyof typeof row.feed];
+      const label = row.channelFields[field as keyof typeof row.channelFields];
+      if (value != null && label) {
+        const formattedValue =
+          typeof value === "number" ? value.toFixed(2) : value;
+        sensorData.push({ label, value: formattedValue });
+      }
+    });
+  }
 
   return (
     <Dialog
@@ -119,11 +157,11 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem onClick={handleMenuDelete}>
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
             Delete
           </MenuItem>
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem onClick={handleMenuResolve}>
             <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
             Mark as Resolved
           </MenuItem>
@@ -149,18 +187,22 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
               </Grid>
               <Grid item xs={6}>
                 <Typography sx={{ fontSize: "1rem" }}>
-                  <strong>Priority:</strong> <PriorityChip size="small" label={row.priority} />
+                  <strong>Priority:</strong>{" "}
+                  <PriorityChip size="small" label={row.priority} />
                 </Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography sx={{ fontSize: "1rem" }}>
-                  <strong>Status:</strong> <StatusChip size="small" label={row.status} />
+                  <strong>Status:</strong>{" "}
+                  <StatusChip size="small" label={row.status} />
                 </Typography>
               </Grid>
               <Grid item xs={12}>
                 <Typography sx={{ fontSize: "1rem" }}>
                   <strong>Date:</strong>{" "}
-                  {row.date !== "Unknown" ? format(new Date(row.date), "dd/MM/yy HH:mm") : "Unknown"}
+                  {row.date !== "Unknown"
+                    ? format(new Date(row.date), "dd/MM/yy HH:mm")
+                    : "Unknown"}
                 </Typography>
               </Grid>
             </Grid>
@@ -170,7 +212,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
 
       {/* Description Block */}
       <DescriptionCard>
-        <CardContent sx={{ flex: 1 }}>
+        <CardContent>
           <Typography variant="h6" color="textSecondary">
             Description
           </Typography>
@@ -180,7 +222,28 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
         </CardContent>
       </DescriptionCard>
 
-      {/* Buttons with Standard Size */}
+      {/* Sensor Snapshot Block */}
+      <SensorCard sx={{ flex: 1 }}>
+        <CardContent>
+          <Typography variant="h6" color="textSecondary">
+            Sensor Snapshot
+          </Typography>
+          {sensorData.length > 0 ? (
+            <Box sx={{ mt: 2 }}>
+              {sensorData.map((data, index) => (
+                <Typography key={index} sx={{ fontSize: "1rem", mb: 1 }}>
+                  <strong>{data.label}:</strong> {data.value}
+                </Typography>
+              ))}
+            </Box>
+          ) : (
+            <Typography sx={{ mt: 2, fontSize: "1rem", color: grey[600] }}>
+              No sensor data available for this alert.
+            </Typography>
+          )}
+        </CardContent>
+      </SensorCard>
+
       <Box
         sx={{
           display: "flex",
@@ -189,29 +252,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           p: 4,
         }}
       >
-        {showApprovalButtons && (
-          <>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ minWidth: "100px" }}
-            >
-              Approve
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              sx={{ minWidth: "100px" }}
-            >
-              Reject
-            </Button>
-          </>
-        )}
-        <Button
-          variant="outlined"
-          onClick={onClose}
-          sx={{ minWidth: "100px" }}
-        >
+        <Button variant="outlined" onClick={onClose} sx={{ minWidth: "100px" }}>
           Cancel
         </Button>
       </Box>
