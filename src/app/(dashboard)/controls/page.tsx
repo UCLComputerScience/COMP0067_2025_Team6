@@ -2272,7 +2272,7 @@ function Controls() {
           setSortField={setSortField}
           setSortDirection={setSortDirection}
         />
-        
+        <HideAuthGuard requiredRoles={["ADMIN", "SUPERUSER"]}>
         <Button
           variant="contained"
           color="primary"
@@ -2281,6 +2281,7 @@ function Controls() {
         >
           Manage Settings
         </Button>
+        </HideAuthGuard>
       </SearchBarContainer>
 
       <Modal

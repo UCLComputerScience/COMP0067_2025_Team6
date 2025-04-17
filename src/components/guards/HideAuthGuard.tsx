@@ -3,31 +3,37 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 
+interface SessionUser {
+  userRole?: string;
+}
+
 interface HideAuthGuardProps {
   children: React.ReactNode;
   requiredRoles?: string[];
 }
 
-const HideAuthGuard = ({ children, requiredRoles = [] }: HideAuthGuardProps) => {
+const HideAuthGuard = ({
+  children,
+  requiredRoles = [],
+}: HideAuthGuardProps) => {
   const { data: session, status } = useSession();
   const userRole = session?.user?.userRole;
 
-  console.log("HideAuthGuard - Session Data:", session);
-  console.log("HideAuthGuard - User Role:", userRole);
-  console.log("HideAuthGuard - Required Roles:", requiredRoles);
-
-  // If session is still loading, return null to avoid flashing content
   if (status === "loading") {
+    return <div style={{ visibility: "hidden" }}>{children}</div>;
+  }
+
+  if (status === "unauthenticated") {
     return null;
   }
 
-  // If unauthenticated or role doesn't match, hide the children (return null)
-  if (status === "unauthenticated" || (requiredRoles.length > 0 && !requiredRoles.includes(userRole))) {
-    console.log("Hiding component - User not authenticated or role insufficient");
+  if (
+    requiredRoles.length > 0 &&
+    (!userRole || !requiredRoles.includes(userRole))
+  ) {
     return null;
   }
 
-  // If authenticated and role matches, show the children
   return <>{children}</>;
 };
 
