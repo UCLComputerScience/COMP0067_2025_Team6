@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions"; 
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
 
 export async function GET(req: NextRequest) {
   console.log("Server-side DATABASE_URL:", process.env.DATABASE_URL);

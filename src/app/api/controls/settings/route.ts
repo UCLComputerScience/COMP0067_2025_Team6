@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
  import { PrismaClient } from "@prisma/client";
  
- const prisma = new PrismaClient();
+//  const prisma = new PrismaClient();
+import prisma from "../../../../lib/prisma";
  
  export async function GET() {
    try {
@@ -11,7 +12,7 @@ import { NextResponse } from "next/server";
    } catch (error) {
      console.error("GET /api/controls/settings - Error:", error);
      return NextResponse.json(
-       { error: `Failed to fetch default thresholds: ${error.message}` },
+       { error: `Failed to fetch default thresholds: ${(error as Error).message}` },
        { status: 500 }
      );
    } finally {
@@ -98,7 +99,7 @@ import { NextResponse } from "next/server";
    } catch (error) {
      console.error("POST /api/controls/settings - Error:", error);
      return NextResponse.json(
-       { error: `Failed to save default thresholds: ${error.message}` },
+       { error: `Failed to save default thresholds: ${(error as Error).message}` },
        { status: 500 }
      );
    } finally {

@@ -39,9 +39,6 @@ const Typography = styled(MuiTypography)(spacing);
 
 const Lab1 = () => {
   const [selectedOption, setSelectedOption] = React.useState<string>("");
-  // const [data, setData] = React.useState<DeviceProps>({} as DeviceProps);  // Data fetched from the API
-  // const [channel_db, setChannel_db] = React.useState<ChannelProps>({} as ChannelProps);  // Channel data from db
-  // const [feeds_db, setFeeds_db] = React.useState<FeedPropsDb[]>([]);  // Feeds data from db
   const [apikeys, setApikeys] = React.useState<string[]>([]); // Apikeys data from db
   const [apidata, setApidata] = React.useState<DeviceProps[]>([]); // Data fetched from the API
   const [data, setData] = React.useState<string>("");
@@ -117,7 +114,7 @@ const Lab1 = () => {
     };
 
     fetchAllData();
-    const interval = setInterval(fetchAllData, 60000); // Poll every 5 sec
+    const interval = setInterval(fetchAllData, 60000); // Poll every 60 sec
 
     return () => clearInterval(interval); // Cleanup
   }, [selectedOption, apikeys]);
@@ -175,51 +172,6 @@ const Lab1 = () => {
   ];
 });
 
-  // const devicesApi = apidata.map((item) => {
-  //   const channel = item?.channel?.name || "N/A";
-  //   if (device !== "All" && channel === device) {}
-
-  //   const channel_id = item?.channel?.id || 0;
-  //   const field1 = item?.channel?.field1 || "N/A";
-  //   const field2 = item?.channel?.field2 || "N/A";
-  //   const field3 = item?.channel?.field3 || "N/A";
-
-  //   // Ensure feeds array exists
-  //   const rdata = item?.feeds || [];
-
-  //   // Extract numerical values safely
-  //   const temperature = rdata.map((feed) => Number(feed?.field1) || 0);
-  //   const humidity = rdata.map((feed) => Number(feed?.field2) || 0);
-  //   const pressure = rdata.map((feed) => Number(feed?.field3) || 0);
-
-  //   // Extract timestamps (assuming extractTimestamps is correctly implemented)
-  //   const DeviceLabels = extractTimestamps(rdata);
-
-  //   return [
-  //     {
-  //       channel_id: channel_id,
-  //       channel: channel,
-  //       field: field1,
-  //       DeviceData: temperature,
-  //       DeviceLabels: DeviceLabels,
-  //     },
-  //     {
-  //       channel_id: channel_id,
-  //       channel: channel,
-  //       field: field2,
-  //       DeviceData: humidity,
-  //       DeviceLabels: DeviceLabels,
-  //     },
-  //     {
-  //       channel_id: channel_id,
-  //       channel: channel,
-  //       field: field3,
-  //       DeviceData: pressure,
-  //       DeviceLabels: DeviceLabels,
-  //     },
-  //   ];
-  // });
-
   const DevicesGridApi = () => {
     return (
       <Grid container spacing={6}>
@@ -228,7 +180,7 @@ const Lab1 = () => {
             key={`${device.channel}-${device.field}`} // Change index key to id
             size={{
               xs: 12,
-              lg: 12,
+              lg: 6,
             }}
           >
             <LineChart
@@ -245,34 +197,6 @@ const Lab1 = () => {
     );
   };
 
-  // // Get session data using the useSession hook
-  // const { data: session, status } = useSession();
-  // const router = useRouter();
-
-  // // State for controlling loading or redirection state
-  // const [loading, setLoading] = useState(true);
-
-  // // Check if the user is authenticated and redirect if needed
-  // useEffect(() => {
-  //   if (status === "unauthenticated") {
-  //     setLoading(false); // Stop loading when we know the user is unauthenticated
-  //     router.push("/auth/sign-in"); // Redirect to login page if not authenticated
-  //   } else if (status === "authenticated") {
-  //     setLoading(false); // Stop loading when user is authenticated
-  //   }
-  // }, [status, router]);
-
-  // // Show a loading state or "Please log in" message while checking session
-  // if (loading) {
-  //   return (
-  //     <div>
-  //       <Typography variant="h5" gutterBottom>
-  //         {t("Please log in to view this page.")}
-  //       </Typography>
-  //     </div>
-  //   );
-  // }
-  // const { data: session } = useSession();
   console.log(session?.user);
 
   return (

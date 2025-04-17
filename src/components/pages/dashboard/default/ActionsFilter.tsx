@@ -106,12 +106,6 @@ const Actions: React.FC<DeviceNameProps> = ({ data, setData, device, setDevice }
 
   return (
     <React.Fragment>
-      {/* <SmallButton size="small" mr={2}>
-        <LoopIcon />
-      </SmallButton> */}
-      {/* <SmallButton size="small" mr={2}>
-        <FilterListIcon />
-      </SmallButton> */}
       <Button
         variant="contained"
         color="secondary"

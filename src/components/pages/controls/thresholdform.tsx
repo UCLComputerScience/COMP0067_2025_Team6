@@ -195,7 +195,11 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       handleClose();
     } catch (error) {
       console.error("Error saving thresholds:", error);
-      setError(error.message || "Failed to save thresholds. Please try again.");
+      if (error instanceof Error) {
+        setError(error.message || "Failed to save thresholds. Please try again.");
+      } else {
+        setError("Failed to save thresholds. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -292,7 +296,11 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       onSave(); // Trigger onSave to refresh LabCard
     } catch (error) {
       console.error("Error resetting thresholds:", error);
-      setError(error.message || "Failed to reset thresholds. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to reset thresholds. Please try again."
+      );
     } finally {
       setLoading(false);
     }
