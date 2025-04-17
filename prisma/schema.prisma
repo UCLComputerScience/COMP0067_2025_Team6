@@ -9,12 +9,13 @@ datasource db {
 
 model Alerts {
   id               Int           @id @default(autoincrement())
-  entryId          Int?
+  feedId           Int?
   alertDescription String        @db.VarChar(255)
   alertDate        DateTime      @db.Timestamp(6)
   priority         PriorityType?
   alertStatus      AlertStatus   @default(UNRESOLVED)
-  feed             Feed?          @relation(fields: [entryId], references: [entryId], onDelete: SetNull, onUpdate: NoAction)
+  fieldViolations  String[]      @default([])
+  feed             Feed?         @relation(fields: [feedId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model Channel {
@@ -42,7 +43,6 @@ model Channel {
 model Feed {
   id        Int      @id @default(autoincrement())
   channelId Int
-  entryId   Int      @unique
   createdAt DateTime @db.Timestamp(6)
   field1    Float?
   field2    Float?
