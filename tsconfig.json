@@ -46,6 +46,6 @@
       }
     ]
   },
-  "include": ["src", ".next/types/**/*.ts", "test", "jest.setup.ts"],
+  "include": ["src", ".next/types/**/*.ts", "test", "jest.setup.ts", "e2e/FormDialog.test.tsx"],
   "exclude": ["node_modules"]
 }

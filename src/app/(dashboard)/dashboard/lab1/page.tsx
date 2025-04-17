@@ -27,11 +27,7 @@ import {
 import Actions from "@/components/pages/dashboard/default/Actions";
 import ActionsAdd from "@/components/pages/dashboard/default/ActionsAdd";
 import ActionsFilter from "@/components/pages/dashboard/default/ActionsFilter";
-import BarChart from "@/components/pages/dashboard/default/BarChart";
 import LineChart from "@/components/pages/dashboard/default/LineChart";
-import DoughnutChart from "@/components/pages/dashboard/default/DoughnutChart";
-import Stats from "@/components/pages/dashboard/default/Stats";
-import Table from "@/components/pages/dashboard/default/Table";
 
 const Divider = styled(MuiDivider)(spacing);
 

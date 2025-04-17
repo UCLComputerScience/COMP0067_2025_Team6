@@ -100,23 +100,8 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, fie
         borderColor: theme.palette.secondary.main,
         tension: 0.4,
         data: DeviceData,
-        pointRadius: 0,
-        // pointRadius: 2, // Show points on the line with a radius of 5.
-        // pointBackgroundColor: theme.palette.secondary.main, // Color of the point's fill (the circle).
-        // pointBorderColor: theme.palette.primary.main, // Color of the point's border.
-        // pointBorderWidth: 2, // The width of the point's border.      
+        pointRadius: 0,     
         },
-      // {
-      //   label: "Orders",
-      //   fill: true,
-      //   backgroundColor: "transparent",
-      //   borderColor: theme.palette.grey[500],
-      //   borderDash: [4, 4],
-      //   tension: 0.4,
-      //   data: [
-      //     958, 724, 629, 883, 915, 1214, 1476, 1212, 1554, 2128, 1466, 1827,
-      //   ],
-      // },
     ],
   };
 
@@ -130,13 +115,6 @@ const LineChart: React.FC<DevicePropsTheme> = ({ theme, channel_id, channel, fie
         enabled: true,  // Enable tooltips
         mode: 'nearest' as 'nearest' | 'x' | 'y' | 'index' | 'dataset' | 'point' | undefined, // Show the nearest point
         intersect: false, // Allow tooltips to appear when hovering near the line
-        // callbacks: {
-        //   label: function (context) {
-        //     // Customize the tooltip label based on the hovered point
-        //     const datasetLabel = context.dataset.label || '';
-        //     const value = context.raw; // Access the value at the hovered point
-        //     return `${datasetLabel}: ${value}`;
-        //   },
         },
     },
     scales: {

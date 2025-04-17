@@ -41,15 +41,6 @@ const FormDialog: React.FC<DataProps> = ({ data, setData }) => {
   const lastSegment = pathSegments[pathSegments.length - 1];
 
   let lab = Number(lastSegment.split("")[lastSegment.length - 1]);
-  // let labmanager = 1;
-  // let labLocation = "";
-  // if (lab === 1) {
-  //   labLocation = "London";
-  // } else if (lab === 2) {
-  //   labLocation = "Turkey";
-  // } else if (lab === 3) {
-  //   labLocation = "India";
-  // }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
