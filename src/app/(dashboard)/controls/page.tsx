@@ -127,117 +127,6 @@ interface SensorFieldProps {
   latestValue: string;
 }
 
-// function SensorField({
-//   label,
-//   value,
-//   min,
-//   max,
-//   step,
-//   unit,
-//   onSliderChange,
-//   latestValue,
-// }: SensorFieldProps) {
-//   const latestVal = parseFloat(latestValue);
-//   const isExceedingThreshold = latestVal < min || latestVal > max;
-
-//   return (
-//     <Box
-//       sx={{
-//         display: "flex",
-//         alignItems: "center",
-//         backgroundColor: "#f0f0f0",
-//         borderRadius: "4px",
-//         padding: "8px",
-//         marginBottom: "8px",
-//       }}
-//     >
-//       <Typography
-//         variant="body2"
-//         sx={{ width: "100px", fontWeight: "bold", alignSelf: "center" }}
-//       >
-//         {label}
-//       </Typography>
-//       <Box
-//         sx={{
-//           width: "120px",
-//           margin: "0 8px",
-//           position: "relative",
-//         }}
-//       >
-//         <Slider
-//           value={value}
-//           min={min}
-//           max={max}
-//           step={step}
-//           onChange={onSliderChange}
-//           valueLabelDisplay="auto"
-//           valueLabelFormat={(val) => `${val}${unit}`} // Show numerical value with unit in tooltip
-//           marks={[
-//             {
-//               value: parseFloat(latestValue),
-//               label: null, // No label for latest value mark
-//             },
-//           ]}
-//           sx={{
-//             "& .MuiSlider-mark": {
-//               width: 5,
-//               height: 20,
-//               borderRadius: "2px",
-//               backgroundColor: isExceedingThreshold ? "red" : "green", // Green for within threshold, red for exceeding
-//               transform: "translate(-50%, -50%)",
-//             },
-//             "& .MuiSlider-thumb": {
-//               width: 12,
-//               height: 12,
-//               borderRadius: "50%",
-//               backgroundColor: isExceedingThreshold ? "red" : "#1976d2", // Red when exceeding, default blue otherwise
-//               "&:hover": {
-//                 boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
-//               },
-//             },
-//             "& .MuiSlider-track": {
-//               height: 4,
-//               backgroundColor: isExceedingThreshold ? "red" : "#1976d2", // Red when exceeding, default blue otherwise
-//             },
-//             "& .MuiSlider-rail": {
-//               height: 4,
-//               backgroundColor: "#bfbfbf",
-//             },
-//           }}
-//         />
-//       </Box>
-//       <Box
-//         sx={{
-//           minWidth: "60px", // Minimum width for the box
-//           minHeight: "32px", // Minimum height for the box
-//           textAlign: "center",
-//           backgroundColor: isExceedingThreshold
-//             ? "rgba(255, 0, 0, 0.2)" // Translucent red when exceeding
-//             : "rgba(0, 128, 0, 0.2)", // Translucent green when within threshold
-//           borderRadius: "4px",
-//           padding: "8px 12px", // Increased padding to expand the box
-//           alignSelf: "center", // Center vertically
-//           marginLeft: "auto", // Push to the right of the SensorField
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "center",
-//         }}
-//       >
-//         <Typography
-//           variant="body2"
-//           sx={{
-//             fontWeight: "bold",
-//             color: isExceedingThreshold ? "red" : "green",
-//           }}
-//         >
-//           {`${latestValue}${unit}`}
-//         </Typography>
-//       </Box>
-//     </Box>
-//   );
-// }
-
-
 
 function SensorField({
   label,
@@ -256,19 +145,19 @@ function SensorField({
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "85px 120px 65px", // Compacted widths
+        gridTemplateColumns: "85px 120px 65px", 
         alignItems: "center",
         backgroundColor: "#f0f0f0",
         borderRadius: "4px",
-        padding: "6px", // Reduced padding
+        padding: "6px", 
         marginBottom: "8px",
-        gap: "8px", // Reduced gap between grid items
+        gap: "8px", 
       }}
     >
       {/* Sensor Name Box */}
       <Box
         sx={{
-          padding: "4px", // Reduced padding
+          padding: "4px", 
           textAlign: "center",
           display: "flex",
           alignItems: "center",
@@ -283,10 +172,9 @@ function SensorField({
         </Typography>
       </Box>
 
-      {/* Slider Box */}
       <Box
         sx={{
-          padding: "4px", // Reduced padding
+          padding: "4px", 
           position: "relative",
         }}
       >
@@ -297,11 +185,11 @@ function SensorField({
           step={step}
           onChange={onSliderChange}
           valueLabelDisplay="auto"
-          valueLabelFormat={(val) => `${val}${unit}`} // Show numerical value with unit in tooltip
+          valueLabelFormat={(val) => `${val}${unit}`} 
           marks={[
             {
-              value: Math.min(Math.max(parseFloat(latestValue), min), max), // Clamp latestValue between min and max
-              label: "", // Empty label for triangle
+              value: Math.min(Math.max(parseFloat(latestValue), min), max), 
+              label: "", 
             },
           ]}
           sx={{
@@ -309,38 +197,38 @@ function SensorField({
               width: 5,
               height: 20,
               borderRadius: "2px",
-              backgroundColor: isExceedingThreshold ? "red" : "green", // Green for within threshold, red for exceeding
+              backgroundColor: isExceedingThreshold ? "red" : "green", 
               transform: "translate(-50%, -50%)",
             },
             "& .MuiSlider-markLabel[data-index='0']": {
-              top: "-6px", // Above the track for triangle
+              top: "-6px",
               width: 0,
               height: 0,
-              borderLeft: "8px solid transparent", // 16px base
+              borderLeft: "8px solid transparent", 
               borderRight: "8px solid transparent",
-              borderTop: `10px solid ${isExceedingThreshold ? "red" : "green"}`, // 10px height, inverted
-              transform: "translateX(-50%)", // Center above the mark
-              backgroundColor: "transparent", // No background
-              zIndex: 2, // Above track but below thumbs
+              borderTop: `10px solid ${isExceedingThreshold ? "red" : "green"}`, 
+              transform: "translateX(-50%)", 
+              backgroundColor: "transparent", 
+              zIndex: 2, 
             },
             "& .MuiSlider-thumb": {
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: isExceedingThreshold ? "red" : "#1976d2", // Red when exceeding, default blue
-              zIndex: 3, // Above triangle and track
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2", 
+              zIndex: 3, 
               "&:hover": {
                 boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
               },
             },
             "& .MuiSlider-track": {
               height: 4,
-              backgroundColor: isExceedingThreshold ? "red" : "#1976d2", // Red when exceeding, default blue
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2", 
               zIndex: 1,
             },
             "& .MuiSlider-rail": {
               height: 4,
-              backgroundColor: "#bfbfbf", // Gray rail
+              backgroundColor: "#bfbfbf", 
               zIndex: 0,
             },
           }}
@@ -349,7 +237,7 @@ function SensorField({
           sx={{
             position: "absolute",
             top: "24px",
-            left: "2px", // Adjusted for reduced padding
+            left: "2px", 
             fontSize: "0.65rem",
             color: "text.primary",
           }}
@@ -360,7 +248,7 @@ function SensorField({
           sx={{
             position: "absolute",
             top: "24px",
-            right: "2px", // Adjusted for reduced padding
+            right: "2px", 
             fontSize: "0.65rem",
             color: "text.primary",
           }}
@@ -372,10 +260,10 @@ function SensorField({
       {/* Sensor Value Box */}
       <Box
         sx={{
-          padding: "4px", // Reduced padding
+          padding: "4px", 
           backgroundColor: isExceedingThreshold
-            ? "rgba(255, 0, 0, 0.2)" // Translucent red when exceeding
-            : "rgba(0, 128, 0, 0.2)", // Translucent green when within threshold
+            ? "rgba(255, 0, 0, 0.2)" 
+            : "rgba(0, 128, 0, 0.2)", 
           borderRadius: "4px",
           textAlign: "center",
           display: "flex",
@@ -796,7 +684,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={handleOpenThresholdForm}>Edit Settings</MenuItem>
+            <MenuItem onClick={handleOpenThresholdForm}>Customise Thresholds</MenuItem>
           </Menu>
 
           <ThresholdForm
@@ -1351,7 +1239,7 @@ function Controls() {
             onClick={handleOpenSettings}
             sx={{ ml: "auto" }}
           >
-            Manage Settings
+            Manage Default Settings
           </Button>
         </HideAuthGuard>
       </SearchBarContainer>

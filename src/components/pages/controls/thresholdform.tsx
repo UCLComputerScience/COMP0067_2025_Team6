@@ -207,55 +207,6 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     }
   };
 
-  // const handleResetToDefault = async () => {
-  //   if (
-  //     !window.confirm(
-  //       "Are you sure you want to reset to default? This will delete all custom thresholds for this channel."
-  //     )
-  //   ) {
-  //     return;
-  //   }
-
-  //   setError(null);
-  //   setLoading(true);
-
-  //   try {
-  //     const response = await fetch("/api/controls/thresholds", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ channelId, thresholds: [] }),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(
-  //         errorData.error || `Failed to reset thresholds: ${response.status}`
-  //       );
-  //     }
-
-  //     const resetFields = channelFields.map((fieldName) => {
-  //       const defaultThreshold = defaultThresholds.find(
-  //         (t) => t.fieldName === fieldName
-  //       );
-  //       return {
-  //         fieldName,
-  //         minValue: defaultThreshold?.minValue?.toString() || "",
-  //         maxValue: defaultThreshold?.maxValue?.toString() || "",
-  //       };
-  //     });
-
-  //     setFields(resetFields);
-  //     alert("Thresholds reset to default successfully!");
-  //   } catch (error) {
-  //     console.error("Error resetting thresholds:", error);
-  //     setError(
-  //       error.message || "Failed to reset thresholds. Please try again."
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleResetToDefault = async () => {
     if (
       !window.confirm(
@@ -325,16 +276,29 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           width: "100%",
         }}
       >
-        <Typography id="threshold-form-title" variant="h6" gutterBottom>
-          Threshold Settings for {channelName}
+        <Typography id="threshold-form-title" variant="h6" mb={2}>
+          Customise Settings for {channelName}
         </Typography>
         {error && (
           <Typography color="error" mb={2}>
             {error}
           </Typography>
         )}
+        <Typography
+          id="threshold-info"
+          mb={2}
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.875rem",
+            fontWeight: 400,
+          }}
+        >
+          Use this form to customise threshold settings for individual lab
+          cards. Pressing "Reset to Default" will revert all settings to the
+          admin-defined defaults.
+        </Typography>
         {potentialWarnings.length > 0 && (
-          <Typography color="warning.main" mb={2}>
+          <Typography color="warning.main" mb={2} sx={{ pb: 2 }}>
             Warning: {potentialWarnings.join("; ")}
           </Typography>
         )}
@@ -410,7 +374,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
                 color="primary"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Thresholds"}
+                {loading ? "Saving..." : "Save"}
               </Button>
               <Button
                 variant="outlined"
