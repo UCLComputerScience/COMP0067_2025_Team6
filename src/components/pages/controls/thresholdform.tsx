@@ -201,6 +201,55 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     }
   };
 
+  // const handleResetToDefault = async () => {
+  //   if (
+  //     !window.confirm(
+  //       "Are you sure you want to reset to default? This will delete all custom thresholds for this channel."
+  //     )
+  //   ) {
+  //     return;
+  //   }
+
+  //   setError(null);
+  //   setLoading(true);
+
+  //   try {
+  //     const response = await fetch("/api/controls/thresholds", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ channelId, thresholds: [] }),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(
+  //         errorData.error || `Failed to reset thresholds: ${response.status}`
+  //       );
+  //     }
+
+  //     const resetFields = channelFields.map((fieldName) => {
+  //       const defaultThreshold = defaultThresholds.find(
+  //         (t) => t.fieldName === fieldName
+  //       );
+  //       return {
+  //         fieldName,
+  //         minValue: defaultThreshold?.minValue?.toString() || "",
+  //         maxValue: defaultThreshold?.maxValue?.toString() || "",
+  //       };
+  //     });
+
+  //     setFields(resetFields);
+  //     alert("Thresholds reset to default successfully!");
+  //   } catch (error) {
+  //     console.error("Error resetting thresholds:", error);
+  //     setError(
+  //       error.message || "Failed to reset thresholds. Please try again."
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleResetToDefault = async () => {
     if (
       !window.confirm(
@@ -209,24 +258,24 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     ) {
       return;
     }
-
+  
     setError(null);
     setLoading(true);
-
+  
     try {
       const response = await fetch("/api/controls/thresholds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelId, thresholds: [] }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
           errorData.error || `Failed to reset thresholds: ${response.status}`
         );
       }
-
+  
       const resetFields = channelFields.map((fieldName) => {
         const defaultThreshold = defaultThresholds.find(
           (t) => t.fieldName === fieldName
@@ -237,14 +286,13 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           maxValue: defaultThreshold?.maxValue?.toString() || "",
         };
       });
-
+  
       setFields(resetFields);
       alert("Thresholds reset to default successfully!");
+      onSave(); // Trigger onSave to refresh LabCard
     } catch (error) {
       console.error("Error resetting thresholds:", error);
-      setError(
-        error.message || "Failed to reset thresholds. Please try again."
-      );
+      setError(error.message || "Failed to reset thresholds. Please try again.");
     } finally {
       setLoading(false);
     }
