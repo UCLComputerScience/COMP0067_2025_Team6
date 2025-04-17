@@ -2,11 +2,14 @@ import { SidebarItemsType } from "@/types/sidebar";
 import { useSession } from "next-auth/react";
 
 import {
+  Bell,
   BookOpen,
   Briefcase,
   Calendar,
   CheckSquare,
+  Clock,
   CreditCard,
+  FileText,
   Grid,
   Heart,
   Layout,
@@ -15,14 +18,18 @@ import {
   ShoppingCart,
   Package,
   PieChart,
+  Settings,
   Sliders,
+  SlidersHorizontal,
+  User,
   Users,
+  Key,
 } from "lucide-react";
 
 const userSection = [
   {
     href: "/dashboard",
-    icon: Sliders,
+    icon: Layout,
     title: "Dashboard",
     children: [
       {
@@ -41,48 +48,45 @@ const userSection = [
   },
   {
     href: "/reports",
-    icon: Package,
+    icon: FileText,
     title: "Reports",
   },
 
   {
     href: "/controls",
-    icon: CheckSquare,
+    icon: SlidersHorizontal,
     title: "Controls",
     // badge: "17",
   },
-
-
 ] as SidebarItemsType[];
 
 const adminSection = [
   {
     href: "/admin/access",
-    icon: Package,
+    icon: Key,
     title: "Manage Access",
   },
   {
     href: "/admin/activity",
-    icon: Package,
+    icon: List,
     title: "Activity Logs",
   },
   {
     href: "/admin/usage",
-    icon: ShoppingCart,
+    icon: Clock,
     title: "Usage History",
   },
   {
     href: "/admin/alerts",
-    icon: ShoppingCart,
+    icon: Bell,
     title: "Alerts",
   },
-
 ] as SidebarItemsType[];
 
 const accountSection = [
   {
     href: "/account/profile",
-    icon: ShoppingCart,
+    icon: User,
     title: "Profile",
   },
 ] as SidebarItemsType[];

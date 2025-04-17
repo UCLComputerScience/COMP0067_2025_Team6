@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
-
 import {
+  Alert,
   Box,
   Breadcrumbs as MuiBreadcrumbs,
   Button,
@@ -38,6 +37,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Snackbar,
   CircularProgress,
   Popover,
 } from "@mui/material";
@@ -53,12 +53,11 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing, SpacingProps } from "@mui/system";
-import { Rosario } from "next/font/google";
+import { format, startOfDay, endOfDay } from "date-fns";
+import AlertDetailsPopup from "@/components/pages/alerts/AlertDetailsPopup";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { format, startOfDay, endOfDay } from "date-fns";
-import AlertDetailsPopup from "./components/AlertDetailsPopup";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
@@ -70,14 +69,12 @@ interface PriorityChipProps extends SpacingProps {
 
 const PriorityChip = styled(MuiChip)<PriorityChipProps>`
   ${spacing};
-
   background: ${(props) =>
     props.priority === "High"
       ? red[500]
       : props.priority === "Moderate"
       ? orange[500]
-      : green[500]}; // Use green for Low priority
-
+      : green[500]};
   color: ${(props) => props.theme.palette.common.white};
 `;
 
@@ -86,7 +83,6 @@ interface StatusChipProps extends SpacingProps {
 }
 const StatusChip = styled(MuiChip)<StatusChipProps>`
   ${spacing};
-
   background: ${(props) =>
     props.status === "Resolved" ? blue[500] : grey[500]};
   color: ${(props) => props.theme.palette.common.white};
@@ -102,9 +98,11 @@ const ToolbarTitle = styled.div`
 
 const SearchContainer = styled.div`
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: center;
+  width: 100%;
 `;
 
 type AlertType = {
@@ -116,21 +114,64 @@ type AlertType = {
   alertDescription: string;
   status: string;
   date: string;
+  feed?: {
+    entryId: number;
+    field1?: number | null;
+    field2?: number | null;
+    field3?: number | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+    createdAt: string;
+  } | null;
+  channelFields?: {
+    field1?: string | null;
+    field2?: string | null;
+    field3?: string | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+  } | null;
 };
 
 export type RowType = {
   id: number;
-  location: string; // Convert [lat, lon] to string
+  location: string;
   channelId: number;
   channel: string;
   priority: string;
   desc: string;
   status: string;
   date: string;
+  feed?: {
+    entryId: number;
+    field1?: number | null;
+    field2?: number | null;
+    field3?: number | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+    createdAt: string;
+  } | null;
+  channelFields?: {
+    field1?: string | null;
+    field2?: string | null;
+    field3?: string | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+  } | null;
 };
 
 function createRowFromAlert(alert: AlertType): RowType {
-  console.log("Processing alert:", alert);
   return {
     id: alert.alertId,
     location:
@@ -145,33 +186,214 @@ function createRowFromAlert(alert: AlertType): RowType {
     desc: alert.alertDescription || "No description",
     status: alert.status || "UNRESOLVED",
     date: alert.date || "Unknown",
+    feed: alert.feed || null,
+    channelFields: alert.channelFields || null,
   };
+}
+
+function DateFilterMenu({
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate,
+  selectedRange,
+  setSelectedRange,
+}: {
+  startDate: Date | null;
+  endDate: Date | null;
+  setStartDate: (date: Date | null) => void;
+  setEndDate: (date: Date | null) => void;
+  selectedRange: string;
+  setSelectedRange: (range: string) => void;
+}) {
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(
+    null
+  );
+  const [popoverAnchorEl, setPopoverAnchorEl] =
+    React.useState<HTMLElement | null>(null);
+
+  const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleRangeSelect = (
+    range: string,
+    event?: React.MouseEvent<HTMLElement>
+  ) => {
+    setSelectedRange(range);
+    let newStartDate: Date | null = null;
+    let newEndDate: Date | null = new Date();
+
+    switch (range) {
+      case "7days":
+        newStartDate = new Date();
+        newStartDate.setDate(newStartDate.getDate() - 7);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "30days":
+        newStartDate = new Date();
+        newStartDate.setDate(newStartDate.getDate() - 30);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "year":
+        newStartDate = new Date();
+        newStartDate.setFullYear(newStartDate.getFullYear() - 1);
+        newStartDate = startOfDay(newStartDate);
+        newEndDate = endOfDay(newEndDate);
+        break;
+      case "all":
+        newStartDate = null;
+        newEndDate = null;
+        break;
+      case "custom":
+        if (event) {
+          setPopoverAnchorEl(event.currentTarget);
+        }
+        return;
+    }
+
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setMenuAnchorEl(null);
+  };
+
+  const handlePopoverClose = () => {
+    setPopoverAnchorEl(null);
+  };
+
+  const handleApplyCustomRange = () => {
+    setSelectedRange("custom");
+    if (startDate) setStartDate(startOfDay(startDate));
+    if (endDate) setEndDate(endOfDay(endDate));
+    setPopoverAnchorEl(null);
+  };
+
+  const handleResetDateFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedRange("all");
+    setPopoverAnchorEl(null);
+  };
+
+  return (
+    <>
+      <Button
+        variant="outlined"
+        onClick={handleDateFilterClick}
+        startIcon={<FilterListIcon />}
+      >
+        {selectedRange === "7days"
+          ? "Last 7 Days"
+          : selectedRange === "30days"
+          ? "Last 30 Days"
+          : selectedRange === "year"
+          ? "Last Year"
+          : selectedRange === "custom"
+          ? "Custom Range"
+          : "All Time"}
+      </Button>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <MenuItem onClick={() => handleRangeSelect("7days")}>
+          Last 7 Days
+        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("30days")}>
+          Last 30 Days
+        </MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("year")}>Last Year</MenuItem>
+        <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
+        <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
+          Custom Range
+        </MenuItem>
+        <MenuItem onClick={handleResetDateFilter}>Reset</MenuItem>
+      </Menu>
+
+      <Popover
+        open={Boolean(popoverAnchorEl)}
+        anchorEl={popoverAnchorEl}
+        onClose={handlePopoverClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <Box sx={{ p: 2, minWidth: 300 }}>
+          <Typography variant="h6" gutterBottom>
+            Select Date Range
+          </Typography>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+                format="dd/MM/yy"
+              />
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                slotProps={{ textField: { size: "small" } }}
+                format="dd/MM/yy"
+              />
+            </Box>
+          </LocalizationProvider>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            <Button onClick={handleResetDateFilter} color="secondary">
+              Reset
+            </Button>
+            <Button onClick={handlePopoverClose}>Cancel</Button>
+            <Button onClick={handleApplyCustomRange} variant="contained">
+              Apply
+            </Button>
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  );
 }
 
 function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   if (orderBy === "channelId") {
-    // Numerical sorting for Channel ID
     return b.channelId - a.channelId;
   } else if (orderBy === "channel") {
-    // Alphabetical sorting for Channel Name
     return b.channel.localeCompare(a.channel);
   } else if (orderBy === "priority") {
-    // Custom order: LOW (1), MODERATE (2), HIGH (3)
     const priorityOrder = { LOW: 1, MODERATE: 2, HIGH: 3 };
-    return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
-           (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+    return (
+      (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) -
+      (priorityOrder[a.priority as keyof typeof priorityOrder] || 0)
+    );
   } else if (orderBy === "desc") {
-    // Alphabetical sorting for Description
     return b.desc.localeCompare(a.desc);
   } else if (orderBy === "status") {
-    // Custom order: UNRESOLVED (0), RESOLVED (1)
     const statusOrder = { UNRESOLVED: 0, RESOLVED: 1 };
-    return (statusOrder[b.status as keyof typeof statusOrder] || 0) - (statusOrder[a.status as keyof typeof statusOrder] || 0);
+    return (
+      (statusOrder[b.status as keyof typeof statusOrder] || 0) -
+      (statusOrder[a.status as keyof typeof statusOrder] || 0)
+    );
   } else if (orderBy === "date") {
-    // Chronological sorting for Date & Time
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   }
-  return 0; // Default case (e.g., "actions" won't sort)
+  return 0;
 }
 
 function getComparator(
@@ -218,10 +440,10 @@ const headCells: Array<HeadCell> = [
 type EnhancedTableHeadProps = {
   numSelected: number;
   order: "desc" | "asc";
-  orderBy: keyof RowType; // [CHANGED]
+  orderBy: keyof RowType;
   rowCount: number;
   onSelectAllClick: (e: any) => void;
-  onRequestSort: (e: any, property: keyof RowType) => void; // [CHANGED]
+  onRequestSort: (e: any, property: keyof RowType) => void;
 };
 
 const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
@@ -275,23 +497,10 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
 
 type EnhancedTableToolbarProps = {
   numSelected: number;
-  onManageAlertsClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  anchorEl: HTMLElement | null;
-  handleMenuClose: () => void;
-  handleBulkDelete: () => void;
-  handleBulkResolve: () => void;
 };
+
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  // Here was 'let'
-  const {
-    numSelected,
-    onManageAlertsClick,
-    anchorEl,
-    handleMenuClose,
-    handleBulkDelete,
-    handleBulkResolve,
-  } = props;
-  const open = Boolean(anchorEl);
+  const { numSelected } = props;
 
   return (
     <Toolbar>
@@ -307,43 +516,6 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
         )}
       </ToolbarTitle>
       <Spacer />
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          disabled={numSelected === 0}
-          onClick={onManageAlertsClick}
-          aria-controls={open ? "manage-alerts-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-          sx={{ minWidth: "110px", minHeight: "35px" }} // Makes the button longer
-        >
-          Manage Alerts
-        </Button>
-        <Menu
-          id="manage-alerts-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <MenuItem onClick={handleBulkDelete}>
-            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-            Delete
-          </MenuItem>
-          <MenuItem onClick={handleBulkResolve}>
-            <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
-            Mark as Resolved
-          </MenuItem>
-        </Menu>
-        <Tooltip title="Filter list">
-          <IconButton aria-label="Filter list" size="large">
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      </div>
     </Toolbar>
   );
 };
@@ -367,38 +539,48 @@ function EnhancedTable() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [priorityFilter, setPriorityFilter] = React.useState("All");
   const [statusFilter, setStatusFilter] = React.useState("All");
-  const [reloadAlerts, setReloadAlerts] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [selectedRange, setSelectedRange] = React.useState("all");
   const [descriptionDialogOpen, setDescriptionDialogOpen] =
     React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowType | null>(null);
+  const [snackbar, setSnackbar] = React.useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+
+  const showFeedback = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const fetchAlerts = async () => {
     try {
       setLoading(true);
       const timestamp = new Date().getTime();
-      const response = await fetch(
-        `/admin/alerts/api/channel?_t=${timestamp}`,
-        {
-          cache: "no-store",
-          headers: {
-            pragma: "no-cache",
-            "cache-control": "no-cache",
-          },
-        }
-      );
-      console.log("Response status:", response.status);
+      const response = await fetch(`/api/alerts/channel?_t=${timestamp}`, {
+        cache: "no-store",
+        headers: {
+          pragma: "no-cache",
+          "cache-control": "no-cache",
+        },
+      });
       if (!response.ok)
         throw new Error(`HTTP error! Status: ${response.status}`);
       const data: AlertType[] = await response.json();
-      console.log("Raw API data:", data);
       const formattedRows = data.map(createRowFromAlert);
-      console.log("Formatted rows:", formattedRows);
       setRows(formattedRows);
     } catch (error) {
       console.error("Failed to fetch alerts:", error);
+      showFeedback("Failed to fetch alerts.", "error");
     } finally {
       setLoading(false);
     }
@@ -406,17 +588,12 @@ function EnhancedTable() {
 
   useEffect(() => {
     fetchAlerts();
-  }, [reloadAlerts]);
+  }, []);
 
   const handleRequestSort = (event: any, property: keyof RowType) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
-  };
-
-  const handleRefreshData = () => {
-    console.log("Refreshing alert data...");
-    setReloadAlerts((prev) => !prev);
   };
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -476,164 +653,6 @@ function EnhancedTable() {
     setSelectedRow(null);
   };
 
-  const DateFilterMenu = () => {
-    const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(
-      null
-    );
-    const [popoverAnchorEl, setPopoverAnchorEl] =
-      React.useState<HTMLElement | null>(null);
-
-    const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
-      console.log("Anchor element:", event.currentTarget);
-      setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-      setMenuAnchorEl(null);
-    };
-
-    const handleRangeSelect = (
-      range: string,
-      event?: React.MouseEvent<HTMLElement>
-    ) => {
-      setSelectedRange(range);
-      let newStartDate: Date | null = null;
-      let newEndDate: Date | null = new Date();
-
-      switch (range) {
-        case "7days":
-          newStartDate = new Date();
-          newStartDate.setDate(newStartDate.getDate() - 7);
-          newStartDate = startOfDay(newStartDate); // Start of day
-          newEndDate = endOfDay(newEndDate); // End of current day
-          break;
-        case "30days":
-          newStartDate = new Date();
-          newStartDate.setDate(newStartDate.getDate() - 30);
-          newStartDate = startOfDay(newStartDate);
-          newEndDate = endOfDay(newEndDate);
-          break;
-        case "year":
-          newStartDate = new Date();
-          newStartDate.setFullYear(newStartDate.getFullYear() - 1);
-          newStartDate = startOfDay(newStartDate);
-          newEndDate = endOfDay(newEndDate);
-          break;
-        case "all":
-          newStartDate = null;
-          newEndDate = null;
-          break;
-        case "custom":
-          if (event) {
-            setPopoverAnchorEl(event.currentTarget);
-          }
-          return;
-      }
-
-      setStartDate(newStartDate);
-      setEndDate(newEndDate);
-      setMenuAnchorEl(null);
-    };
-
-    const handlePopoverClose = () => {
-      setPopoverAnchorEl(null);
-    };
-
-    const handleApplyCustomRange = () => {
-      setSelectedRange("custom");
-      if (startDate) setStartDate(startOfDay(startDate));
-      if (endDate) setEndDate(endOfDay(endDate));
-      setPopoverAnchorEl(null);
-    };
-
-    return (
-      <>
-        <Button
-          variant="outlined"
-          onClick={handleDateFilterClick}
-          startIcon={<FilterListIcon />}
-        >
-          {selectedRange === "7days"
-            ? "Last 7 Days"
-            : selectedRange === "30days"
-            ? "Last 30 Days"
-            : selectedRange === "year"
-            ? "Last Year"
-            : selectedRange === "custom"
-            ? "Custom Range"
-            : "All Time"}
-        </Button>
-
-        <Menu
-          anchorEl={menuAnchorEl}
-          open={Boolean(menuAnchorEl)}
-          onClose={handleMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <MenuItem onClick={() => handleRangeSelect("7days")}>
-            Last 7 Days
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("30days")}>
-            Last 30 Days
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("year")}>
-            Last Year
-          </MenuItem>
-          <MenuItem onClick={() => handleRangeSelect("all")}>All Time</MenuItem>
-          <MenuItem onClick={(event) => handleRangeSelect("custom", event)}>
-            Custom Range
-          </MenuItem>
-        </Menu>
-
-        <Popover
-          open={Boolean(popoverAnchorEl)}
-          anchorEl={popoverAnchorEl}
-          onClose={handlePopoverClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, minWidth: 300 }}>
-            <Typography variant="h6" gutterBottom>
-              Select Date Range
-            </Typography>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <DatePicker
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(newValue) => setStartDate(newValue)}
-                  slotProps={{ textField: { size: "small" } }}
-                  format="dd/MM/yy"
-                />
-                <DatePicker
-                  label="End Date"
-                  value={endDate}
-                  onChange={(newValue) => setEndDate(newValue)}
-                  slotProps={{ textField: { size: "small" } }}
-                  format="dd/MM/yy"
-                />
-              </Box>
-            </LocalizationProvider>
-            <Box
-              sx={{
-                mt: 2,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 1,
-              }}
-            >
-              <Button onClick={handlePopoverClose}>Cancel</Button>
-              <Button onClick={handleApplyCustomRange} variant="contained">
-                Apply
-              </Button>
-            </Box>
-          </Box>
-        </Popover>
-      </>
-    );
-  };
-
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
   const filteredRows = rows.filter((row) => {
@@ -666,24 +685,22 @@ function EnhancedTable() {
   const confirmDelete = async () => {
     if (deleteId === null) return;
     try {
-      const response = await fetch(`/admin/alerts/api/${deleteId}/delete`, {
+      const response = await fetch(`/api/alerts/${deleteId}/delete`, {
         method: "DELETE",
       });
       if (response.ok) {
-        setRows(rows.filter((row) => row.id !== deleteId));
+        await fetchAlerts();
         setSelected(
           selected.filter((selectedId) => selectedId !== deleteId.toString())
         );
-        console.log(`Alert deleted successfully.`);
-        alert(`Alert deleted successfully.`);
+        showFeedback("Alert deleted successfully.", "success");
       } else {
         const errorData = await response.json();
-        console.error("Failed to delete alert:", errorData.error);
-        alert("Unable to delete alert.");
+        showFeedback(`Failed to delete alert: ${errorData.error}`, "error");
       }
     } catch (error) {
       console.error("Error deleting alert:", error);
-      alert("Something went wrong. Please try again.");
+      showFeedback("Something went wrong. Please try again.", "error");
     } finally {
       setDeleteDialogOpen(false);
       setDeleteId(null);
@@ -693,7 +710,7 @@ function EnhancedTable() {
   const handleMarkAsResolved = async (id: number) => {
     const row = rows.find((r) => r.id === id);
     if (row && row.status === "RESOLVED") {
-      alert(`Alert is already resolved.`);
+      showFeedback("Alert is already resolved.", "info");
       return;
     }
     setResolveId(id);
@@ -703,46 +720,39 @@ function EnhancedTable() {
   const confirmResolve = async () => {
     if (resolveId === null) return;
     try {
-      const response = await fetch(`/admin/alerts/api/${resolveId}/update`, {
+      const response = await fetch(`/api/alerts/${resolveId}/update`, {
         method: "PATCH",
       });
       if (response.ok) {
-        const updatedAlert = await response.json();
-        setRows(
-          rows.map((row) =>
-            row.id === resolveId
-              ? { ...row, status: updatedAlert.alertStatus }
-              : row
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.id === resolveId ? { ...row, status: "RESOLVED" } : row
           )
         );
-        console.log(`Alert ${resolveId} marked as resolved.`);
-        alert(`Alert successfully marked as resolved.`);
+        showFeedback("Alert successfully marked as resolved.", "success");
       } else {
         const errorData = await response.json();
-        console.error("Failed to mark alert as resolved:", errorData.error);
-        alert("Unable to mark alert as resolved.");
+        showFeedback(
+          `Failed to mark alert as resolved: ${errorData.error}`,
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error marking alert as resolved:", error);
-      alert("Something went wrong. Please try again.");
+      showFeedback("Something went wrong. Please try again.", "error");
     } finally {
       setResolveDialogOpen(false);
       setResolveId(null);
     }
   };
-  // Added menu handlers
+
   const handleManageAlertsClick = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
-    console.log(
-      "Manage Alerts clicked, setting anchorEl:",
-      event.currentTarget
-    );
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuClose = () => {
-    console.log("Closing menu, setting anchorEl to null");
     setAnchorEl(null);
   };
 
@@ -754,21 +764,26 @@ function EnhancedTable() {
   const confirmBulkDelete = async () => {
     try {
       const deletePromises = selected.map((id) =>
-        fetch(`/admin/alerts/api/${id}/delete`, { method: "DELETE" }).then(
+        fetch(`/api/alerts/${id}/delete`, { method: "DELETE" }).then(
           (response) => {
-            if (!response.ok)
-              throw new Error(`Failed to delete alert. Please try again.`);
+            if (!response.ok) throw new Error(`Failed to delete alert ${id}.`);
             return id;
           }
         )
       );
       await Promise.all(deletePromises);
-      setRows(rows.filter((row) => !selected.includes(row.id.toString())));
+      await fetchAlerts();
       setSelected([]);
-      alert(`Successfully deleted ${selected.length} alert(s).`);
+      showFeedback(
+        `Successfully deleted ${selected.length} alert(s).`,
+        "success"
+      );
     } catch (error) {
       console.error("Error during bulk delete:", error);
-      alert("An error occurred while deleting alerts. Please try again.");
+      showFeedback(
+        "An error occurred while deleting alerts. Please try again.",
+        "error"
+      );
     } finally {
       setBulkDeleteDialogOpen(false);
       handleMenuClose();
@@ -782,29 +797,26 @@ function EnhancedTable() {
 
   const confirmBulkResolve = async () => {
     try {
-      // Count already resolved alerts
       const alreadyResolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status === "RESOLVED";
       });
       const alreadyResolvedCount = alreadyResolvedIds.length;
 
-      // Filter out unresolved alerts to process
       const unresolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status !== "RESOLVED";
       });
 
       if (unresolvedIds.length === 0) {
-        alert(`All selected alert(s) already resolved.`);
+        showFeedback("All selected alert(s) already resolved.", "info");
         setBulkResolveDialogOpen(false);
         handleMenuClose();
         return;
       }
 
-      // Send PATCH requests for all unresolved alerts
       const resolvePromises = unresolvedIds.map((id) =>
-        fetch(`/admin/alerts/api/${id}/update`, { method: "PATCH" }).then(
+        fetch(`/api/alerts/${id}/update`, { method: "PATCH" }).then(
           async (response) => {
             if (!response.ok) {
               const errorData = await response.json();
@@ -814,64 +826,33 @@ function EnhancedTable() {
                 }`
               );
             }
-            const updatedAlert = await response.json();
-            return { id, status: updatedAlert.alertStatus };
+            return id;
           }
         )
       );
 
-      // Wait for all requests to complete
-      const results = await Promise.allSettled(resolvePromises);
+      await Promise.all(resolvePromises);
 
-      // Process results
-      const updatedRows = [...rows];
-      let successCount = 0;
-      let failureCount = 0;
+      setRows((prevRows) =>
+        prevRows.map((row) =>
+          unresolvedIds.includes(row.id.toString())
+            ? { ...row, status: "RESOLVED" }
+            : row
+        )
+      );
 
-      results.forEach((result, index) => {
-        const selectedId = unresolvedIds[index];
-        if (result.status === "fulfilled") {
-          const rowIndex = updatedRows.findIndex(
-            (r) => r.id.toString() === selectedId
-          );
-          if (rowIndex !== -1) {
-            updatedRows[rowIndex] = {
-              ...updatedRows[rowIndex],
-              status: result.value.status,
-            };
-            successCount++;
-          }
-        } else {
-          console.error(`Error resolving alert ${selectedId}:`, result.reason);
-          failureCount++;
-        }
-      });
-
-      // Update state
-      setRows(updatedRows);
       setSelected([]);
 
-      // Provide detailed user feedback
-      const totalSelected = selected.length;
-      if (successCount > 0 || alreadyResolvedCount > 0 || failureCount > 0) {
-        let message = "";
-        if (successCount > 0) {
-          message += `Successfully resolved ${successCount} alert(s). `;
-        }
-        if (alreadyResolvedCount > 0) {
-          message += `${alreadyResolvedCount} alert(s) already resolved. `;
-        }
-        if (failureCount > 0) {
-          message += `${failureCount} alert(s) failed to resolve. Please try again.`;
-        }
-        alert(message.trim());
-      } else {
-        alert("No alerts were processed due to an unexpected issue.");
+      let message = `Successfully resolved ${unresolvedIds.length} alert(s). `;
+      if (alreadyResolvedCount > 0) {
+        message += `${alreadyResolvedCount} alert(s) already resolved.`;
       }
+      showFeedback(message.trim(), "success");
     } catch (error) {
       console.error("Unexpected error during bulk resolve:", error);
-      alert(
-        "An unexpected error occurred while resolving alerts. Please try again."
+      showFeedback(
+        "An unexpected error occurred while resolving alerts. Please try again.",
+        "error"
       );
     } finally {
       setBulkResolveDialogOpen(false);
@@ -883,64 +864,88 @@ function EnhancedTable() {
   if (!loading && rows.length === 0)
     return <Typography>No alerts found.</Typography>;
 
-  console.log("Rendering table with rows:", rows);
-
   return (
     <div>
       <SearchContainer>
-        <TextField
-          placeholder="Search by description or channel"
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{ startAdornment: <SearchIcon color="action" /> }}
-          sx={{ minWidth: 300 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Priority</InputLabel>
-          <Select
-            value={priorityFilter}
-            label="Priority"
-            onChange={(e) => setPriorityFilter(e.target.value)}
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <TextField
+            placeholder="Search by description or channel"
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{ startAdornment: <SearchIcon color="action" /> }}
+            sx={{ minWidth: 300 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Priority</InputLabel>
+            <Select
+              value={priorityFilter}
+              label="Priority"
+              onChange={(e) => setPriorityFilter(e.target.value)}
+            >
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="HIGH">High</MenuItem>
+              <MenuItem value="MODERATE">Moderate</MenuItem>
+              <MenuItem value="LOW">Low</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="RESOLVED">Resolved</MenuItem>
+              <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
+            </Select>
+          </FormControl>
+          <DateFilterMenu
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
+        </Box>
+        <Box>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            disabled={selected.length === 0}
+            onClick={handleManageAlertsClick}
+            aria-controls={Boolean(anchorEl) ? "manage-alerts-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={Boolean(anchorEl) ? "true" : undefined}
+            sx={{ minWidth: "110px", minHeight: "35px" }}
           >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="HIGH">High</MenuItem>
-            <MenuItem value="MODERATE">Moderate</MenuItem>
-            <MenuItem value="LOW">Low</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            value={statusFilter}
-            label="Status"
-            onChange={(e) => setStatusFilter(e.target.value)}
+            Manage Alerts
+          </Button>
+          <Menu
+            id="manage-alerts-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            <MenuItem value="All">All</MenuItem>
-            <MenuItem value="RESOLVED">Resolved</MenuItem>
-            <MenuItem value="UNRESOLVED">Unresolved</MenuItem>
-          </Select>
-        </FormControl>
-        <DateFilterMenu />
-        <Button
-          variant="outlined"
-          onClick={handleRefreshData}
-          startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh Data"}
-        </Button>
+            <MenuItem onClick={handleBulkDelete}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Delete
+            </MenuItem>
+            <MenuItem onClick={handleBulkResolve}>
+              <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
+              Mark as Resolved
+            </MenuItem>
+          </Menu>
+        </Box>
       </SearchContainer>
       <Paper>
-        <EnhancedTableToolbar
-          numSelected={selected.length}
-          onManageAlertsClick={handleManageAlertsClick}
-          anchorEl={anchorEl}
-          handleMenuClose={handleMenuClose}
-          handleBulkDelete={handleBulkDelete}
-          handleBulkResolve={handleBulkResolve}
-        />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -970,7 +975,7 @@ function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id || "unknown"}-${index}`} //originally: key={`${row.id}-${index}`}
+                      key={`${row.id || "unknown"}-${index}`}
                       selected={isItemSelected}
                       onClick={() => handleRowClick(row)}
                       sx={{ cursor: "pointer" }}
@@ -979,9 +984,10 @@ function EnhancedTable() {
                         <Checkbox
                           checked={isItemSelected}
                           inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) =>
-                            handleClick(event, row.id.toString())
-                          }
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleClick(event, row.id.toString());
+                          }}
                         />
                       </TableCell>
                       <TableCell align="left">{row.channelId}</TableCell>
@@ -1023,7 +1029,7 @@ function EnhancedTable() {
                             mr={1}
                             mb={1}
                             label="Resolved"
-                            status="Resolved" // Pass status prop to style it
+                            status="Resolved"
                           />
                         )}
                         {row.status === "UNRESOLVED" && (
@@ -1032,7 +1038,7 @@ function EnhancedTable() {
                             mr={1}
                             mb={1}
                             label="Unresolved"
-                            status="Unresolved" // Pass status prop to style it
+                            status="Unresolved"
                           />
                         )}
                       </TableCell>
@@ -1046,14 +1052,20 @@ function EnhancedTable() {
                           <IconButton
                             aria-label="delete"
                             size="large"
-                            onClick={() => handleDelete(row.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDelete(row.id);
+                            }}
                           >
                             <DeleteIcon />
                           </IconButton>
                           <IconButton
                             aria-label="details"
                             size="large"
-                            onClick={() => handleMarkAsResolved(row.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleMarkAsResolved(row.id);
+                            }}
                           >
                             <CheckCircleIcon />
                           </IconButton>
@@ -1084,7 +1096,9 @@ function EnhancedTable() {
         open={descriptionDialogOpen}
         row={selectedRow}
         onClose={handleDescriptionDialogClose}
-        // No onApprove or onCancel props yet
+        handleDelete={handleDelete}
+        handleMarkAsResolved={handleMarkAsResolved}
+        refreshData={fetchAlerts}
       />
       <Dialog
         open={deleteDialogOpen}
@@ -1125,7 +1139,7 @@ function EnhancedTable() {
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the selected alerts?
+            Are you sure you want to delete the selected alert(s)?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -1155,6 +1169,19 @@ function EnhancedTable() {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
@@ -1172,9 +1199,6 @@ function OrderList() {
             <Link component={NextLink} href="/">
               Dashboard
             </Link>
-            {/* <Link component={NextLink} href="/">
-              Pages
-            </Link> */}
             <Typography>Alerts</Typography>
           </Breadcrumbs>
         </Grid>
