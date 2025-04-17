@@ -22,6 +22,7 @@ interface ThresholdFormProps {
   }[];
   channelFields: string[];
   onSave: () => void;
+  latestFeed?: any; // Type can be refined based on Feed model
 }
 
 const ThresholdForm: React.FC<ThresholdFormProps> = ({
@@ -32,10 +33,12 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
   defaultThresholds,
   channelFields,
   onSave,
+  latestFeed,
 }) => {
   const [fields, setFields] = useState<ThresholdField[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [potentialWarnings, setPotentialWarnings] = useState<string[]>([]);
 
   // Initialize fields with channelFields
   useEffect(() => {
@@ -52,7 +55,6 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         const data = await response.json();
         const thresholds = data.thresholds || [];
 
-        // Initialize fields for all channelFields
         const initializedFields = channelFields.map((fieldName) => {
           const threshold = thresholds.find(
             (t: any) => t.fieldName === fieldName
@@ -87,6 +89,53 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     }
   }, [open, channelId, channelFields, defaultThresholds]);
 
+  // Check for potential alerts when fields or latestFeed change
+  useEffect(() => {
+    if (!latestFeed) {
+      setPotentialWarnings([]);
+      return;
+    }
+
+    const warnings: string[] = [];
+    fields.forEach((field, index) => {
+      const minValue = field.minValue ? Number(field.minValue) : NaN;
+      const maxValue = field.maxValue ? Number(field.maxValue) : NaN;
+      const defaultThreshold = defaultThresholds.find(
+        (t) => t.fieldName === field.fieldName
+      );
+
+      // Use default threshold if minValue or maxValue is empty
+      const effectiveMin =
+        !isNaN(minValue) && field.minValue !== ""
+          ? minValue
+          : defaultThreshold?.minValue ?? NaN;
+      const effectiveMax =
+        !isNaN(maxValue) && field.maxValue !== ""
+          ? maxValue
+          : defaultThreshold?.maxValue ?? NaN;
+
+      // Skip if thresholds are invalid
+      if (isNaN(effectiveMin) || isNaN(effectiveMax)) return;
+
+      // Map fieldName to field1-field8
+      const fieldIndex = channelFields.indexOf(field.fieldName) + 1;
+      const latestValue = latestFeed?.[`field${fieldIndex}`]
+        ? parseFloat(latestFeed[`field${fieldIndex}`])
+        : NaN;
+
+      if (!isNaN(latestValue)) {
+        if (latestValue < effectiveMin || latestValue > effectiveMax) {
+          const unit = defaultThreshold?.unit || "";
+          warnings.push(
+            `${field.fieldName}: ${latestValue}${unit} outside range (${effectiveMin}${unit} - ${effectiveMax}${unit})`
+          );
+        }
+      }
+    });
+
+    setPotentialWarnings(warnings);
+  }, [fields, latestFeed, channelFields, defaultThresholds]);
+
   const handleFieldChange = (index: number, key: string, value: string) => {
     const updatedFields = [...fields];
     updatedFields[index] = { ...updatedFields[index], [key]: value };
@@ -98,9 +147,8 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     setError(null);
     setLoading(true);
 
-    // Validate only filled fields
     const invalidFields = fields
-      .filter((field) => field.minValue !== "" || field.maxValue !== "") // Only check fields with at least one value
+      .filter((field) => field.minValue !== "" || field.maxValue !== "")
       .filter((field) => {
         const min = field.minValue === "" ? NaN : Number(field.minValue);
         const max = field.maxValue === "" ? NaN : Number(field.maxValue);
@@ -122,7 +170,6 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       return;
     }
 
-    // Prepare submission fields
     const submissionFields = fields
       .filter((field) => field.minValue !== "" && field.maxValue !== "")
       .map((field) => ({
@@ -226,6 +273,12 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         {error && (
           <Typography color="error" mb={2}>
             {error}
+          </Typography>
+        )}
+        {potentialWarnings.length > 0 && (
+          <Typography color="warning.main" mb={2}>
+            Warning: {" "}
+            {potentialWarnings.join("; ")}
           </Typography>
         )}
         {loading && <Typography mb={2}>Loading...</Typography>}

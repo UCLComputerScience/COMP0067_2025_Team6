@@ -52,7 +52,7 @@ import { NextResponse } from "next/server";
      const existingFieldNames = existingThresholds.map((t) => t.fieldName);
      const submittedFieldNames = fields.map((f) => f.fieldName);
  
-     // Identify thresholds to delete (not in submitted fields)
+     // Identify thresholds to delete 
      const thresholdsToDelete = existingFieldNames.filter(
        (fieldName) => !submittedFieldNames.includes(fieldName)
      );
