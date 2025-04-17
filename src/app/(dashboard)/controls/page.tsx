@@ -914,8 +914,13 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
           await checkThresholdViolations(fields, data);
         }
       } catch (err) {
-        console.error("Fetch error:", err.message);
-        setError(err.message);
+        if (err instanceof Error) {
+          console.error("Fetch error:", err.message);
+          setError(err.message);
+        } else {
+          console.error("Fetch error:", err);
+          setError("An unknown error occurred.");
+        }
       }
     };
 
@@ -1006,7 +1011,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
       >
         <Box sx={{ flexShrink: 0, p: 3, pb: 2 }}>
           <Grid container alignItems="center" justifyContent="space-between">
-            <Grid item>
+            <Grid>
               <Typography variant="h5" gutterBottom fontWeight="bold">
                 {channel.name}
               </Typography>
@@ -1017,7 +1022,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds }: LabCardProps) {
                 {channelId}
               </Typography>
             </Grid>
-            <Grid item>
+            <Grid>
               <IconButton onClick={handleMenuOpen}>
                 <MoreVert />
               </IconButton>
@@ -1441,9 +1446,14 @@ function Controls() {
 
       setChannels(channelsData);
       setDefaultThresholds(thresholdsData.fields || []);
-    } catch (err) {
-      setError(err.message);
-      console.error("Fetch error:", err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error("Fetch error:", err);
+      } else {
+        setError("An unknown error occurred.");
+        console.error("Fetch error:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -1505,7 +1515,7 @@ function Controls() {
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
-  const channelIds = [...new Set(channels.map((channel) => channel.id))].sort(
+  const channelIds = Array.from(new Set(channels.map((channel) => channel.id))).sort(
     (a, b) => a - b
   );
 
@@ -1612,7 +1622,7 @@ function Controls() {
           {filteredChannels.map((channel) => {
             console.log(`Channel ${channel.id} ApiKey:`, channel.ApiKey);
             return (
-              <Grid item={true} xs={12} key={channel.id}>
+              <Grid key={channel.id}>
                 <LabCard
                   channelId={channel.id}
                   name={channel.name}

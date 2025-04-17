@@ -16,7 +16,7 @@ import {
 import styled from "@emotion/styled";
 import { spacing } from "@mui/system";
 import { format } from "date-fns";
-import { RowType } from "../page";
+import { RowType } from "../../../app/(dashboard)/admin/alerts/page";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -106,12 +106,17 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   if (!row) return null;
 
   // Prepare sensor data for display
-  const sensorData = [];
+  interface SensorData {
+    label: string;
+    value: string | number;
+  }
+
+  const sensorData: SensorData[] = [];
   const fields = ["field1", "field2", "field3", "field4", "field5", "field6", "field7", "field8"];
   if (row.feed && row.channelFields) {
     fields.forEach((field, index) => {
-      const value = row.feed[field as keyof typeof row.feed];
-      const label = row.channelFields[field as keyof typeof row.channelFields];
+      const value = row.feed?.[field as keyof typeof row.feed];
+      const label = row.channelFields?.[field as keyof typeof row.channelFields];
       if (value != null && label) {
         const formattedValue =
           typeof value === "number" ? value.toFixed(2) : value;
