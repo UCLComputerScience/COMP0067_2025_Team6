@@ -174,10 +174,14 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       handleClose();
     } catch (error) {
       console.error("Error saving default thresholds:", error);
-      setError(error.message || "Failed to save thresholds. Please try again.");
+      if (error instanceof Error) {
+        setError(error.message || "Failed to save thresholds. Please try again.");
+      } else {
+        setError("Failed to save thresholds. Please try again.");
+      }
       setSnackbar({
         open: true,
-        message: error.message || "Failed to save thresholds.",
+        message: error instanceof Error ? error.message : "Failed to save thresholds.",
         severity: "error",
       });
     } finally {

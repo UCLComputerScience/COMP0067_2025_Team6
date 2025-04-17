@@ -104,19 +104,23 @@ function createData(
   return { id, firstname, lastname, usertype, status, role };
 }
 
-type RowType = {
-  [key: string]: string | number;
-  id: string;
-  firstname: string;
-  lastname: string;
-  usertype: string;
-  status: string;
-  role: string;
-  channelCount?: number;
+type RowType = Omit<
+  {
+    id: string;
+    firstname: string;
+    lastname: string;
+    usertype: string;
+    status: string;
+    role: string;
+    channelCount?: number;
+  },
+  keyof { channelCount: number | undefined }
+> & {
+  [key: string]: string | number | undefined;
 };
 
 interface UserInfo {
-  id: string;
+  id: number; // Changed from string to number
   firstName: string;
   lastName: string;
   organisation: string | null;
@@ -129,10 +133,10 @@ interface UserInfo {
 }
 
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
-  if (b[orderBy] < a[orderBy]) {
+  if ((b[orderBy] ?? '') < (a[orderBy] ?? '')) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if ((b[orderBy] ?? '') > (a[orderBy] ?? '')) {
     return 1;
   }
   return 0;
