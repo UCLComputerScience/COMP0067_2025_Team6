@@ -31,6 +31,13 @@ const HeaderCard = styled(MuiCard)`
 
 const DescriptionCard = styled(MuiCard)`
   ${spacing}
+  margin: 8px 16px 8px 16px;
+  overflow: visible;
+  border: 1px solid ${grey[300]};
+`;
+
+const SensorCard = styled(MuiCard)`
+  ${spacing}
   margin: 8px 16px 16px 16px;
   overflow: visible;
   border: 1px solid ${grey[300]};
@@ -59,8 +66,9 @@ interface AlertDetailsPopupProps {
   open: boolean;
   row: RowType | null;
   onClose: () => void;
-  handleDelete: (id: number) => void; // Add handleDelete prop
-  handleMarkAsResolved: (id: number) => void; // Add handleMarkAsResolved prop
+  handleDelete: (id: number) => void;
+  handleMarkAsResolved: (id: number) => void;
+  refreshData: () => void;
 }
 
 const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
@@ -69,6 +77,7 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
   onClose,
   handleDelete,
   handleMarkAsResolved,
+  refreshData,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -81,7 +90,35 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
     setAnchorEl(null);
   };
 
+  const handleMenuDelete = () => {
+    handleDelete(row!.id);
+    handleMenuClose();
+    onClose();
+  };
+
+  const handleMenuResolve = () => {
+    handleMarkAsResolved(row!.id);
+    handleMenuClose();
+    refreshData();
+    onClose();
+  };
+
   if (!row) return null;
+
+  // Prepare sensor data for display
+  const sensorData = [];
+  const fields = ["field1", "field2", "field3", "field4", "field5", "field6", "field7", "field8"];
+  if (row.feed && row.channelFields) {
+    fields.forEach((field, index) => {
+      const value = row.feed[field as keyof typeof row.feed];
+      const label = row.channelFields[field as keyof typeof row.channelFields];
+      if (value != null && label) {
+        const formattedValue =
+          typeof value === "number" ? value.toFixed(2) : value;
+        sensorData.push({ label, value: formattedValue });
+      }
+    });
+  }
 
   return (
     <Dialog
@@ -120,23 +157,11 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem
-            onClick={() => {
-              handleDelete(row.id);
-              handleMenuClose();
-              onClose(); 
-            }}
-          >
+          <MenuItem onClick={handleMenuDelete}>
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
             Delete
           </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleMarkAsResolved(row.id);
-              handleMenuClose();
-              onClose();
-            }}
-          >
+          <MenuItem onClick={handleMenuResolve}>
             <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />
             Mark as Resolved
           </MenuItem>
@@ -185,8 +210,9 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
         </CardContent>
       </HeaderCard>
 
+      {/* Description Block */}
       <DescriptionCard>
-        <CardContent sx={{ flex: 1 }}>
+        <CardContent>
           <Typography variant="h6" color="textSecondary">
             Description
           </Typography>
@@ -195,6 +221,28 @@ const AlertDetailsPopup: React.FC<AlertDetailsPopupProps> = ({
           </Typography>
         </CardContent>
       </DescriptionCard>
+
+      {/* Sensor Snapshot Block */}
+      <SensorCard sx={{ flex: 1 }}>
+        <CardContent>
+          <Typography variant="h6" color="textSecondary">
+            Sensor Snapshot
+          </Typography>
+          {sensorData.length > 0 ? (
+            <Box sx={{ mt: 2 }}>
+              {sensorData.map((data, index) => (
+                <Typography key={index} sx={{ fontSize: "1rem", mb: 1 }}>
+                  <strong>{data.label}:</strong> {data.value}
+                </Typography>
+              ))}
+            </Box>
+          ) : (
+            <Typography sx={{ mt: 2, fontSize: "1rem", color: grey[600] }}>
+              No sensor data available for this alert.
+            </Typography>
+          )}
+        </CardContent>
+      </SensorCard>
 
       <Box
         sx={{

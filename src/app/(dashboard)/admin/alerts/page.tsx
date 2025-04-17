@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
-
 import {
   Alert,
   Box,
@@ -55,12 +53,11 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing, SpacingProps } from "@mui/system";
-import { Rosario } from "next/font/google";
+import { format, startOfDay, endOfDay } from "date-fns";
+import AlertDetailsPopup from "@/components/pages/alerts/AlertDetailsPopup";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { format, startOfDay, endOfDay } from "date-fns";
-import AlertDetailsPopup from "./components/AlertDetailsPopup";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
@@ -72,14 +69,12 @@ interface PriorityChipProps extends SpacingProps {
 
 const PriorityChip = styled(MuiChip)<PriorityChipProps>`
   ${spacing};
-
   background: ${(props) =>
     props.priority === "High"
       ? red[500]
       : props.priority === "Moderate"
       ? orange[500]
-      : green[500]}; // Use green for Low priority
-
+      : green[500]};
   color: ${(props) => props.theme.palette.common.white};
 `;
 
@@ -88,7 +83,6 @@ interface StatusChipProps extends SpacingProps {
 }
 const StatusChip = styled(MuiChip)<StatusChipProps>`
   ${spacing};
-
   background: ${(props) =>
     props.status === "Resolved" ? blue[500] : grey[500]};
   color: ${(props) => props.theme.palette.common.white};
@@ -104,11 +98,11 @@ const ToolbarTitle = styled.div`
 
 const SearchContainer = styled.div`
   display: flex;
-  justify-content: space-between; /* Changed to space-between */
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
-  width: 100%; /* Ensure it spans the full width */
+  width: 100%;
 `;
 
 type AlertType = {
@@ -120,21 +114,64 @@ type AlertType = {
   alertDescription: string;
   status: string;
   date: string;
+  feed?: {
+    entryId: number;
+    field1?: number | null;
+    field2?: number | null;
+    field3?: number | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+    createdAt: string;
+  } | null;
+  channelFields?: {
+    field1?: string | null;
+    field2?: string | null;
+    field3?: string | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+  } | null;
 };
 
 export type RowType = {
   id: number;
-  location: string; // Convert [lat, lon] to string
+  location: string;
   channelId: number;
   channel: string;
   priority: string;
   desc: string;
   status: string;
   date: string;
+  feed?: {
+    entryId: number;
+    field1?: number | null;
+    field2?: number | null;
+    field3?: number | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+    createdAt: string;
+  } | null;
+  channelFields?: {
+    field1?: string | null;
+    field2?: string | null;
+    field3?: string | null;
+    field4?: string | null;
+    field5?: string | null;
+    field6?: string | null;
+    field7?: string | null;
+    field8?: string | null;
+  } | null;
 };
 
 function createRowFromAlert(alert: AlertType): RowType {
-  console.log("Processing alert:", alert);
   return {
     id: alert.alertId,
     location:
@@ -149,6 +186,8 @@ function createRowFromAlert(alert: AlertType): RowType {
     desc: alert.alertDescription || "No description",
     status: alert.status || "UNRESOLVED",
     date: alert.date || "Unknown",
+    feed: alert.feed || null,
+    channelFields: alert.channelFields || null,
   };
 }
 
@@ -174,7 +213,6 @@ function DateFilterMenu({
     React.useState<HTMLElement | null>(null);
 
   const handleDateFilterClick = (event: React.MouseEvent<HTMLElement>) => {
-    console.log("Anchor element:", event.currentTarget);
     setMenuAnchorEl(event.currentTarget);
   };
 
@@ -335,33 +373,27 @@ function DateFilterMenu({
 
 function descendingComparator(a: RowType, b: RowType, orderBy: keyof RowType) {
   if (orderBy === "channelId") {
-    // Numerical sorting for Channel ID
     return b.channelId - a.channelId;
   } else if (orderBy === "channel") {
-    // Alphabetical sorting for Channel Name
     return b.channel.localeCompare(a.channel);
   } else if (orderBy === "priority") {
-    // Custom order: LOW (1), MODERATE (2), HIGH (3)
     const priorityOrder = { LOW: 1, MODERATE: 2, HIGH: 3 };
     return (
       (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) -
       (priorityOrder[a.priority as keyof typeof priorityOrder] || 0)
     );
   } else if (orderBy === "desc") {
-    // Alphabetical sorting for Description
     return b.desc.localeCompare(a.desc);
   } else if (orderBy === "status") {
-    // Custom order: UNRESOLVED (0), RESOLVED (1)
     const statusOrder = { UNRESOLVED: 0, RESOLVED: 1 };
     return (
       (statusOrder[b.status as keyof typeof statusOrder] || 0) -
       (statusOrder[a.status as keyof typeof statusOrder] || 0)
     );
   } else if (orderBy === "date") {
-    // Chronological sorting for Date & Time
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   }
-  return 0; // Default case (e.g., "actions" won't sort)
+  return 0;
 }
 
 function getComparator(
@@ -408,10 +440,10 @@ const headCells: Array<HeadCell> = [
 type EnhancedTableHeadProps = {
   numSelected: number;
   order: "desc" | "asc";
-  orderBy: keyof RowType; // [CHANGED]
+  orderBy: keyof RowType;
   rowCount: number;
   onSelectAllClick: (e: any) => void;
-  onRequestSort: (e: any, property: keyof RowType) => void; // [CHANGED]
+  onRequestSort: (e: any, property: keyof RowType) => void;
 };
 
 const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
@@ -513,14 +545,12 @@ function EnhancedTable() {
   const [descriptionDialogOpen, setDescriptionDialogOpen] =
     React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowType | null>(null);
-  // Add snackbar state
   const [snackbar, setSnackbar] = React.useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   });
 
-  // Function to show snackbar
   const showFeedback = (
     message: string,
     severity: "success" | "error" | "info" | "warning"
@@ -528,7 +558,6 @@ function EnhancedTable() {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Function to close snackbar
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -537,16 +566,13 @@ function EnhancedTable() {
     try {
       setLoading(true);
       const timestamp = new Date().getTime();
-      const response = await fetch(
-        `/api/alerts/channel?_t=${timestamp}`,
-        {
-          cache: "no-store",
-          headers: {
-            pragma: "no-cache",
-            "cache-control": "no-cache",
-          },
-        }
-      );
+      const response = await fetch(`/api/alerts/channel?_t=${timestamp}`, {
+        cache: "no-store",
+        headers: {
+          pragma: "no-cache",
+          "cache-control": "no-cache",
+        },
+      });
       if (!response.ok)
         throw new Error(`HTTP error! Status: ${response.status}`);
       const data: AlertType[] = await response.json();
@@ -698,7 +724,6 @@ function EnhancedTable() {
         method: "PATCH",
       });
       if (response.ok) {
-        // Update the specific row's status locally
         setRows((prevRows) =>
           prevRows.map((row) =>
             row.id === resolveId ? { ...row, status: "RESOLVED" } : row
@@ -777,19 +802,19 @@ function EnhancedTable() {
         return row && row.status === "RESOLVED";
       });
       const alreadyResolvedCount = alreadyResolvedIds.length;
-  
+
       const unresolvedIds = selected.filter((id) => {
         const row = rows.find((r) => r.id.toString() === id);
         return row && row.status !== "RESOLVED";
       });
-  
+
       if (unresolvedIds.length === 0) {
         showFeedback("All selected alert(s) already resolved.", "info");
         setBulkResolveDialogOpen(false);
         handleMenuClose();
         return;
       }
-  
+
       const resolvePromises = unresolvedIds.map((id) =>
         fetch(`/api/alerts/${id}/update`, { method: "PATCH" }).then(
           async (response) => {
@@ -805,10 +830,9 @@ function EnhancedTable() {
           }
         )
       );
-  
+
       await Promise.all(resolvePromises);
-  
-      // Update rows locally
+
       setRows((prevRows) =>
         prevRows.map((row) =>
           unresolvedIds.includes(row.id.toString())
@@ -816,9 +840,9 @@ function EnhancedTable() {
             : row
         )
       );
-  
+
       setSelected([]);
-  
+
       let message = `Successfully resolved ${unresolvedIds.length} alert(s). `;
       if (alreadyResolvedCount > 0) {
         message += `${alreadyResolvedCount} alert(s) already resolved.`;
@@ -887,7 +911,6 @@ function EnhancedTable() {
             setSelectedRange={setSelectedRange}
           />
         </Box>
-        {/* Add Manage Alerts button and menu */}
         <Box>
           <Button
             variant="contained"
@@ -1146,7 +1169,6 @@ function EnhancedTable() {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* Add Snackbar for feedback */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -1163,6 +1185,7 @@ function EnhancedTable() {
     </div>
   );
 }
+
 function OrderList() {
   return (
     <React.Fragment>
@@ -1176,9 +1199,6 @@ function OrderList() {
             <Link component={NextLink} href="/">
               Dashboard
             </Link>
-            {/* <Link component={NextLink} href="/">
-              Pages
-            </Link> */}
             <Typography>Alerts</Typography>
           </Breadcrumbs>
         </Grid>

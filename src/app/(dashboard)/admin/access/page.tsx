@@ -50,7 +50,7 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
-import UserInfoPopup from "./components/UserInfoPopup";
+import UserInfoPopup from "@/components/pages/access/UserInfoPopup";
 
 const Divider = styled(MuiDivider)(spacing);
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);

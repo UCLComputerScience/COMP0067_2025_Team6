@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const id = Number(params.id); // Convert string to number if your ID is numeric
+  const id = Number(params.id);
   if (isNaN(id)) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }

@@ -3,14 +3,14 @@ import prisma from "@/lib/prisma";
 
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const id = Number(params.id); // Convert string to number if your ID is numeric
+  const id = Number(params.id); 
   if (isNaN(id)) {
     return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   }
   try {
     const updatedAlert = await prisma.alerts.update({
       where: { id },
-      data: { alertStatus: "RESOLVED" }, // Adjust field name based on your schema
+      data: { alertStatus: "RESOLVED" }, 
     });
     return NextResponse.json(updatedAlert, { status: 200 });
   } catch (error) {
