@@ -6,15 +6,15 @@ export async function GET() {
     const alertsWithChannelInfo = await prisma.alerts.findMany({
       select: {
         id: true,
-        entryId: true,
+        feedId: true, // Include feedId if needed by the client
         priority: true,
         alertDescription: true,
         alertStatus: true,
         alertDate: true,
         feed: {
           select: {
+            id: true, // Use id instead of entryId
             channelId: true,
-            entryId: true,
             field1: true,
             field2: true,
             field3: true,
@@ -58,7 +58,7 @@ export async function GET() {
       date: alert.alertDate.toISOString(),
       feed: alert.feed
         ? {
-            entryId: alert.feed.entryId,
+            entryId: alert.feed.id, // Use feed.id instead of feed.entryId
             field1: alert.feed.field1,
             field2: alert.feed.field2,
             field3: alert.feed.field3,
@@ -89,6 +89,9 @@ export async function GET() {
   } catch (error: unknown) {
     console.error('Error fetching alerts:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json({ message: 'Internal Server Error', error: errorMessage }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error', error: errorMessage },
+      { status: 500 }
+    );
   }
 }
