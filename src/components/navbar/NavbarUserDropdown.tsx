@@ -1,7 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import { useRouter } from "next/navigation";
-
 import { green } from "@mui/material/colors";
 
 import {
@@ -19,7 +20,6 @@ import useAuth from "@/hooks/useAuth";
 
 const IconButton = styled(MuiIconButton)`
   ${spacing};
-
   &:hover {
     background-color: transparent;
   }
@@ -37,9 +37,45 @@ const AvatarBadge = styled(Badge)`
 `;
 
 function NavbarUserDropdown() {
-  const [anchorMenu, setAnchorMenu] = React.useState<any>(null);
+  const [anchorMenu, setAnchorMenu] = useState<any>(null);
   const router = useRouter();
-  const { session, signOut } = useAuth();
+  const { session, signOut, status } = useAuth();
+
+  const [avatarSrc, setAvatarSrc] = useState("/static/img/avatars/avatar-1.jpg");
+  const [displayName, setDisplayName] = useState("User");
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    const loadUserData = () => {
+      if (typeof window === "undefined") return;
+
+      const storedData = localStorage.getItem("personalInfo");
+      const parsed = storedData ? JSON.parse(storedData) : null;
+
+      if (parsed?.firstName && parsed?.lastName) {
+        setDisplayName(`${parsed.firstName} ${parsed.lastName}`);
+      } else if (session?.user?.firstName && session?.user?.lastName) {
+        setDisplayName(`${session.user.firstName} ${session.user.lastName}`);
+      } else {
+        setDisplayName(session?.user?.name || "User");
+      }
+
+      if (parsed?.avatar) {
+        setAvatarSrc(parsed.avatar);
+      } else {
+        setAvatarSrc(session?.user?.avatar || "/static/img/avatars/avatar-1.jpg");
+      }
+    };
+
+    loadUserData();
+
+    window.addEventListener("profileUpdated", loadUserData);
+
+    return () => {
+      window.removeEventListener("profileUpdated", loadUserData);
+    };
+  }, [session, status]);
 
   const toggleMenu = (event: React.SyntheticEvent) => {
     setAnchorMenu(event.currentTarget);
@@ -57,15 +93,15 @@ function NavbarUserDropdown() {
   const handleProfile = () => {
     router.push("/account/profile");
     closeMenu();
-  }
+  };
 
   const handleSettings = () => {
     router.push("/account/settings");
     closeMenu();
-  }
+  };
 
   return (
-    <React.Fragment>
+    <>
       <Tooltip title="Account">
         <IconButton
           aria-owns={anchorMenu ? "menu-appbar" : undefined}
@@ -77,22 +113,12 @@ function NavbarUserDropdown() {
         >
           <AvatarBadge
             overlap="circular"
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             variant="dot"
           >
-            {!!session?.user && <Avatar alt={session?.user.displayName} src={session?.user.avatar} />}
-            {/* Demo data */}
-            {!session?.user && (
-              <Avatar
-                alt="Lucy Lavender"
-                src="/static/img/avatars/avatar-1.jpg"
-              />
-            )}
+            <Avatar alt={displayName} src={avatarSrc} />
           </AvatarBadge>
-        </IconButton> 
+        </IconButton>
       </Tooltip>
       <Menu
         id="menu-appbar"
@@ -106,7 +132,7 @@ function NavbarUserDropdown() {
         <MenuItem onClick={closeMenu}>Help</MenuItem>
         <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
       </Menu>
-    </React.Fragment>
+    </>
   );
 }
 

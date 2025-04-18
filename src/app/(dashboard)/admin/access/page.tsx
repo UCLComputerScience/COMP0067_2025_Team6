@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { ReactElement } from "react";
 import styled from "@emotion/styled";
 import NextLink from "next/link";
-// import withAuth from "@/lib/withAuth"; // Import the withAuth HOC
-
+import { getSession } from "next-auth/react";
 import {
   Box,
   Breadcrumbs as MuiBreadcrumbs,
@@ -39,34 +38,33 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { orange } from "@mui/material/colors";
 import {
   Edit as EditIcon,
   Star as StarIcon,
   Search as SearchIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
+import UserInfoPopup from "@/components/pages/access/UserInfoPopup";
 
 const Divider = styled(MuiDivider)(spacing);
-
 const Breadcrumbs = styled(MuiBreadcrumbs)(spacing);
-
 const Paper = styled(MuiPaper)(spacing);
-
 const Spacer = styled.div`
   flex: 1 1 100%;
 `;
-
 const ToolbarTitle = styled.div`
   min-width: 150px;
 `;
-
 const Customer = styled.div`
   display: flex;
   align-items: center;
 `;
-
 const ImageWrapper = styled.div`
   width: 50px;
   height: 50px;
@@ -75,27 +73,24 @@ const ImageWrapper = styled.div`
   align-items: center;
   justify-content: center;
 `;
-
 const Image = styled.img`
   max-width: 100%;
   max-height: 100%;
 `;
-
 const Rating = styled.div`
   display: flex;
   align-items: center;
   gap: ${(props) => props.theme.spacing(1)};
 `;
-
 const RatingIcon = styled(StarIcon)`
   color: ${() => orange[400]};
 `;
-
 const SearchContainer = styled.div`
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
   align-items: center;
+  justify-content: space-between;
 `;
 
 function createData(
@@ -109,21 +104,39 @@ function createData(
   return { id, firstname, lastname, usertype, status, role };
 }
 
-type RowType = {
-  [key: string]: string | number;
-  id: string;
-  firstname: string;
-  lastname: string;
-  usertype: string;
-  status: string;
-  role: string;
+type RowType = Omit<
+  {
+    id: string;
+    firstname: string;
+    lastname: string;
+    usertype: string;
+    status: string;
+    role: string;
+    channelCount?: number;
+  },
+  keyof { channelCount: number | undefined }
+> & {
+  [key: string]: string | number | undefined;
 };
 
+interface UserInfo {
+  id: number; // Changed from string to number
+  firstName: string;
+  lastName: string;
+  organisation: string | null;
+  role: string;
+  status: string;
+  access: {
+    channelId: number | null;
+    channelName: string | null;
+  }[];
+}
+
 function descendingComparator(a: RowType, b: RowType, orderBy: string) {
-  if (b[orderBy] < a[orderBy]) {
+  if ((b[orderBy] ?? '') < (a[orderBy] ?? '')) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if ((b[orderBy] ?? '') > (a[orderBy] ?? '')) {
     return 1;
   }
   return 0;
@@ -164,6 +177,7 @@ const headCells: Array<HeadCell> = [
   { id: "usertype", alignment: "left", label: "Organisation", width: "15%" },
   { id: "role", alignment: "left", label: "Role", width: "15%" },
   { id: "status", alignment: "left", label: "Status", width: "15%" },
+  { id: "channelCount", alignment: "left", label: "Number of Channels", width: "10%" },
 ];
 
 type EnhancedTableHeadProps = {
@@ -223,10 +237,9 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
 
 type EnhancedTableToolbarProps = {
   numSelected: number;
-  onManageAccess: () => void;
 };
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const { numSelected, onManageAccess } = props;
+  const { numSelected } = props;
 
   return (
     <Toolbar>
@@ -241,20 +254,10 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
           </Typography>
         )}
       </ToolbarTitle>
-      <Spacer />
-      <Button
-        variant="contained"
-        color="primary"
-        size="small"
-        disabled={numSelected === 0}
-        onClick={onManageAccess}
-      >
-        Manage Access
-      </Button>
     </Toolbar>
   );
 };
-
+ 
 function EnhancedTable() {
   const [order, setOrder] = React.useState<"desc" | "asc">("asc");
   const [orderBy, setOrderBy] = React.useState("customer");
@@ -263,16 +266,330 @@ function EnhancedTable() {
   const [rowsPerPage, setRowsPerPage] = React.useState(6);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [editingRow, setEditingRow] = React.useState<RowType | null>(null);
-  const [selectedUsers, setSelectedUsers] = React.useState<Array<string>>([]); //keeps selected users for multiple update
+  const [selectedUsers, setSelectedUsers] = React.useState<Array<string>>([]);
   const [currentTab, setCurrentTab] = React.useState(0);
   const [instrumentAccess, setInstrumentAccess] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
-  const [regionFilter, setRegionFilter] = React.useState("All");
-  const [projectFilter, setProjectFilter] = React.useState("All");
-  const [selectedRole, setSelectedRole] = React.useState(""); //stores role for selected users
+  const [selectedRole, setSelectedRole] = React.useState("");
   const [users, setUsers] = React.useState<Array<RowType>>([]);
   const [loading, setLoading] = React.useState(true);
+  const [reloadUsers, setReloadUsers] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "info" | "warning",
+  });
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [confirmDialogAction, setConfirmDialogAction] = React.useState<
+    "activate" | "deactivate"
+  >("deactivate");
+  const [accessForm, setAccessForm] = React.useState({
+    channelId: "",
+    grantedBy: "",
+  });
+  const [channels, setChannels] = React.useState<
+    Array<{ id: number; name: string }>
+  >([]);
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  const [selectedUserInfo, setSelectedUserInfo] =
+    React.useState<UserInfo | null>(null);
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const showFeedback = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case "ACTIVE":
+        return "Active";
+      case "INACTIVE":
+        return "Inactive";
+      default:
+        return "Unknown";
+    }
+  };
+
+  // In-memory cache for access data
+  const accessCache: { [userId: string]: { channelCount: number } } = {};
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      console.log("Fetching users from /api/auth/users...");
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/auth/users?_t=${timestamp}`, {
+        cache: "no-store",
+        headers: {
+          pragma: "no-cache",
+          "cache-control": "no-cache",
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Failed to fetch users:", response.status, response.statusText);
+        showFeedback("Failed to load users", "error");
+        setUsers([]);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Users data received:", data);
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn("No users found");
+        showFeedback("No users found", "info");
+        setUsers([]);
+        return;
+      }
+
+      interface UserApiResponse {
+        id: string;
+        firstName: string;
+        lastName: string;
+        organisation?: string;
+        userRole: string;
+        status: string;
+      }
+
+      interface MappedUser extends RowType {
+        id: string;
+        firstname: string;
+        lastname: string;
+        usertype: string;
+        role: string;
+        status: string;
+        channelCount?: number;
+      }
+
+      const mappedUsers: MappedUser[] = await Promise.all(
+        (data as UserApiResponse[]).map(async (user: UserApiResponse) => {
+          const baseUser = {
+            id: user.id,
+            firstname: user.firstName,
+            lastname: user.lastName,
+            usertype: user.organisation || "Standard",
+            role: formatRole(user.userRole),
+            status: formatStatus(user.status),
+          };
+
+          // Check cache
+          if (accessCache[user.id]) {
+            console.log(`Using cached access for user ${user.id}`);
+            return {
+              ...baseUser,
+              channelCount: accessCache[user.id].channelCount,
+            };
+          }
+
+          // Fetch access data
+          let channelCount = 0;
+          try {
+            console.log(`Fetching access for user ${user.id}...`);
+            const accessResponse = await fetch(`/api/access/users/${user.id}`);
+            if (accessResponse.ok) {
+              const userAccess = await accessResponse.json();
+              console.log(`Access data for user ${user.id}:`, userAccess);
+              channelCount = userAccess.access.filter((a: { channelId: number | null }) => a.channelId !== null).length;
+              accessCache[user.id] = { channelCount };
+            } else {
+              console.warn(`No access data for user ${user.id}:`, accessResponse.statusText);
+            }
+          } catch (error) {
+            console.error(`Error fetching access for user ${user.id}:`, error);
+          }
+
+          return {
+            ...baseUser,
+            channelCount,
+          };
+        })
+      );
+
+      console.log("Mapped users:", mappedUsers);
+      setUsers(mappedUsers);
+    } catch (error) {
+      console.error("Error in fetchUsers:", error);
+      showFeedback("Error loading users", "error");
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchChannels = async () => {
+    try {
+      const response = await fetch("/api/access/channels");
+      if (response.ok) {
+        const data = await response.json();
+        setChannels(data);
+      } else {
+        console.error("Failed to fetch channels:", response.statusText);
+        showFeedback("Failed to fetch channels", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching channels:", error);
+      showFeedback("Error fetching channels", "error");
+    }
+  };
+
+  const fetchUserInfo = async (userId: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/access/users/${userId}`);
+      if (response.ok) {
+        const userData = await response.json();
+        setSelectedUserInfo(userData);
+        setPopupOpen(true);
+      } else {
+        showFeedback("Failed to fetch user details", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      showFeedback("Error fetching user details", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Fetching data...");
+    // Clear cache on reload
+    Object.keys(accessCache).forEach((key) => delete accessCache[key]);
+    fetchUsers();
+    fetchChannels();
+  }, [reloadUsers]);
+
+  const handlePopupManageAccess = (userId: number) => {
+    setSelectedUsers([userId.toString()]);
+    const user = users.find((u) => u.id === userId.toString());
+    if (user) {
+      const rawRole = getRawRoleValue(user.role);
+      setSelectedRole(rawRole);
+    } else {
+      setSelectedRole("STANDARD_USER");
+    }
+    setAccessForm({ channelId: "", grantedBy: "" });
+    setOpenDialog(true);
+    setPopupOpen(false); // Close popup
+  };
+
+  const handleDeactivateUsers = async () => {
+    if (selectedUsers.length === 0) return;
+
+    try {
+      const response = await fetch("/api/auth/deactivate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds: selectedUsers }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(
+            `Failed to deactivate users: ${
+              errorJson.error || errorJson.message || errorText
+            }`
+          );
+        } catch (parseError) {
+          throw new Error(`Failed to deactivate users: ${errorText}`);
+        }
+      }
+
+      const result = await response.json();
+      console.log("Users deactivated successfully:", result);
+
+      setReloadUsers((prev) => !prev);
+      setSelected([]);
+      setSelectedUsers([]);
+      closeConfirmationDialog();
+
+      showFeedback(
+        `Successfully deactivated ${selectedUsers.length} user(s)`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error deactivating users:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to deactivate users: ${errorMessage}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleActivateUsers = async () => {
+    if (selectedUsers.length === 0) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch("/api/auth/activate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds: selectedUsers }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(
+            `Failed to activate users: ${
+              errorJson.error || errorJson.message || errorText
+            }`
+          );
+        } catch (parseError) {
+          throw new Error(`Failed to activate users: ${errorText}`);
+        }
+      }
+
+      const result = await response.json();
+      console.log("Users activated successfully:", result);
+
+      setReloadUsers((prev) => !prev);
+      setSelected([]);
+      setSelectedUsers([]);
+      closeConfirmationDialog();
+
+      showFeedback(
+        `Successfully activated ${selectedUsers.length} user(s)`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error activating users:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(`Failed to activate users: ${errorMessage}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openConfirmationDialog = (action: "activate" | "deactivate") => {
+    setConfirmDialogAction(action);
+    setConfirmDialogOpen(true);
+  };
+
+  const closeConfirmationDialog = () => {
+    setConfirmDialogOpen(false);
+  };
 
   const formatRole = (role: string) => {
     switch (role) {
@@ -289,56 +606,12 @@ function EnhancedTable() {
     }
   };
 
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("/api/auth/users");
-        if (response.ok) {
-          const data = await response.json();
-          interface UserApiResponse {
-            id: string;
-            firstName: string;
-            lastName: string;
-            organisation?: string;
-            role: string;
-          }
-
-          interface MappedUser extends RowType {
-            id: string;
-            firstname: string;
-            lastname: string;
-            usertype: string;
-            role: string;
-            status: string;
-          }
-
-          const mappedUsers: MappedUser[] = data.map((user: UserApiResponse) => ({
-            id: user.id,
-            firstname: user.firstName,
-            lastname: user.lastName,
-            usertype: user.organisation || "Standard",
-            role: formatRole(user.role),
-            status: "Active",
-          }));
-          setUsers(mappedUsers);
-        } else {
-          console.error("Failed to fetch users");
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
   const handleEditClick = (row: RowType) => {
     setEditingRow(row);
     setSelectedUsers([row.id]);
     const rawRole = getRawRoleValue(row.role);
     setSelectedRole(rawRole);
+    setAccessForm({ channelId: "", grantedBy: "" });
     setOpenDialog(true);
   };
 
@@ -365,10 +638,10 @@ function EnhancedTable() {
         const rawRole = getRawRoleValue(firstSelectedUser.role);
         setSelectedRole(rawRole);
       } else {
-        setSelectedRole("STANDARD_USER"); //default value
+        setSelectedRole("STANDARD_USER");
       }
     }
-
+    setAccessForm({ channelId: "", grantedBy: "" });
     setOpenDialog(true);
   };
 
@@ -377,17 +650,164 @@ function EnhancedTable() {
     setEditingRow(null);
     setSelectedUsers([]);
     setCurrentTab(0);
+    setAccessForm({ channelId: "", grantedBy: "" });
+  };
+
+  const handleClosePopup = () => {
+    setPopupOpen(false);
+    setSelectedUserInfo(null);
+  };
+
+  const handleGrantAccess = async () => {
+    if (selectedUsers.length === 0) {
+      console.warn("No users selected for grant access");
+      showFeedback("Please select at least one user", "warning");
+      return;
+    }
+
+    if (!accessForm.channelId) {
+      console.warn("No channel selected for grant access");
+      showFeedback("Please select a channel", "warning");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const session = await getSession();
+      console.log("Session data for grant:", session);
+
+      if (!session?.user?.id) {
+        console.warn("No user ID in session for grantedBy");
+        showFeedback("Authentication required", "error");
+        return;
+      }
+
+      const accessData = {
+        userIds: selectedUsers,
+        channelId: parseInt(accessForm.channelId),
+        grantedBy: parseInt(session.user.id),
+      };
+
+      console.log("Sending grant access data:", accessData);
+
+      const response = await fetch("/api/access/user_access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(accessData),
+      });
+
+      const result = await response.json();
+      console.log("Grant access response:", result);
+
+      if (!response.ok) {
+        if (response.status === 409 || response.status === 404) {
+          showFeedback(result.message || "Action not completed", "warning");
+        } else {
+          throw new Error(
+            result.error || `Failed to grant access: ${response.statusText}`
+          );
+        }
+      } else {
+        showFeedback(result.message, "success");
+      }
+
+      setReloadUsers((prev) => !prev);
+      setSelected([]);
+    } catch (error) {
+      console.error("Error granting access:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(errorMessage, "error");
+    } finally {
+      setLoading(false);
+      handleCloseDialog();
+    }
+  };
+
+  const handleRemoveAccess = async () => {
+    if (selectedUsers.length === 0) {
+      console.warn("No users selected for remove access");
+      showFeedback("Please select at least one user", "warning");
+      return;
+    }
+
+    if (!accessForm.channelId) {
+      console.warn("No channel selected for remove access");
+      showFeedback("Please select a channel", "warning");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const session = await getSession();
+      console.log("Session data for remove:", session);
+
+      if (!session?.user?.id) {
+        console.warn("No user ID in session for grantedBy");
+        showFeedback("Authentication required", "error");
+        return;
+      }
+
+      const accessData = {
+        userIds: selectedUsers,
+        channelId: parseInt(accessForm.channelId),
+        grantedBy: parseInt(session.user.id),
+      };
+
+      console.log("Sending remove access data:", accessData);
+
+      const response = await fetch("/api/access/remove_access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(accessData),
+      });
+
+      const result = await response.json();
+      console.log("Remove access response:", result);
+
+      if (!response.ok) {
+        if (response.status === 409 || response.status === 404) {
+          showFeedback(result.message || "Action not completed", "warning");
+        } else {
+          throw new Error(
+            result.error || `Failed to remove access: ${response.statusText}`
+          );
+        }
+      } else {
+        showFeedback(result.message, "success");
+      }
+
+      setReloadUsers((prev) => !prev);
+      setSelected([]);
+    } catch (error) {
+      console.error("Error removing access:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(errorMessage, "error");
+    } finally {
+      setLoading(false);
+      handleCloseDialog();
+    }
   };
 
   const handleSaveChanges = async () => {
-    if (selectedUsers.length > 0) {
-      try {
-        console.log(
-          "Updating roles for selected users:",
-          selectedUsers,
-          selectedRole
-        );
+    if (selectedUsers.length === 0) {
+      console.warn("No users selected for save action");
+      showFeedback("Please select at least one user", "warning");
+      return;
+    }
 
+    try {
+      setLoading(true);
+      const session = await getSession();
+      console.log("Session data:", session);
+
+      if (currentTab === 0) {
+        console.log("Updating roles for users:", selectedUsers, selectedRole);
         const response = await fetch("/api/auth/users", {
           method: "POST",
           headers: {
@@ -396,34 +816,56 @@ function EnhancedTable() {
           body: JSON.stringify({
             userIds: selectedUsers,
             role: selectedRole,
+            currentUserEmail: session?.user?.email,
           }),
         });
 
-        const result = await response.json();
-        console.log("API response:", result);
-
-        if (response.ok) {
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              selectedUsers.includes(user.id)
-                ? { ...user, role: formatRole(selectedRole) }
-                : user
-            )
-          );
-
-          setSelected([]);
-        } else {
-          console.error("Failed to update roles:", result.error);
+        if (!response.ok) {
+          const errorText = await response.text();
+          try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(
+              `Failed to update roles: ${
+                errorJson.error || errorJson.message || errorText
+              }`
+            );
+          } catch (parseError) {
+            throw new Error(`Failed to update roles: ${errorText}`);
+          }
         }
-      } catch (error) {
-        console.error("Error updating roles:", error);
+
+        showFeedback(
+          `Successfully updated role for ${selectedUsers.length} user(s)`,
+          "success"
+        );
       }
+
+      if (currentTab === 2) {
+        console.log("No save action in Resource Access tab");
+        showFeedback("Please use Grant Access or Remove Access buttons", "warning");
+        return;
+      }
+
+      setReloadUsers((prev) => !prev);
+      setSelected([]);
+    } catch (error) {
+      console.error("Error in handleSaveChanges:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showFeedback(errorMessage, "error");
+    } finally {
+      setLoading(false);
+      handleCloseDialog();
     }
-    handleCloseDialog();
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
+  };
+
+  const handleAccessFormChange = (field: string, value: string) => {
+    console.log("Access form change:", { field, value });
+    setAccessForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleRequestSort = (event: any, property: string) => {
@@ -441,10 +883,11 @@ function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (
+  const handleCheckboxClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     id: string
   ) => {
+    event.stopPropagation();
     const selectedIndex = selected.indexOf(id);
     let newSelected: Array<string> = [];
 
@@ -464,6 +907,10 @@ function EnhancedTable() {
     setSelected(newSelected);
   };
 
+  const handleRowClick = (row: RowType) => {
+    fetchUserInfo(row.id);
+  };
+
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number
@@ -474,11 +921,29 @@ function EnhancedTable() {
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setRowsPerPage(parseInt(event.target.value, 6));
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
   const isSelected = (id: string) => selected.indexOf(id) !== -1;
+
+  const areAllSelectedUsersActive = () => {
+    if (selectedUsers.length === 0) return false;
+
+    return selectedUsers.every((userId) => {
+      const user = users.find((u) => u.id === userId);
+      return user && user.status === "Active";
+    });
+  };
+
+  const areAllSelectedUsersInactive = () => {
+    if (selectedUsers.length === 0) return false;
+
+    return selectedUsers.every((userId) => {
+      const user = users.find((u) => u.id === userId);
+      return user && user.status === "Inactive";
+    });
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -493,7 +958,7 @@ function EnhancedTable() {
   });
 
   const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, users.length - page * rowsPerPage);
+    rowsPerPage - Math.min(rowsPerPage, filteredUsers.length - page * rowsPerPage);
 
   return (
     <div>
@@ -523,38 +988,27 @@ function EnhancedTable() {
             <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Region</InputLabel>
-          <Select
-            value={regionFilter}
-            label="Region"
-            onChange={(e) => setRegionFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add region options */}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Project</InputLabel>
-          <Select
-            value={projectFilter}
-            label="Project"
-            onChange={(e) => setProjectFilter(e.target.value)}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {/* Add project options */}
-          </Select>
-        </FormControl>
-        <Button variant="contained" color="primary">
-          Go
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          disabled={selected.length === 0}
+          onClick={handleManageAccess}
+          sx={{
+            height: "32px",
+            minWidth: "120px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          Manage Access
         </Button>
       </SearchContainer>
 
       <Paper>
-        <EnhancedTableToolbar
-          numSelected={selected.length}
-          onManageAccess={handleManageAccess}
-        />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -567,64 +1021,84 @@ function EnhancedTable() {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={users.length}
+              rowCount={filteredUsers.length}
             />
             <TableBody>
-              {stableSort(filteredUsers, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row: RowType, index: number) => {
-                  const isItemSelected = isSelected(row.id);
-                  const labelId = `enhanced-table-checkbox-${index}`;
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <Typography>No users found</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                stableSort(filteredUsers, getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row: RowType, index: number) => {
+                    const isItemSelected = isSelected(row.id);
+                    const labelId = `enhanced-table-checkbox-${index}`;
 
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={`${row.id}-${index}`}
-                      selected={isItemSelected}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={isItemSelected}
-                          inputProps={{ "aria-labelledby": labelId }}
-                          onClick={(event) => handleClick(event, row.id)}
-                        />
-                      </TableCell>
-                      <TableCell component="th" id={labelId} scope="row">
-                        <Customer>
-                          <Box>
-                            <Typography variant="body1">
-                              {row.firstname}
-                            </Typography>
-                          </Box>
-                        </Customer>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.lastname}</Typography>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.usertype}</Typography>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.role}</Typography>
-                      </TableCell>
-                      <TableCell align="left">
-                        <Typography variant="body1">{row.status}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          color="primary"
-                          onClick={() => handleEditClick(row)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
+                    return (
+                      <TableRow
+                        hover
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        key={`${row.id}-${index}`}
+                        selected={isItemSelected}
+                        onClick={() => handleRowClick(row)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={isItemSelected}
+                            inputProps={{ "aria-labelledby": labelId }}
+                            onClick={(event) => handleCheckboxClick(event, row.id)}
+                          />
+                        </TableCell>
+                        <TableCell component="th" id={labelId} scope="row">
+                          <Customer>
+                            <Box>
+                              <Typography variant="body1">{row.firstname}</Typography>
+                            </Box>
+                          </Customer>
+                        </TableCell>
+                        <TableCell align="left">
+                          <Typography variant="body1">{row.lastname}</Typography>
+                        </TableCell>
+                        <TableCell align="left">
+                          <Typography variant="body1">{row.usertype}</Typography>
+                        </TableCell>
+                        <TableCell align="left">
+                          <Typography variant="body1">{row.role}</Typography>
+                        </TableCell>
+                        <TableCell align="left">
+                          <Typography variant="body1">{row.status}</Typography>
+                        </TableCell>
+                        <TableCell align="left">
+                          <Typography variant="body1">{row.channelCount ?? 0}</Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            color="primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(row);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+              )}
+              {!loading && filteredUsers.length > 0 && emptyRows > 0 && (
                 <TableRow style={{ height: 53 * emptyRows }}>
                   <TableCell colSpan={7} />
                 </TableRow>
@@ -643,6 +1117,13 @@ function EnhancedTable() {
         />
       </Paper>
 
+      <UserInfoPopup
+        open={popupOpen}
+        user={selectedUserInfo}
+        onClose={handleClosePopup}
+        onManageAccess={handlePopupManageAccess}
+      />
+
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
           {selectedUsers.length > 1
@@ -652,14 +1133,12 @@ function EnhancedTable() {
         <DialogContent>
           <Tabs value={currentTab} onChange={handleTabChange}>
             <Tab label="User Role" />
-            <Tab label="Instrument Access" />
-            <Tab label="Dashboard Access" />
-            <Tab label="Control Access" />
+            <Tab label="User Status" />
+            <Tab label="Resource Access" />
           </Tabs>
 
           {currentTab === 0 && (
             <Box sx={{ mt: 2 }}>
-              {/* User Role Selection */}
               <FormControl fullWidth margin="dense">
                 <InputLabel>User Role</InputLabel>
                 <Select
@@ -678,37 +1157,156 @@ function EnhancedTable() {
 
           {currentTab === 1 && (
             <Box sx={{ mt: 2 }}>
-              {/* Instrument Access */}
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Instrument Access</InputLabel>
-                <Select
-                  value={instrumentAccess}
-                  onChange={(e) => setInstrumentAccess(e.target.value)}
-                  label="Instrument Access"
-                >
-                  <MenuItem value="full">Full Access</MenuItem>
-                  <MenuItem value="limited">Limited Access</MenuItem>
-                  <MenuItem value="none">No Access</MenuItem>
-                </Select>
-              </FormControl>
+              <Typography variant="body1" gutterBottom>
+                Manage user status:
+              </Typography>
+
+              {areAllSelectedUsersActive() && (
+                <Box mt={3} display="flex" justifyContent="flex-end">
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => openConfirmationDialog("deactivate")}
+                    disabled={selectedUsers.length === 0}
+                  >
+                    Deactivate Users
+                  </Button>
+                </Box>
+              )}
+
+              {areAllSelectedUsersInactive() && (
+                <Box mt={3} display="flex" justifyContent="flex-end">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => openConfirmationDialog("activate")}
+                    disabled={selectedUsers.length === 0}
+                  >
+                    Activate Users
+                  </Button>
+                </Box>
+              )}
+
+              {!areAllSelectedUsersActive() &&
+                !areAllSelectedUsersInactive() &&
+                selectedUsers.length > 0 && (
+                  <Typography color="error">
+                    Selected users have mixed statuses. Please select users with
+                    the same status.
+                  </Typography>
+                )}
             </Box>
           )}
 
           {currentTab === 2 && (
-            <Box sx={{ mt: 2 }}>{/* Add Dashboard Access fields here */}</Box>
-          )}
-
-          {currentTab === 3 && (
-            <Box sx={{ mt: 2 }}>{/* Control Access fields here */}</Box>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body1" gutterBottom>
+                Manage resource access:
+              </Typography>
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Channel</InputLabel>
+                <Select
+                  value={accessForm.channelId}
+                  onChange={(e) =>
+                    handleAccessFormChange("channelId", e.target.value)
+                  }
+                  label="Channel"
+                >
+                  <MenuItem value="">
+                    <em>Select a channel</em>
+                  </MenuItem>
+                  {channels.map((channel) => (
+                    <MenuItem key={channel.id} value={channel.id}>
+                      {channel.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleGrantAccess}
+                  disabled={!accessForm.channelId || selectedUsers.length === 0}
+                >
+                  Grant Access
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleRemoveAccess}
+                  disabled={!accessForm.channelId || selectedUsers.length === 0}
+                >
+                  Remove Access
+                </Button>
+              </Box>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveChanges} color="primary">
+          <Button
+            onClick={handleSaveChanges}
+            color="primary"
+            disabled={currentTab === 2 || (currentTab === 0 && !selectedRole)}
+          >
             Save
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={confirmDialogOpen} onClose={closeConfirmationDialog}>
+        <DialogTitle>
+          {confirmDialogAction === "deactivate"
+            ? "Confirm User Deactivation"
+            : "Confirm User Activation"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            {confirmDialogAction === "deactivate"
+              ? `Are you sure you want to deactivate ${
+                  selectedUsers.length
+                } selected user${
+                  selectedUsers.length !== 1 ? "s" : ""
+                }? Deactivated users will no longer be able to access the system.`
+              : `Are you sure you want to activate ${
+                  selectedUsers.length
+                } selected user${
+                  selectedUsers.length !== 1 ? "s" : ""
+                }? Activated users will be able to access the system.`}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirmationDialog}>Cancel</Button>
+          <Button
+            onClick={
+              confirmDialogAction === "deactivate"
+                ? handleDeactivateUsers
+                : handleActivateUsers
+            }
+            variant="contained"
+            color={
+              confirmDialogAction === "deactivate" ? "secondary" : "primary"
+            }
+          >
+            {confirmDialogAction === "deactivate" ? "Deactivate" : "Activate"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
@@ -726,9 +1324,6 @@ function Products() {
             <Link component={NextLink} href="/">
               Dashboard
             </Link>
-            {/* <Link component={NextLink} href="/">
-              Pages
-            </Link> */}
             <Typography>Manage Access</Typography>
           </Breadcrumbs>
         </Grid>
@@ -743,4 +1338,9 @@ function Products() {
   );
 }
 
+
 export default Products;
+
+
+
+

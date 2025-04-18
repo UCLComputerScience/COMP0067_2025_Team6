@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 
 import { Badge, Grid2 as Grid, Avatar, Typography } from "@mui/material";
@@ -7,10 +9,8 @@ import { green } from "@mui/material/colors";
 import useAuth from "@/hooks/useAuth";
 
 const Footer = styled.div`
-  background-color: ${(props) =>
-    props.theme.sidebar.footer.background} !important;
-  padding: ${(props) => props.theme.spacing(2.75)}
-    ${(props) => props.theme.spacing(4)};
+  background-color: ${(props) => props.theme.sidebar.footer.background} !important;
+  padding: ${(props) => props.theme.spacing(2.75)} ${(props) => props.theme.spacing(4)};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
 `;
 
@@ -37,15 +37,43 @@ const FooterBadge = styled(Badge)`
 `;
 
 const SidebarFooter: React.FC = ({ ...rest }) => {
-  const { firstName, lastName, session } = useAuth();
+  const { session, status } = useAuth();
 
-  // Construct the display name
-  const displayName =
-    firstName && lastName
-      ? `${firstName} ${lastName}`
-      : session?.user?.name || "Stephen Hilton"; // Fallback to the full name if first/last name is missing
+  const [avatarSrc, setAvatarSrc] = useState<string>("/static/img/avatars/avatar-1.jpg");
+  const [displayName, setDisplayName] = useState<string>("User");
 
-  const avatarSrc = session?.user?.avatar || "/static/img/avatars/avatar-1.jpg"; // Default avatar if not set
+  useEffect(() => {
+    if (status !== "authenticated") return; 
+
+    const loadUserData = () => {
+      if (typeof window === "undefined") return;
+
+      const storedData = localStorage.getItem("personalInfo");
+      const parsed = storedData ? JSON.parse(storedData) : null;
+
+      if (parsed?.firstName && parsed?.lastName) {
+        setDisplayName(`${parsed.firstName} ${parsed.lastName}`);
+      } else if (session?.user?.firstName && session?.user?.lastName) {
+        setDisplayName(`${session.user.firstName} ${session.user.lastName}`);
+      } else {
+        setDisplayName(session?.user?.name || "User");
+      }
+
+      if (parsed?.avatar) {
+        setAvatarSrc(parsed.avatar);
+      } else {
+        setAvatarSrc(session?.user?.avatar || "/static/img/avatars/avatar-1.jpg");
+      }
+    };
+
+    loadUserData(); 
+
+    window.addEventListener("profileUpdated", loadUserData);
+
+    return () => {
+      window.removeEventListener("profileUpdated", loadUserData);
+    };
+  }, [session, status]); 
 
   return (
     <Footer {...rest}>
@@ -74,3 +102,4 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
 };
 
 export default SidebarFooter;
+

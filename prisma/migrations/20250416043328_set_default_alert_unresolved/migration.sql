@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Alerts" ALTER COLUMN "alertStatus" SET DEFAULT 'UNRESOLVED';
