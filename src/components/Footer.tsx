@@ -52,17 +52,8 @@ function Footer() {
           }}
         >
           <List>
-            <ListItemButton component="a" href="#">
+            <ListItemButton component="a" href="https://profiles.ucl.ac.uk/21504-stephen-hilton" >
               <ListItemText primary="Support" />
-            </ListItemButton>
-            {/* <ListItemButton component="a" href="#">
-              <ListItemText primary="Help Center" />
-            </ListItemButton> */}
-            <ListItemButton component="a" href="#">
-              <ListItemText primary="Privacy" />
-            </ListItemButton>
-            <ListItemButton component="a" href="#">
-              <ListItemText primary="Terms of Service" />
             </ListItemButton>
           </List>
         </Grid>

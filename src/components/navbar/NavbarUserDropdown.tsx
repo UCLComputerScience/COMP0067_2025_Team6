@@ -127,9 +127,7 @@ function NavbarUserDropdown() {
         onClose={closeMenu}
       >
         <MenuItem onClick={handleProfile}>Profile</MenuItem>
-        <MenuItem onClick={handleSettings}>Settings & Privacy</MenuItem>
         <Divider />
-        <MenuItem onClick={closeMenu}>Help</MenuItem>
         <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
       </Menu>
     </>
