@@ -127,7 +127,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         if (latestValue < effectiveMin || latestValue > effectiveMax) {
           const unit = defaultThreshold?.unit || "";
           warnings.push(
-            `${field.fieldName}: ${latestValue}${unit} outside range (${effectiveMin}${unit} - ${effectiveMax}${unit})`
+            `${field.fieldName} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
           );
         }
       }
@@ -196,7 +196,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     } catch (error) {
       console.error("Error saving thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
@@ -244,6 +246,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
 
       setFields(resetFields);
       alert("Thresholds reset to default successfully!");
+      onSave(); // Trigger onSave to refresh LabCard
     } catch (error) {
       console.error("Error resetting thresholds:", error);
       setError(
@@ -273,18 +276,30 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           width: "100%",
         }}
       >
-        <Typography id="threshold-form-title" variant="h6" gutterBottom>
-          Threshold Settings for {channelName}
+        <Typography id="threshold-form-title" variant="h6" mb={2}>
+          Customise Settings for {channelName}
         </Typography>
         {error && (
           <Typography color="error" mb={2}>
             {error}
           </Typography>
         )}
+        <Typography
+          id="threshold-info"
+          mb={2}
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.875rem",
+            fontWeight: 400,
+          }}
+        >
+          Use this form to customise threshold settings for individual lab
+          cards. Pressing "Reset to Default" will revert all settings to the
+          admin-defined defaults.
+        </Typography>
         {potentialWarnings.length > 0 && (
-          <Typography color="warning.main" mb={2}>
-            Warning: {" "}
-            {potentialWarnings.join("; ")}
+          <Typography color="warning.main" mb={2} sx={{ pb: 2 }}>
+            Warning: {potentialWarnings.join("; ")}
           </Typography>
         )}
         {loading && <Typography mb={2}>Loading...</Typography>}
@@ -359,7 +374,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
                 color="primary"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Thresholds"}
+                {loading ? "Saving..." : "Save"}
               </Button>
               <Button
                 variant="outlined"

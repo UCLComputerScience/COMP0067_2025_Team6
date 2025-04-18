@@ -175,13 +175,16 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : "Failed to save thresholds.",
+        message:
+          error instanceof Error ? error.message : "Failed to save thresholds.",
         severity: "error",
       });
     } finally {
@@ -207,7 +210,6 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       return;
     }
 
-    // Prepare submission fields
     const submissionFields = fields.map((field) => ({
       fieldName: field.fieldName.trim(),
       minValue: Number(field.minValue),
@@ -215,7 +217,6 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       unit: field.unit.trim() || null,
     }));
 
-    // Show confirmation dialog
     setConfirmationDialog({ open: true, submissionFields });
     setLoading(false);
   };
@@ -232,7 +233,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         margin: "0 auto",
       }}
     >
-      <Typography variant="h4" mb={5}>
+      <Typography variant="h4" mb={2}>
         Default Threshold Settings
       </Typography>
       {error && (
@@ -240,6 +241,22 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
           {error}
         </Typography>
       )}
+      <Typography
+        id="threshold-info"
+        mb={2}
+        sx={{
+          color: "text.secondary",
+          fontSize: "0.875rem",
+          fontWeight: 400,
+          padding: 1,
+        }}
+      >
+        Configure default threshold settings (range and units) for all channels
+        using this form. These settings will apply to channels without custom
+        thresholds. If no defaults are specified, channels will use a threshold
+        of ±10 from the current feed value.
+      </Typography>
+      <div></div>
       {loading && <Typography mb={2}>Loading...</Typography>}
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -380,8 +397,9 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         <DialogTitle>Confirm Default Threshold Change</DialogTitle>
         <DialogContent>
           <Typography>
-          Changing default thresholds may cause lab cards without custom thresholds to exceed new limits. Do you want to proceed
-          with the changes?
+            Changing default thresholds may cause lab cards without custom
+            thresholds to exceed new limits. Do you want to proceed with the
+            changes?
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -115,7 +115,7 @@ type AlertType = {
   status: string;
   date: string;
   feed?: {
-    entryId: number;
+    id: number;
     field1?: number | null;
     field2?: number | null;
     field3?: number | null;
@@ -148,7 +148,7 @@ export type RowType = {
   status: string;
   date: string;
   feed?: {
-    entryId: number;
+    id: number;
     field1?: number | null;
     field2?: number | null;
     field3?: number | null;
