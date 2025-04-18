@@ -187,7 +187,7 @@ function SensorField({
           valueLabelFormat={(val) => `${val}${unit}`}
           marks={[
             {
-              value: Math.min(Math.max(latest, min), max),
+              value: Math.min(Math.max(parseFloat(latestValue), min), max),
               label: "",
             },
           ]}
@@ -296,13 +296,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
     message: "",
     severity: "info",
   });
-  const showSnackbar = (
-    message: string,
-    severity: "success" | "error" | "warning" | "info"
-  ) => {
-    setSnackbar({ open: true, message, severity });
-  };
-  
+
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };  
@@ -323,6 +317,13 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
     setOpenThresholdForm(false);
   };
   
+
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "warning" | "info"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
 
   const fetchThresholds = async () => {
     try {
@@ -588,7 +589,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
   };
   
 
-  // Check for potential alerts when sliderValues change
   useEffect(() => {
     if (!channelData || !channelData.feeds || channelData.feeds.length === 0) {
       setPotentialWarnings([]);
@@ -600,8 +600,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
       .filter((key) => key.startsWith("field"))
       .map((key) => ({
         label: channelData.channel[key],
-        latestValue:
-          latestFeed[key] && parseFloat(latestFeed[key]).toFixed(2),
+        latestValue: latestFeed[key] && parseFloat(latestFeed[key]).toFixed(2),
       }))
       .filter((field) => field.label && field.latestValue);
 
@@ -903,6 +902,20 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           )}
         </Box>
       </CardContent>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <MuiAlert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Card>
 
     <Snackbar
@@ -1287,9 +1300,9 @@ function Controls() {
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
-  const channelIds = Array.from(new Set(channels.map((channel) => channel.id))).sort(
-    (a, b) => a - b
-  );
+  const channelIds = Array.from(
+    new Set(channels.map((channel) => channel.id))
+  ).sort((a, b) => a - b);
 
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;

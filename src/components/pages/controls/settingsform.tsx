@@ -187,13 +187,16 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : "Failed to save thresholds.",
+        message:
+          error instanceof Error ? error.message : "Failed to save thresholds.",
         severity: "error",
       });
     } finally {
@@ -219,7 +222,6 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       return;
     }
 
-    // Prepare submission fields
     const submissionFields = fields.map((field) => ({
       fieldName: field.fieldName.trim(),
       minValue: Number(field.minValue),
@@ -227,7 +229,6 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       unit: (field.unit ?? "").trim() || null,
     }));
 
-    // Show confirmation dialog
     setConfirmationDialog({ open: true, submissionFields });
     setLoading(false);
   };
