@@ -869,7 +869,7 @@ function EnhancedTable() {
       <SearchContainer>
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <TextField
-            placeholder="Search by description or channel"
+            placeholder="Search Channel/Description"
             variant="outlined"
             size="small"
             value={searchTerm}

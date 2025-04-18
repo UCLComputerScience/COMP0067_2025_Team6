@@ -271,6 +271,7 @@ function EnhancedTable() {
   const [instrumentAccess, setInstrumentAccess] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
   const [userTypeFilter, setUserTypeFilter] = React.useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [selectedRole, setSelectedRole] = React.useState("");
   const [users, setUsers] = React.useState<Array<RowType>>([]);
   const [loading, setLoading] = React.useState(true);
@@ -946,15 +947,21 @@ function EnhancedTable() {
   };
 
   const filteredUsers = users.filter((user) => {
+    const lowerSearch = searchTerm.toLowerCase();
+  
     const matchesSearch =
       searchTerm === "" ||
-      user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.lastname.toLowerCase().includes(searchTerm.toLowerCase());
-
+      user.firstname.toLowerCase().includes(lowerSearch) ||
+      user.lastname.toLowerCase().includes(lowerSearch) ||
+      (user.usertype && user.usertype.toLowerCase().includes(lowerSearch));
+  
     const matchesUserType =
       userTypeFilter === "All" || getRawRoleValue(user.role) === userTypeFilter;
-
-    return matchesSearch && matchesUserType;
+  
+    const matchesStatus =
+      statusFilter === "All" || user.status === statusFilter;
+    
+    return matchesSearch && matchesUserType && matchesStatus;
   });
 
   const emptyRows =
@@ -964,7 +971,7 @@ function EnhancedTable() {
     <div>
       <SearchContainer>
         <TextField
-          placeholder="Search"
+          placeholder="Search User/Organisation"
           variant="outlined"
           size="small"
           value={searchTerm}
@@ -986,6 +993,18 @@ function EnhancedTable() {
             <MenuItem value="SUPER_USER">Super User</MenuItem>
             <MenuItem value="STANDARD_USER">Standard User</MenuItem>
             <MenuItem value="TEMPORARY_USER">Temporary User</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            value={statusFilter}
+            label="Status"
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Active">Active</MenuItem>
+            <MenuItem value="Inactive">Inactive</MenuItem>
           </Select>
         </FormControl>
         <Box sx={{ flexGrow: 1 }} />
@@ -1026,13 +1045,13 @@ function EnhancedTable() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <Typography>No users found</Typography>
                   </TableCell>
                 </TableRow>
@@ -1100,7 +1119,7 @@ function EnhancedTable() {
               )}
               {!loading && filteredUsers.length > 0 && emptyRows > 0 && (
                 <TableRow style={{ height: 53 * emptyRows }}>
-                  <TableCell colSpan={7} />
+                  <TableCell colSpan={8} />
                 </TableRow>
               )}
             </TableBody>

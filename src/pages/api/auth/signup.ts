@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 import cors from 'cors';
+import bcrypt from "bcryptjs";
 
 const corsMiddleware = cors({
   origin: ['http://localhost:3000'],
@@ -41,11 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: "User already exists" });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     //create new user in database
     const newUser = await prisma.user.create({
         data: {
             email,
-            password,
+            password: hashedPassword,
             firstName,
             lastName,
             organisation,
@@ -59,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await prisma.usageHistory.create({
       data: {
         userEmail: newUser.email,  // Linking to User using email
-        action: "User Signup",     // Action performed
+        action: "Signed up",     // Action performed
         metadata: {
           firstName: newUser.firstName,
           lastName: newUser.lastName,

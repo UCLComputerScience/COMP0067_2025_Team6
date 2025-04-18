@@ -1,5 +1,5 @@
 "use client";
-
+import { getSession } from "next-auth/react";
 import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import {
@@ -34,6 +34,7 @@ interface SettingsFormProps {
 
 function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
   const [fields, setFields] = useState<Threshold[]>([]);
+  const [originalFields, setOriginalFields] = useState<Threshold[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -85,30 +86,15 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       setError(null);
       try {
         const response = await fetch("/api/controls/settings");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch thresholds: ${response.status}`);
-        }
+        if (!response.ok) throw new Error("Failed to fetch thresholds");
         const data = await response.json();
-        if (data.fields && Array.isArray(data.fields)) {
-          setFields(
-            data.fields.map((field: any) => ({
-              fieldName: field.fieldName || "",
-              minValue: field.minValue != null ? field.minValue.toString() : "",
-              maxValue: field.maxValue != null ? field.maxValue.toString() : "",
-              unit: field.unit || "",
-            }))
-          );
-        } else {
-          setFields([]);
-        }
+        const fetchedFields = data.fields || [];
+        setFields(fetchedFields);
+        setOriginalFields(JSON.parse(JSON.stringify(fetchedFields)));
       } catch (error) {
-        console.error("Error fetching default thresholds:", error);
-        setError("Failed to load default thresholds. Please try again.");
-        setSnackbar({
-          open: true,
-          message: "Failed to load default thresholds.",
-          severity: "error",
-        });
+        console.error("Error fetching thresholds:", error);
+        setError("Failed to load thresholds.");
+        setSnackbar({ open: true, message: "Failed to load thresholds.", severity: "error" });
       } finally {
         setLoading(false);
       }
@@ -117,61 +103,87 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
   }, []);
 
   const validateFields = () => {
-    if (fields.length === 0) {
-      return null; // Allow empty fields to delete all thresholds
-    }
-
+    if (fields.length === 0) return null;
     for (let i = 0; i < fields.length; i++) {
-      const field = fields[i];
-      if (!field.fieldName.trim()) {
-        return `Field ${i + 1}: Name is required and cannot be empty`;
-      }
-      const min = Number(field.minValue);
-      const max = Number(field.maxValue);
-      if (field.minValue === "" || isNaN(min)) {
-        return `Field ${i + 1}: Min value must be a valid number`;
-      }
-      if (field.maxValue === "" || isNaN(max)) {
-        return `Field ${i + 1}: Max value must be a valid number`;
-      }
-      if (min >= max) {
-        return `Field ${i + 1}: Min value must be less than max value`;
-      }
+      const f = fields[i];
+      const min = Number(f.minValue);
+      const max = Number(f.maxValue);
+      if (!f.fieldName.trim()) return `Field ${i + 1}: Name required`;
+      if (f.minValue === "" || isNaN(min)) return `Field ${i + 1}: Invalid min`;
+      if (f.maxValue === "" || isNaN(max)) return `Field ${i + 1}: Invalid max`;
+      if (min >= max) return `Field ${i + 1}: Min >= Max`;
     }
     return null;
   };
 
-  const saveThresholds = async (submissionFields: any[]) => {
+  const saveThresholds = async (submissionFields: Threshold[]) => {
     try {
       const response = await fetch("/api/controls/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fields: submissionFields }),
       });
+      if (!response.ok) throw new Error("Failed to save thresholds");
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        let errorMessage = "Failed to save thresholds. Please try again.";
-        if (errorData.error) {
-          errorMessage = errorData.error;
-          if (errorData.details) {
-            errorMessage +=
-              "\nDetails: " + JSON.stringify(errorData.details, null, 2);
+      const session = await getSession();
+      if (session?.user?.id) {
+        const userId = session.user.id;
+
+        // Create a map to compare previous and new
+        const originalMap = Object.fromEntries(originalFields.map(f => [f.fieldName.toLowerCase(), f]));
+        const newMap = Object.fromEntries(submissionFields.map(f => [f.fieldName.toLowerCase(), f]));
+
+        const changes: string[] = [];
+
+        // Log changes and additions
+        for (const [key, newVal] of Object.entries(newMap)) {
+          const oldVal = originalMap[key];
+          const fieldName = key.toLowerCase(); // ensure lowercase in log
+
+          if (!oldVal) {
+            // New threshold added
+            changes.push(
+              `Upper threshold set to ${newVal.maxValue}${newVal.unit} and lower threshold set to ${newVal.minValue}${newVal.unit} for ${fieldName}`
+            );
+          } else {
+            // Existing threshold updated
+            if (
+              oldVal.minValue !== newVal.minValue ||
+              oldVal.maxValue !== newVal.maxValue ||
+              oldVal.unit !== newVal.unit
+            ) {
+              changes.push(
+                `Upper threshold set to ${newVal.maxValue}${newVal.unit} and lower threshold set to ${newVal.minValue}${newVal.unit} for ${fieldName}`
+              );
+            }
           }
         }
-        throw new Error(errorMessage);
+
+        // Log deletions
+        for (const [key, oldVal] of Object.entries(originalMap)) {
+          if (!newMap[key]) {
+            changes.push(
+              `Upper threshold of ${oldVal.maxValue}${oldVal.unit} and lower threshold of ${oldVal.minValue}${oldVal.unit} for ${key} was deleted`
+            );
+          }
+        }
+
+        for (const action of changes) {
+          await fetch("/api/logs/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              action,
+              device: "Default Threshold",
+              location: "N/A",
+            }),
+          });
+        }
       }
 
-      setSnackbar({
-        open: true,
-        message:
-          fields.length === 0
-            ? "All default thresholds removed successfully!"
-            : "Default thresholds saved successfully!",
-        severity: "success",
-      });
+      setSnackbar({ open: true, message: "Saved successfully", severity: "success" });
       onSave?.();
-      handleClose();
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       if (error instanceof Error) {
@@ -212,7 +224,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       fieldName: field.fieldName.trim(),
       minValue: Number(field.minValue),
       maxValue: Number(field.maxValue),
-      unit: field.unit.trim() || null,
+      unit: (field.unit ?? "").trim() || null,
     }));
 
     // Show confirmation dialog
@@ -232,7 +244,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         margin: "0 auto",
       }}
     >
-      <Typography variant="h4" mb={5}>
+      <Typography variant="h4" mb={2}>
         Default Threshold Settings
       </Typography>
       {error && (
@@ -240,6 +252,22 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
           {error}
         </Typography>
       )}
+      <Typography
+        id="threshold-info"
+        mb={2}
+        sx={{
+          color: "text.secondary",
+          fontSize: "0.875rem",
+          fontWeight: 400,
+          padding: 1,
+        }}
+      >
+        Configure default threshold settings (range and units) for all channels
+        using this form. These settings will apply to channels without custom
+        thresholds. If no defaults are specified, channels will use a threshold
+        of ±10 from the current feed value.
+      </Typography>
+      <div></div>
       {loading && <Typography mb={2}>Loading...</Typography>}
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -380,8 +408,9 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         <DialogTitle>Confirm Default Threshold Change</DialogTitle>
         <DialogContent>
           <Typography>
-          Changing default thresholds may cause lab cards without custom thresholds to exceed new limits. Do you want to proceed
-          with the changes?
+            Changing default thresholds may cause lab cards without custom
+            thresholds to exceed new limits. Do you want to proceed with the
+            changes?
           </Typography>
         </DialogContent>
         <DialogActions>

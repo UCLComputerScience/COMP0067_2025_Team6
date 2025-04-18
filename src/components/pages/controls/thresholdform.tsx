@@ -1,5 +1,5 @@
 "use client";
-
+import { getSession } from "next-auth/react";
 import React, { useState, useEffect } from "react";
 import { Box, Button, TextField, Typography, Modal } from "@mui/material";
 
@@ -22,7 +22,8 @@ interface ThresholdFormProps {
   }[];
   channelFields: string[];
   onSave: () => void;
-  latestFeed?: any; // Type can be refined based on Feed model
+  latestFeed?: any;
+  labLocation: string;
 }
 
 const ThresholdForm: React.FC<ThresholdFormProps> = ({
@@ -34,8 +35,10 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
   channelFields,
   onSave,
   latestFeed,
+  labLocation,
 }) => {
   const [fields, setFields] = useState<ThresholdField[]>([]);
+  const [originalThresholds, setOriginalThresholds] = useState<ThresholdField[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [potentialWarnings, setPotentialWarnings] = useState<string[]>([]);
@@ -76,6 +79,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         });
 
         setFields(initializedFields);
+        setOriginalThresholds(JSON.parse(JSON.stringify(initializedFields)));
       } catch (err) {
         console.error("Error fetching thresholds:", err);
         setError("Failed to load thresholds. Please try again.");
@@ -126,9 +130,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
       if (!isNaN(latestValue)) {
         if (latestValue < effectiveMin || latestValue > effectiveMax) {
           const unit = defaultThreshold?.unit || "";
-          warnings.push(
-            `${field.fieldName}: ${latestValue}${unit} outside range (${effectiveMin}${unit} - ${effectiveMax}${unit})`
-          );
+           warnings.push(
+            `${field.fieldName} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
+           );
         }
       }
     });
@@ -146,7 +150,8 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     e.preventDefault();
     setError(null);
     setLoading(true);
-
+  
+    // Validate input fields
     const invalidFields = fields
       .filter((field) => field.minValue !== "" || field.maxValue !== "")
       .filter((field) => {
@@ -158,18 +163,16 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           (!isNaN(min) && !isNaN(max) && min >= max)
         );
       });
-
+  
     if (invalidFields.length > 0) {
-      const invalidNames = invalidFields
-        .map((field) => field.fieldName)
-        .join(", ");
+      const invalidNames = invalidFields.map((field) => field.fieldName).join(", ");
       setError(
         `Invalid thresholds for fields: ${invalidNames}. Both min and max must be numeric and min must be less than max, or both must be empty.`
       );
       setLoading(false);
       return;
     }
-
+  
     const submissionFields = fields
       .filter((field) => field.minValue !== "" && field.maxValue !== "")
       .map((field) => ({
@@ -177,19 +180,64 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         minValue: Number(field.minValue),
         maxValue: Number(field.maxValue),
       }));
-
+  
     try {
+      // Submit updated thresholds
       const response = await fetch("/api/controls/thresholds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelId, thresholds: submissionFields }),
       });
+  
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.error || `Failed to save thresholds: ${response.status}`
-        );
+        throw new Error(errorData.error || `Failed to save thresholds: ${response.status}`);
       }
+  
+      // Fetch session info for logging
+      const session = await getSession();
+      const userId = session?.user?.id;
+  
+      if (userId) {
+        const logChanges: string[] = [];
+  
+        fields.forEach((field) => {
+          const newMin = Number(field.minValue);
+          const newMax = Number(field.maxValue);
+          const defaultThreshold = defaultThresholds.find(
+            (t) => t.fieldName === field.fieldName
+          );
+          const oldMin = defaultThreshold?.minValue ?? NaN;
+          const oldMax = defaultThreshold?.maxValue ?? NaN;
+          const unit = defaultThreshold?.unit || "";
+        
+          if (!isNaN(oldMin) && oldMin !== newMin) {
+            logChanges.push(
+              `Lower threshold changed for ${field.fieldName.toLowerCase()} from ${oldMin}${unit} to ${newMin}${unit}`
+            );
+          }
+        
+          if (!isNaN(oldMax) && oldMax !== newMax) {
+            logChanges.push(
+              `Upper threshold changed for ${field.fieldName.toLowerCase()} changed from ${oldMax}${unit} to ${newMax}${unit}`
+            );
+          }
+        });
+
+        for (const action of logChanges) {
+          await fetch("/api/logs/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              action,
+              device: channelName,
+              location: labLocation,
+            }),
+          });
+        }
+      }
+  
       alert("Thresholds saved successfully!");
       onSave();
       handleClose();
@@ -213,24 +261,39 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     ) {
       return;
     }
-
+  
     setError(null);
     setLoading(true);
-
+  
     try {
       const response = await fetch("/api/controls/thresholds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channelId, thresholds: [] }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
           errorData.error || `Failed to reset thresholds: ${response.status}`
         );
       }
-
+  
+      // Fetch session to log activity
+      const session = await getSession();
+      if (session?.user?.id) {
+        await fetch("/api/logs/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: session.user.id,
+            action: "Thresholds reset to default",
+            device: channelName,
+            location: labLocation,
+          }),
+        });
+      }
+  
       const resetFields = channelFields.map((fieldName) => {
         const defaultThreshold = defaultThresholds.find(
           (t) => t.fieldName === fieldName
@@ -241,9 +304,10 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           maxValue: defaultThreshold?.maxValue?.toString() || "",
         };
       });
-
+  
       setFields(resetFields);
       alert("Thresholds reset to default successfully!");
+      onSave(); // Trigger onSave to refresh LabCard
     } catch (error) {
       console.error("Error resetting thresholds:", error);
       setError(
@@ -254,7 +318,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <Modal
@@ -273,16 +337,29 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
           width: "100%",
         }}
       >
-        <Typography id="threshold-form-title" variant="h6" gutterBottom>
-          Threshold Settings for {channelName}
+        <Typography id="threshold-form-title" variant="h6" mb={2}>
+          Customise Settings for {channelName}
         </Typography>
         {error && (
           <Typography color="error" mb={2}>
             {error}
           </Typography>
         )}
+        <Typography
+          id="threshold-info"
+          mb={2}
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.875rem",
+            fontWeight: 400,
+          }}
+        >
+          Use this form to customise threshold settings for individual lab
+          cards. Pressing "Reset to Default" will revert all settings to the
+          admin-defined defaults.
+        </Typography>
         {potentialWarnings.length > 0 && (
-          <Typography color="warning.main" mb={2}>
+          <Typography color="warning.main" mb={2} sx={{ pb: 2 }}>
             Warning: {" "}
             {potentialWarnings.join("; ")}
           </Typography>
@@ -359,7 +436,7 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
                 color="primary"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Thresholds"}
+                {loading ? "Saving..." : "Save"}
               </Button>
               <Button
                 variant="outlined"

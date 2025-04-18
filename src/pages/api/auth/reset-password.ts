@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -22,10 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: "Invalid or expired reset token" });
     }
 
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        password: newPassword,
+        password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
       },
@@ -37,5 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
 
 

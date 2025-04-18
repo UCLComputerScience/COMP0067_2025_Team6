@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import { getToken } from "next-auth/jwt";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -25,13 +26,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     where: { email: token.email },
   });
 
-  if (!user || !user.password) {
+  if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   await prisma.user.update({
     where: { email: token.email },
-    data: { password: newPassword },
+    data: { password: hashedPassword },
   });
 
   return res.status(200).json({ message: "Password updated successfully" });
