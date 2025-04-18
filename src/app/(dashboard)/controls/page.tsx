@@ -6,6 +6,7 @@ import NextLink from "next/link";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
+  Alert as MuiAlert,
   Avatar,
   AvatarGroup as MuiAvatarGroup,
   Breadcrumbs as MuiBreadcrumbs,
@@ -25,6 +26,7 @@ import {
   Popover,
   Typography as MuiTypography,
   IconButton,
+  Snackbar,
   Select,
   Slider,
   Switch,
@@ -139,58 +141,136 @@ function SensorField({
   onSliderChange,
   latestValue,
 }: SensorFieldProps) {
+  const latest = parseFloat(latestValue);
+  const isExceedingThreshold = latest < value[0] || latest > value[1];
+
   return (
     <Box
       sx={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "85px 120px 65px",
         alignItems: "center",
         backgroundColor: "#f0f0f0",
         borderRadius: "4px",
-        padding: "8px",
+        padding: "6px",
         marginBottom: "8px",
+        gap: "8px",
       }}
     >
-      <Typography variant="body2" sx={{ width: "100px", fontWeight: "bold" }}>
-        {label}
-      </Typography>
-      <Slider
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={onSliderChange}
-        valueLabelDisplay="auto"
-        marks={[
-          {
-            value: parseFloat(latestValue),
-          },
-        ]}
+      {/* Label */}
+      <Box
         sx={{
-          width: "120px",
-          margin: "0 8px",
-          "& .MuiSlider-mark": {
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            backgroundColor: "orange",
-          },
-          "& .MuiSlider-thumb": {
-            width: 12,
-            height: 12,
-            borderRadius: "50%",
-          },
+          padding: "4px",
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
-
-      <Typography
-        variant="body2"
-        sx={{ width: "80px", textAlign: "center", fontWeight: "bold" }}
       >
-        {`${latestValue}${unit}`}
-      </Typography>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: "bold", color: "text.primary" }}
+        >
+          {label}
+        </Typography>
+      </Box>
+
+      {/* Slider */}
+      <Box sx={{ padding: "4px", position: "relative" }}>
+        <Slider
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={onSliderChange}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(val) => `${val}${unit}`}
+          marks={[
+            {
+              value: Math.min(Math.max(latest, min), max),
+              label: "",
+            },
+          ]}
+          sx={{
+            "& .MuiSlider-mark": {
+              width: 5,
+              height: 20,
+              borderRadius: "2px",
+              backgroundColor: isExceedingThreshold ? "red" : "green",
+              transform: "translate(-50%, -50%)",
+            },
+            "& .MuiSlider-thumb": {
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+              zIndex: 3,
+              "&:hover": {
+                boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
+              },
+            },
+            "& .MuiSlider-track": {
+              height: 4,
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+            },
+            "& .MuiSlider-rail": {
+              height: 4,
+              backgroundColor: "#bfbfbf",
+            },
+          }}
+        />
+        <Typography
+          sx={{
+            position: "absolute",
+            top: "24px",
+            left: "2px",
+            fontSize: "0.65rem",
+            color: "text.primary",
+          }}
+        >
+          Min
+        </Typography>
+        <Typography
+          sx={{
+            position: "absolute",
+            top: "24px",
+            right: "2px",
+            fontSize: "0.65rem",
+            color: "text.primary",
+          }}
+        >
+          Max
+        </Typography>
+      </Box>
+
+      {/* Latest Value Box */}
+      <Box
+        sx={{
+          padding: "4px",
+          backgroundColor: isExceedingThreshold
+            ? "rgba(255, 0, 0, 0.2)"
+            : "rgba(0, 128, 0, 0.2)",
+          borderRadius: "4px",
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: "bold",
+            color: isExceedingThreshold ? "red" : "green",
+          }}
+        >
+          {`${latestValue}${unit}`}
+        </Typography>
+      </Box>
     </Box>
   );
 }
+
 
 function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocation }: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
@@ -206,7 +286,26 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
     { fieldName: string; minValue: number; maxValue: number; unit: string }[]
   >([]);
   const [potentialWarnings, setPotentialWarnings] = useState<string[]>([]); // Add state for warnings
-
+  useState<string[]>([]);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "warning" | "info";
+  }>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "warning" | "info"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+  
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };  
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -223,6 +322,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
   const handleCloseThresholdForm = () => {
     setOpenThresholdForm(false);
   };
+  
 
   const fetchThresholds = async () => {
     try {
@@ -271,7 +371,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         });
 
         setSliderValues(updatedSliderValues);
-        setInitialSliderValues(updatedSliderValues);
+        if (initialSliderValues.length === 0) {
+          setInitialSliderValues(updatedSliderValues); 
+        }
         setHasChanges(false);
       }
     } catch (err) {
@@ -387,62 +489,104 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           }),
         });
       }
-      alert("Thresholds saved successfully!");
+      showSnackbar("Thresholds saved successfully!", "success");
     } catch (err) {
       console.error("Error saving thresholds:", err);
       setError("Failed to save thresholds. Please try again.");
+      showSnackbar("Failed to save thresholds.", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const checkThresholdViolations = async (fields: any[], newData: any) => {
-
-    const latestFeed = newData.feeds[newData.feeds.length - 1];
-    const entryId = latestFeed.entry_id;
-
+    const latestFeed = newData.feeds[newData.feeds.length - 1] as Record<string, any>;
+    const violations = [];
+  
     for (const field of fields) {
       const threshold =
         thresholds.find((t) => t.fieldName === field.label) ||
         defaultThresholds.find((t) => t.fieldName === field.label);
       if (!threshold || !field.latestValue) continue;
-
+  
       const latestValue = parseFloat(field.latestValue);
       if (isNaN(latestValue)) continue;
-
+  
       const { minValue, maxValue, unit } = threshold;
-
+  
       if (latestValue < minValue || latestValue > maxValue) {
-        const alertDescription = `${field.label} has exceeded the threshold: ${latestValue}${unit} (Range: ${minValue}${unit} - ${maxValue}${unit})`;
-
-        try {
-          const response = await fetch("/api/controls/alerts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              entryId,
-              channelId,
-              fieldName: field.label,
-              alertDescription,
-              priority: "HIGH",
-            }),
+        violations.push({
+          fieldName: field.label,
+          value: latestValue,
+          minValue,
+          maxValue,
+          unit,
+        });
+      }
+    }
+  
+    if (violations.length > 0) {
+      const alertDescription = violations
+        .map(
+          (v) =>
+            `${v.fieldName} exceeded threshold: ${v.value}${v.unit} (Range: ${v.minValue}${v.unit} - ${v.maxValue}${v.unit})`
+        )
+        .join("; ");
+  
+      try {
+        const feedData: Record<string, number | null> = {};
+        Object.keys(newData.channel)
+          .filter((key) => key.startsWith("field"))
+          .forEach((key) => {
+            const fieldNum = key.replace("field", "");
+            feedData[`field${fieldNum}`] = latestFeed[key]
+              ? parseFloat(latestFeed[key])
+              : null;
           });
-
-          if (!response.ok) {
-            throw new Error(`Failed to create alert: ${response.status}`);
-          }
-
-          const result = await response.json();
-          console.log("Alert created:", result);
-
-          alert(alertDescription);
-        } catch (err) {
-          console.error("Error creating alert:", err);
-          setError("Failed to create alert for threshold violation.");
+  
+        const response = await fetch("/api/controls/alerts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channelId,
+            fieldViolations: violations.map((v) => v.fieldName),
+            alertDescription,
+            priority: "HIGH",
+            alertStatus: "UNRESOLVED",
+            feedData,
+          }),
+        });
+  
+        const result = await response.json();
+  
+        if (response.status === 409) {
+          showSnackbar(result.error, "warning");
+          return;
         }
+  
+        if (response.status === 200) {
+          console.log(
+            `Unresolved alerts exist for fields: ${result.alerts
+              .map((a: { alertDescription: string }) => a.alertDescription)
+              .join(", ")}`
+          );
+          return;
+        }
+  
+        if (!response.ok) {
+          throw new Error(
+            result.details || `Failed to create feed/alert: ${response.status}`
+          );
+        }
+  
+        showSnackbar(`New alert created: ${alertDescription}`, "warning");
+      } catch (err: any) {
+        console.error("Error creating feed/alert:", err);
+        showSnackbar(`Failed to create alert: ${err.message || "Unknown error"}`, "error");
       }
     }
   };
+  
 
   // Check for potential alerts when sliderValues change
   useEffect(() => {
@@ -451,7 +595,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
       return;
     }
 
-    const latestFeed = channelData.feeds[channelData.feeds.length - 1];
+    const latestFeed = channelData.feeds[channelData.feeds.length - 1]; 
     const fields = Object.keys(channelData.channel)
       .filter((key) => key.startsWith("field"))
       .map((key) => ({
@@ -462,31 +606,41 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
       .filter((field) => field.label && field.latestValue);
 
     const warnings: string[] = [];
-    fields.forEach((field, index) => {
+    const violationFields = fields
+    .map((field, index) => {
       const [minValue, maxValue] = sliderValues[index] || [NaN, NaN];
       const defaultThreshold = defaultThresholds.find(
         (t) => t.fieldName === field.label
       );
 
-      // Use default threshold if slider values are invalid
-      const effectiveMin = !isNaN(minValue) ? minValue : defaultThreshold?.minValue ?? NaN;
-      const effectiveMax = !isNaN(maxValue) ? maxValue : defaultThreshold?.maxValue ?? NaN;
+      const effectiveMin = !isNaN(minValue)
+        ? minValue
+        : defaultThreshold?.minValue ?? NaN;
+      const effectiveMax = !isNaN(maxValue)
+        ? maxValue
+        : defaultThreshold?.maxValue ?? NaN;
 
-      // Skip if thresholds are invalid
-      if (isNaN(effectiveMin) || isNaN(effectiveMax)) return;
+      if (isNaN(effectiveMin) || isNaN(effectiveMax)) return null;
 
       const latestValue = parseFloat(field.latestValue);
       if (!isNaN(latestValue)) {
         if (latestValue < effectiveMin || latestValue > effectiveMax) {
           const unit = defaultThreshold?.unit || "";
           warnings.push(
-            `${field.label}: ${latestValue}${unit} outside range (${effectiveMin}${unit} - ${effectiveMax}${unit})`
+            `${field.label} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
           );
+          return { label: field.label, latestValue: field.latestValue };
         }
       }
-    });
+      return null;
+    })
+    .filter((field) => field !== null);
 
-    setPotentialWarnings(warnings);
+  setPotentialWarnings(warnings);
+
+  if (violationFields.length > 0) {
+    checkThresholdViolations(violationFields, channelData);
+  }
   }, [sliderValues, channelData, defaultThresholds]);
 
   useEffect(() => {
@@ -591,24 +745,25 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
     }))
     .filter((field) => field.label && field.latestValue);
 
-  return (
-    <Card
-      sx={{
-        maxWidth: 320,
-        minHeight: 350,
-        marginBottom: 4,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <CardContent
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: 0,
-        }}
-      >
+    return (
+      <>
+        <Card
+          sx={{
+            maxWidth: 320,
+            minHeight: 350,
+            marginBottom: 4,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <CardContent
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              padding: 0,
+            }}
+          >
         <Box sx={{ flexShrink: 0, p: 3, pb: 2 }}>
           <Grid container alignItems="center" justifyContent="space-between">
             <Grid>
@@ -634,7 +789,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={handleOpenThresholdForm}>Edit Settings</MenuItem>
+            <MenuItem onClick={handleOpenThresholdForm}>Customise Thresholds</MenuItem>
           </Menu>
 
           <ThresholdForm
@@ -749,6 +904,22 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         </Box>
       </CardContent>
     </Card>
+
+    <Snackbar
+    open={snackbar.open}
+    autoHideDuration={6000}
+    onClose={handleSnackbarClose}
+    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+    >
+    <MuiAlert
+      onClose={handleSnackbarClose}
+      severity={snackbar.severity}
+      sx={{ width: "100%" }}
+    >
+      {snackbar.message}
+    </MuiAlert>
+    </Snackbar>
+    </>
   );
 }
 
@@ -1190,7 +1361,7 @@ function Controls() {
           onClick={handleOpenSettings}
           sx={{ ml: "auto" }}
         >
-          Manage Settings
+          Manage Default Settings
         </Button>
         </HideAuthGuard>
       </SearchBarContainer>
@@ -1242,6 +1413,3 @@ function Controls() {
 }
 
 export default Controls;
-
-
-

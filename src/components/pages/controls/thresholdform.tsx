@@ -204,22 +204,23 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
         fields.forEach((field) => {
           const newMin = Number(field.minValue);
           const newMax = Number(field.maxValue);
+          const originalField = originalThresholds.find(t => t.fieldName === field.fieldName);
+          const oldMin = originalField ? Number(originalField.minValue) : NaN;
+          const oldMax = originalField ? Number(originalField.maxValue) : NaN;
           const defaultThreshold = defaultThresholds.find(
             (t) => t.fieldName === field.fieldName
           );
-          const oldMin = defaultThreshold?.minValue ?? NaN;
-          const oldMax = defaultThreshold?.maxValue ?? NaN;
           const unit = defaultThreshold?.unit || "";
         
-          if (!isNaN(oldMin) && oldMin !== newMin) {
+          if (!isNaN(oldMin) && !isNaN(newMin) && oldMin !== newMin) {
             logChanges.push(
               `Lower threshold changed for ${field.fieldName.toLowerCase()} from ${oldMin}${unit} to ${newMin}${unit}`
             );
           }
         
-          if (!isNaN(oldMax) && oldMax !== newMax) {
+          if (!isNaN(oldMax) && !isNaN(newMax) && oldMax !== newMax) {
             logChanges.push(
-              `Upper threshold changed for ${field.fieldName.toLowerCase()} changed from ${oldMax}${unit} to ${newMax}${unit}`
+              `Upper threshold changed for ${field.fieldName.toLowerCase()} from ${oldMax}${unit} to ${newMax}${unit}`
             );
           }
         });
@@ -244,7 +245,9 @@ const ThresholdForm: React.FC<ThresholdFormProps> = ({
     } catch (error) {
       console.error("Error saving thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
