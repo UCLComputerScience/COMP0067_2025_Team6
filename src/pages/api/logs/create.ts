@@ -15,14 +15,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const numericUserId = parseInt(userId); // ✅ convert to number
+    const numericUserId = parseInt(userId);
 
     if (isNaN(numericUserId)) {
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
     const userRecord = await prisma.user.findUnique({
-      where: { id: numericUserId }, // ✅ now it's the correct type
+      where: { id: numericUserId },
       select: { firstName: true, lastName: true },
     });
 

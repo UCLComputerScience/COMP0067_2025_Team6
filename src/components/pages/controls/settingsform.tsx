@@ -86,15 +86,31 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
       setError(null);
       try {
         const response = await fetch("/api/controls/settings");
-        if (!response.ok) throw new Error("Failed to fetch thresholds");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch thresholds: ${response.status}`);
+        }
         const data = await response.json();
-        const fetchedFields = data.fields || [];
-        setFields(fetchedFields);
-        setOriginalFields(JSON.parse(JSON.stringify(fetchedFields)));
+        if (data.fields && Array.isArray(data.fields)) {
+          const mappedFields = data.fields.map((field: any) => ({
+            fieldName: field.fieldName || "",
+            minValue: field.minValue != null ? field.minValue.toString() : "",
+            maxValue: field.maxValue != null ? field.maxValue.toString() : "",
+            unit: field.unit || "",
+          }));
+          setFields(mappedFields);
+          setOriginalFields(JSON.parse(JSON.stringify(mappedFields)));
+        } else {
+          setFields([]);
+          setOriginalFields([]); 
+        }
       } catch (error) {
-        console.error("Error fetching thresholds:", error);
-        setError("Failed to load thresholds.");
-        setSnackbar({ open: true, message: "Failed to load thresholds.", severity: "error" });
+        console.error("Error fetching default thresholds:", error);
+        setError("Failed to load default thresholds. Please try again.");
+        setSnackbar({
+          open: true,
+          message: "Failed to load default thresholds.",
+          severity: "error",
+        });
       } finally {
         setLoading(false);
       }
@@ -103,27 +119,50 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
   }, []);
 
   const validateFields = () => {
-    if (fields.length === 0) return null;
+    if (fields.length === 0) {
+      return null; // Allow empty fields to delete all thresholds
+    }
+
     for (let i = 0; i < fields.length; i++) {
-      const f = fields[i];
-      const min = Number(f.minValue);
-      const max = Number(f.maxValue);
-      if (!f.fieldName.trim()) return `Field ${i + 1}: Name required`;
-      if (f.minValue === "" || isNaN(min)) return `Field ${i + 1}: Invalid min`;
-      if (f.maxValue === "" || isNaN(max)) return `Field ${i + 1}: Invalid max`;
-      if (min >= max) return `Field ${i + 1}: Min >= Max`;
+      const field = fields[i];
+      if (!field.fieldName.trim()) {
+        return `Field ${i + 1}: Name is required and cannot be empty`;
+      }
+      const min = Number(field.minValue);
+      const max = Number(field.maxValue);
+      if (field.minValue === "" || isNaN(min)) {
+        return `Field ${i + 1}: Min value must be a valid number`;
+      }
+      if (field.maxValue === "" || isNaN(max)) {
+        return `Field ${i + 1}: Max value must be a valid number`;
+      }
+      if (min >= max) {
+        return `Field ${i + 1}: Min value must be less than max value`;
+      }
     }
     return null;
   };
 
-  const saveThresholds = async (submissionFields: Threshold[]) => {
+
+  const saveThresholds = async (submissionFields: any[]) => {
     try {
       const response = await fetch("/api/controls/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fields: submissionFields }),
       });
-      if (!response.ok) throw new Error("Failed to save thresholds");
+      if (!response.ok) {
+        const errorData = await response.json();
+        let errorMessage = "Failed to save thresholds. Please try again.";
+        if (errorData.error) {
+          errorMessage = errorData.error;
+          if (errorData.details) {
+            errorMessage +=
+              "\nDetails: " + JSON.stringify(errorData.details, null, 2);
+          }
+        }
+        throw new Error(errorMessage);
+      }
 
       const session = await getSession();
       if (session?.user?.id) {
@@ -136,7 +175,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         const changes: string[] = [];
 
         // Log changes and additions
-        for (const [key, newVal] of Object.entries(newMap)) {
+        for (const [key, newVal] of Object.entries(newMap) as [string, Threshold][]) {
           const oldVal = originalMap[key];
           const fieldName = key.toLowerCase(); // ensure lowercase in log
 
@@ -182,18 +221,29 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
         }
       }
 
-      setSnackbar({ open: true, message: "Saved successfully", severity: "success" });
+      setSnackbar({
+        open: true,
+        message:
+          fields.length === 0
+            ? "All default thresholds removed successfully!"
+            : "Default thresholds saved successfully!",
+        severity: "success",
+      });
       onSave?.();
+      handleClose();
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       if (error instanceof Error) {
-        setError(error.message || "Failed to save thresholds. Please try again.");
+        setError(
+          error.message || "Failed to save thresholds. Please try again."
+        );
       } else {
         setError("Failed to save thresholds. Please try again.");
       }
       setSnackbar({
         open: true,
-        message: error instanceof Error ? error.message : "Failed to save thresholds.",
+        message:
+          error instanceof Error ? error.message : "Failed to save thresholds.",
         severity: "error",
       });
     } finally {

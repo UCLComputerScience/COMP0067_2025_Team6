@@ -113,14 +113,6 @@ const headCells: Array<HeadCell> = [
   { id: "action", alignment: "left", label: "Action" },
 ];
 
-// function createLogData(
-//   timestamp: string,
-//   user: string,
-//   action: string
-// ): RowType {
-//   return { id: timestamp, timestamp, user, action };
-// }
-
 type RowType = {
   id: string;
   timestamp: string;
@@ -136,16 +128,6 @@ function createLogData(
 ): RowType {
   return { id: timestamp, timestamp, user, action };
 }
-
-// const rows: Array<RowType> = [
-//   createLogData("2025-04-09 10:24", "john.doe@example.com", "Signed up"),
-//   createLogData("2025-04-09 10:30", "john.doe@example.com", "Logged in"),
-//   createLogData(
-//     "2025-04-09 11:00",
-//     "admin@example.com",
-//     "Changed access level of john.doe@example.com to admin"
-//   ),
-// ];
 
 const EnhancedTableHead: React.FC<{
   order: "desc" | "asc";

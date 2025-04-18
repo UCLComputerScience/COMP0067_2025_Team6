@@ -240,7 +240,7 @@ const SearchControls = ({
           <MenuItem value="Default threshold deleted">Default threshold deleted</MenuItem>
           <MenuItem value="Upper threshold changed">Upper threshold changed</MenuItem>
           <MenuItem value="Lower threshold changed">Lower threshold changed</MenuItem>
-          <MenuItem value="Thresholds reset to default">Threshold reset</MenuItem>
+          <MenuItem value="Thresholds reset to default">Thresholds reset</MenuItem>
         </Select>
       </FormControl>
 
@@ -567,7 +567,6 @@ function ActivityLogs() {
       </Grid>
       <Divider my={6} />
       
-      {/* Standalone search controls outside any Paper */}
       <Grid container spacing={6}>
         <Grid size={12}>
           <SearchControls 
@@ -576,11 +575,7 @@ function ActivityLogs() {
           />
         </Grid>
       </Grid>
-      
-      {/* Adding margin between search and table */}
       <Box mt={3}></Box>
-      
-      {/* Table in its own section */}
       <Grid container spacing={6}>
         <Grid size={12}>
           <EnhancedTable
