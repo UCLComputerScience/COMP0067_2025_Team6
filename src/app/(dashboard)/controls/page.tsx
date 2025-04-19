@@ -175,50 +175,65 @@ function SensorField({
         </Typography>
       </Box>
 
-      {/* Slider */}
       <Box sx={{ padding: "4px", position: "relative" }}>
-        <Slider
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={onSliderChange}
-          valueLabelDisplay="auto"
-          valueLabelFormat={(val) => `${val}${unit}`}
-          marks={[
-            {
-              value: Math.min(Math.max(parseFloat(latestValue), min), max),
-              label: "",
+      <Slider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={onSliderChange}
+        valueLabelDisplay="auto"
+        valueLabelFormat={(val) => `${val}${unit}`}
+        marks={[
+          {
+            value: Math.min(Math.max(parseFloat(latestValue), min), max),
+            label: "", 
+          },
+        ]}
+        sx={{
+          "& .MuiSlider-mark": {
+            width: 5,
+            height: 20,
+            borderRadius: "2px",
+            backgroundColor: isExceedingThreshold ? "red" : "green",
+            transform: "translate(-50%, -50%)",
+          },
+          "& .MuiSlider-markLabel[data-index='0']": {
+            top: "-6px",
+            width: 0,
+            height: 0,
+            borderLeft: "8px solid transparent",
+            borderRight: "8px solid transparent",
+            borderTop: `10px solid ${isExceedingThreshold ? "red" : "green"}`,
+            position: "absolute",
+            transform: "translateX(-50%)",
+            backgroundColor: "transparent",
+            zIndex: 2,
+          },
+          "& .MuiSlider-thumb": {
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+            zIndex: 3,
+            "&:hover": {
+              boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
             },
-          ]}
-          sx={{
-            "& .MuiSlider-mark": {
-              width: 5,
-              height: 20,
-              borderRadius: "2px",
-              backgroundColor: isExceedingThreshold ? "red" : "green",
-              transform: "translate(-50%, -50%)",
-            },
-            "& .MuiSlider-thumb": {
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
-              zIndex: 3,
-              "&:hover": {
-                boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
-              },
-            },
-            "& .MuiSlider-track": {
-              height: 4,
-              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
-            },
-            "& .MuiSlider-rail": {
-              height: 4,
-              backgroundColor: "#bfbfbf",
-            },
-          }}
-        />
+          },
+          "& .MuiSlider-track": {
+            height: 4,
+            backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+            zIndex: 1,
+          },
+          "& .MuiSlider-rail": {
+            height: 4,
+            backgroundColor: "#bfbfbf",
+            zIndex: 0,
+          },
+        }}
+      />
+
+
         <Typography
           sx={{
             position: "absolute",
@@ -917,21 +932,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         </MuiAlert>
       </Snackbar>
     </Card>
-
-    <Snackbar
-    open={snackbar.open}
-    autoHideDuration={6000}
-    onClose={handleSnackbarClose}
-    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-    >
-    <MuiAlert
-      onClose={handleSnackbarClose}
-      severity={snackbar.severity}
-      sx={{ width: "100%" }}
-    >
-      {snackbar.message}
-    </MuiAlert>
-    </Snackbar>
     </>
   );
 }

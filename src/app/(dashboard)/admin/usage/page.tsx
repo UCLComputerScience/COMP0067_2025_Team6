@@ -181,7 +181,7 @@ const EnhancedTableHead: React.FC<{
 };
 
 function EnhancedTable({ logs }: { logs: RowType[] }) {
-  const [order, setOrder] = React.useState<"desc" | "asc">("asc");
+  const [order, setOrder] = React.useState<"desc" | "asc">("desc");
   const [orderBy, setOrderBy] = React.useState<keyof RowType>("timestamp");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(6);
@@ -311,7 +311,12 @@ function OrderList() {
       return matchesUser && matchesAction && matchesDate;
     });
 
-    const data = filteredLogs.map((log) => ({
+    const sortedFilteredLogs = stableSort(
+      filteredLogs,
+      getComparator("desc", "timestamp")
+    );
+
+    const data = sortedFilteredLogs.map((log) => ({
       timestamp: new Date(log.timestamp).toLocaleString("en-GB", {
         day: "2-digit",
         month: "2-digit",

@@ -272,7 +272,7 @@ function EnhancedTable({
   filters: { user: string; activity: string; date: string };
   onDataFiltered?: (data: Array<RowType>, filters: any) => void;
 }) {
-  const [order, setOrder] = React.useState<"desc" | "asc">("asc");
+  const [order, setOrder] = React.useState<"desc" | "asc">("desc");
   const [orderBy, setOrderBy] = React.useState("timestamp");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(6);
@@ -484,14 +484,18 @@ function ActivityLogs() {
       { header: "Location", dataKey: "location" },
     ];
 
-    const data = filteredData.filter((log) => {
+    const filteredLogs = filteredData.filter((log) => {
       return (
         (currentFilters.user === "" ||
           (`${log.firstName} ${log.lastName}`).toLowerCase().includes(currentFilters.user.toLowerCase())) &&
         (currentFilters.activity === "" || log.action === currentFilters.activity) &&
         (currentFilters.date === "" || new Date(log.timestamp).toISOString().slice(0, 10) === currentFilters.date)
       );
-    }).map((row) => ({
+    });
+    
+    const sortedFilteredLogs = stableSort(filteredLogs, getComparator("desc", "timestamp"));
+    
+    const data = sortedFilteredLogs.map((row) => ({
       timestamp: new Date(row.timestamp).toLocaleString(),
       firstName: row.firstName,
       lastName: row.lastName,
@@ -499,6 +503,7 @@ function ActivityLogs() {
       action: row.action,
       location: row.location,
     }));
+  
 
     doc.setFontSize(16);
     doc.text("Activity Logs Report", 14, 15);

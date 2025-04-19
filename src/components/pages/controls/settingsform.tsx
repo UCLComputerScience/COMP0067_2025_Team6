@@ -184,6 +184,7 @@ function SettingsForm({ handleClose, onSave }: SettingsFormProps) {
 
       setSnackbar({ open: true, message: "Saved successfully", severity: "success" });
       onSave?.();
+      handleClose();
     } catch (error) {
       console.error("Error saving default thresholds:", error);
       if (error instanceof Error) {
