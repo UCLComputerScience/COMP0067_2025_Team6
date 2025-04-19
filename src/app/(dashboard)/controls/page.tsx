@@ -1264,9 +1264,11 @@ function Controls() {
 
   const filteredChannels = channels
     .filter((channel) => {
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         searchTerm === "" ||
-        channel.name.toLowerCase().includes(searchTerm.toLowerCase());
+        channel.name.toLowerCase().includes(searchLower) ||
+        channel.id.toString().includes(searchLower);
       const matchesChannelId =
         channelIdFilter === "" || channel.id === channelIdFilter;
       const createdDate = new Date(channel.createdAt);
