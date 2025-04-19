@@ -176,63 +176,62 @@ function SensorField({
       </Box>
 
       <Box sx={{ padding: "4px", position: "relative" }}>
-      <Slider
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={onSliderChange}
-        valueLabelDisplay="auto"
-        valueLabelFormat={(val) => `${val}${unit}`}
-        marks={[
-          {
-            value: Math.min(Math.max(parseFloat(latestValue), min), max),
-            label: "", 
-          },
-        ]}
-        sx={{
-          "& .MuiSlider-mark": {
-            width: 5,
-            height: 20,
-            borderRadius: "2px",
-            backgroundColor: isExceedingThreshold ? "red" : "green",
-            transform: "translate(-50%, -50%)",
-          },
-          "& .MuiSlider-markLabel[data-index='0']": {
-            top: "-6px",
-            width: 0,
-            height: 0,
-            borderLeft: "8px solid transparent",
-            borderRight: "8px solid transparent",
-            borderTop: `10px solid ${isExceedingThreshold ? "red" : "green"}`,
-            position: "absolute",
-            transform: "translateX(-50%)",
-            backgroundColor: "transparent",
-            zIndex: 2,
-          },
-          "& .MuiSlider-thumb": {
-            width: 12,
-            height: 12,
-            borderRadius: "50%",
-            backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
-            zIndex: 3,
-            "&:hover": {
-              boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
+        <Slider
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={onSliderChange}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(val) => `${val}${unit}`}
+          marks={[
+            {
+              value: Math.min(Math.max(parseFloat(latestValue), min), max),
+              label: "",
             },
-          },
-          "& .MuiSlider-track": {
-            height: 4,
-            backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
-            zIndex: 1,
-          },
-          "& .MuiSlider-rail": {
-            height: 4,
-            backgroundColor: "#bfbfbf",
-            zIndex: 0,
-          },
-        }}
-      />
-
+          ]}
+          sx={{
+            "& .MuiSlider-mark": {
+              width: 5,
+              height: 20,
+              borderRadius: "2px",
+              backgroundColor: isExceedingThreshold ? "red" : "green",
+              transform: "translate(-50%, -50%)",
+            },
+            "& .MuiSlider-markLabel[data-index='0']": {
+              top: "-6px",
+              width: 0,
+              height: 0,
+              borderLeft: "8px solid transparent",
+              borderRight: "8px solid transparent",
+              borderTop: `10px solid ${isExceedingThreshold ? "red" : "green"}`,
+              position: "absolute",
+              transform: "translateX(-50%)",
+              backgroundColor: "transparent",
+              zIndex: 2,
+            },
+            "& .MuiSlider-thumb": {
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+              zIndex: 3,
+              "&:hover": {
+                boxShadow: "0 0 0 8px rgba(25, 118, 210, 0.16)",
+              },
+            },
+            "& .MuiSlider-track": {
+              height: 4,
+              backgroundColor: isExceedingThreshold ? "red" : "#1976d2",
+              zIndex: 1,
+            },
+            "& .MuiSlider-rail": {
+              height: 4,
+              backgroundColor: "#bfbfbf",
+              zIndex: 0,
+            },
+          }}
+        />
 
         <Typography
           sx={{
@@ -286,11 +285,19 @@ function SensorField({
   );
 }
 
-
-function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocation }: LabCardProps) {
+function LabCard({
+  channelId,
+  name,
+  apiKey,
+  defaultThresholds,
+  userId,
+  labLocation,
+}: LabCardProps) {
   const [channelData, setChannelData] = useState<any | null>(null);
   const [sliderValues, setSliderValues] = useState<number[][]>([]);
-  const [initialSliderValues, setInitialSliderValues] = useState<number[][]>([]);
+  const [initialSliderValues, setInitialSliderValues] = useState<number[][]>(
+    []
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const location = labLocation;
@@ -314,7 +321,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
 
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
-  };  
+  };
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -331,7 +338,6 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
   const handleCloseThresholdForm = () => {
     setOpenThresholdForm(false);
   };
-  
 
   const showSnackbar = (
     message: string,
@@ -388,7 +394,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
 
         setSliderValues(updatedSliderValues);
         if (initialSliderValues.length === 0) {
-          setInitialSliderValues(updatedSliderValues); 
+          setInitialSliderValues(updatedSliderValues);
         }
         setHasChanges(false);
       }
@@ -433,7 +439,9 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           return null;
         }
         const threshold = thresholds.find((t) => t.fieldName === fieldName);
-        const defaultThreshold = defaultThresholds.find((t) => t.fieldName === fieldName);
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === fieldName
+        );
         return {
           fieldName,
           minValue,
@@ -450,7 +458,8 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         body: JSON.stringify({ channelId, thresholds: submissionFields }),
       });
 
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
 
       await fetchThresholds();
 
@@ -459,21 +468,23 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         device: string;
         location: string;
       };
-      
+
       const logChanges: LogChange[] = [];
 
       for (let index = 0; index < fields.length; index++) {
         const fieldLabel = fields[index];
         const [oldMin, oldMax] = initialSliderValues[index] || [];
         const [newMin, newMax] = sliderValues[index] || [];
-      
+
         const deviceName = channelData?.channel?.name || name;
         const location = labLocation;
-      
-        const threshold = thresholds.find(t => t.fieldName === fieldLabel);
-        const defaultThreshold = defaultThresholds.find(t => t.fieldName === fieldLabel);
+
+        const threshold = thresholds.find((t) => t.fieldName === fieldLabel);
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === fieldLabel
+        );
         const unit = threshold?.unit || defaultThreshold?.unit || "";
-      
+
         if (oldMin !== newMin) {
           logChanges.push({
             action: `Lower threshold changed for ${fieldLabel.toLowerCase()} from ${oldMin}${unit} to ${newMin}${unit}`,
@@ -481,7 +492,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
             location: labLocation,
           });
         }
-      
+
         if (oldMax !== newMax) {
           logChanges.push({
             action: `Upper threshold changed for ${fieldLabel.toLowerCase()} from ${oldMax}${unit} to ${newMax}${unit}`,
@@ -490,10 +501,10 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           });
         }
       }
-      
+
       for (const change of logChanges) {
         if (!userId) continue;
-      
+
         await fetch("/api/logs/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -516,20 +527,23 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
   };
 
   const checkThresholdViolations = async (fields: any[], newData: any) => {
-    const latestFeed = newData.feeds[newData.feeds.length - 1] as Record<string, any>;
+    const latestFeed = newData.feeds[newData.feeds.length - 1] as Record<
+      string,
+      any
+    >;
     const violations = [];
-  
+
     for (const field of fields) {
       const threshold =
         thresholds.find((t) => t.fieldName === field.label) ||
         defaultThresholds.find((t) => t.fieldName === field.label);
       if (!threshold || !field.latestValue) continue;
-  
+
       const latestValue = parseFloat(field.latestValue);
       if (isNaN(latestValue)) continue;
-  
+
       const { minValue, maxValue, unit } = threshold;
-  
+
       if (latestValue < minValue || latestValue > maxValue) {
         violations.push({
           fieldName: field.label,
@@ -540,7 +554,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
         });
       }
     }
-  
+
     if (violations.length > 0) {
       const alertDescription = violations
         .map((v) => {
@@ -548,7 +562,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           return `${v.fieldName} exceeded threshold: ${v.value}${unit} (Range: ${v.minValue}${unit} - ${v.maxValue}${unit})`;
         })
         .join("; ");
-  
+
       try {
         const feedData: Record<string, number | null> = {};
         Object.keys(newData.channel)
@@ -559,7 +573,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
               ? parseFloat(latestFeed[key])
               : null;
           });
-  
+
         const response = await fetch("/api/controls/alerts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -572,14 +586,14 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
             feedData,
           }),
         });
-  
+
         const result = await response.json();
-  
+
         if (response.status === 409) {
           showSnackbar(result.error, "warning");
           return;
         }
-  
+
         if (response.status === 200) {
           console.log(
             `Unresolved alerts exist for fields: ${result.alerts
@@ -588,21 +602,23 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
           );
           return;
         }
-  
+
         if (!response.ok) {
           throw new Error(
             result.details || `Failed to create feed/alert: ${response.status}`
           );
         }
-  
+
         showSnackbar(`New alert created: ${alertDescription}`, "warning");
       } catch (err: any) {
         console.error("Error creating feed/alert:", err);
-        showSnackbar(`Failed to create alert: ${err.message || "Unknown error"}`, "error");
+        showSnackbar(
+          `Failed to create alert: ${err.message || "Unknown error"}`,
+          "error"
+        );
       }
     }
   };
-  
 
   useEffect(() => {
     if (!channelData || !channelData.feeds || channelData.feeds.length === 0) {
@@ -610,7 +626,7 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
       return;
     }
 
-    const latestFeed = channelData.feeds[channelData.feeds.length - 1]; 
+    const latestFeed = channelData.feeds[channelData.feeds.length - 1];
     const fields = Object.keys(channelData.channel)
       .filter((key) => key.startsWith("field"))
       .map((key) => ({
@@ -621,40 +637,40 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
 
     const warnings: string[] = [];
     const violationFields = fields
-    .map((field, index) => {
-      const [minValue, maxValue] = sliderValues[index] || [NaN, NaN];
-      const defaultThreshold = defaultThresholds.find(
-        (t) => t.fieldName === field.label
-      );
+      .map((field, index) => {
+        const [minValue, maxValue] = sliderValues[index] || [NaN, NaN];
+        const defaultThreshold = defaultThresholds.find(
+          (t) => t.fieldName === field.label
+        );
 
-      const effectiveMin = !isNaN(minValue)
-        ? minValue
-        : defaultThreshold?.minValue ?? NaN;
-      const effectiveMax = !isNaN(maxValue)
-        ? maxValue
-        : defaultThreshold?.maxValue ?? NaN;
+        const effectiveMin = !isNaN(minValue)
+          ? minValue
+          : defaultThreshold?.minValue ?? NaN;
+        const effectiveMax = !isNaN(maxValue)
+          ? maxValue
+          : defaultThreshold?.maxValue ?? NaN;
 
-      if (isNaN(effectiveMin) || isNaN(effectiveMax)) return null;
+        if (isNaN(effectiveMin) || isNaN(effectiveMax)) return null;
 
-      const latestValue = parseFloat(field.latestValue);
-      if (!isNaN(latestValue)) {
-        if (latestValue < effectiveMin || latestValue > effectiveMax) {
-          const unit = defaultThreshold?.unit || "";
-          warnings.push(
-            `${field.label} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
-          );
-          return { label: field.label, latestValue: field.latestValue };
+        const latestValue = parseFloat(field.latestValue);
+        if (!isNaN(latestValue)) {
+          if (latestValue < effectiveMin || latestValue > effectiveMax) {
+            const unit = defaultThreshold?.unit || "";
+            warnings.push(
+              `${field.label} (${latestValue}${unit}) falls outside threshold (Min:${effectiveMin}${unit}, Max:${effectiveMax}${unit})`
+            );
+            return { label: field.label, latestValue: field.latestValue };
+          }
         }
-      }
-      return null;
-    })
-    .filter((field) => field !== null);
+        return null;
+      })
+      .filter((field) => field !== null);
 
-  setPotentialWarnings(warnings);
+    setPotentialWarnings(warnings);
 
-  if (violationFields.length > 0) {
-    checkThresholdViolations(violationFields, channelData);
-  }
+    if (violationFields.length > 0) {
+      checkThresholdViolations(violationFields, channelData);
+    }
   }, [sliderValues, channelData, defaultThresholds]);
 
   useEffect(() => {
@@ -759,179 +775,181 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
     }))
     .filter((field) => field.label && field.latestValue);
 
-    return (
-      <>
-        <Card
-          sx={{
-            maxWidth: 320,
-            minHeight: 350,
-            marginBottom: 4,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <CardContent
-            sx={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              padding: 0,
-            }}
-          >
-        <Box sx={{ flexShrink: 0, p: 3, pb: 2 }}>
-          <Grid container alignItems="center" justifyContent="space-between">
-            <Grid>
-              <Typography variant="h5" gutterBottom fontWeight="bold">
-                {channel.name}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontSize: "0.8rem", color: "grey.500" }}
-              >
-                {channelId}
-              </Typography>
-            </Grid>
-            <Grid>
-              <IconButton onClick={handleMenuOpen}>
-                <MoreVert />
-              </IconButton>
-            </Grid>
-          </Grid>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem onClick={handleOpenThresholdForm}>Customise Thresholds</MenuItem>
-          </Menu>
-
-          <ThresholdForm
-            open={openThresholdForm}
-            handleClose={handleCloseThresholdForm}
-            channelId={channelId}
-            channelName={name}
-            defaultThresholds={defaultThresholds}
-            channelFields={fields.map((f) => f.label)}
-            onSave={handleThresholdsSave}
-            latestFeed={latestFeed}
-            labLocation={labLocation} 
-          />
-        </Box>
-
-        <Box
+  return (
+    <>
+      <Card
+        sx={{
+          maxWidth: 320,
+          minHeight: 350,
+          marginBottom: 4,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <CardContent
           sx={{
             flex: 1,
-            p: 3,
-            pt: 0,
-            pb: 0,
             display: "flex",
             flexDirection: "column",
+            padding: 0,
           }}
         >
-          <Box sx={{ flexShrink: 0 }}>
-            {fields.map((field, index) => {
-              const threshold = thresholds.find(
-                (t) => t.fieldName === field.label
-              );
-              const defaultThreshold = defaultThresholds.find(
-                (t) => t.fieldName === field.label
-              );
-              const latest = field.latestValue
-                ? parseFloat(field.latestValue)
-                : 0;
-              return (
-                <SensorField
-                  key={index}
-                  label={field.label}
-                  value={sliderValues[index] || [latest - 10, latest + 10]}
-                  min={
-                    threshold?.minValue ??
-                    defaultThreshold?.minValue ??
-                    latest - 10
-                  }
-                  max={
-                    threshold?.maxValue ??
-                    defaultThreshold?.maxValue ??
-                    latest + 10
-                  }
-                  step={0.1}
-                  unit={threshold?.unit ?? defaultThreshold?.unit ?? ""}
-                  onSliderChange={(event, newValue) =>
-                    handleSliderChange(index, newValue)
-                  }
-                  latestValue={field.latestValue || "0.00"}
-                />
-              );
-            })}
-            {potentialWarnings.length > 0 && (
-              <Typography variant="body2" color="warning.main" mt={2}>
-                Warning: {potentialWarnings.join("; ")}
-              </Typography>
+          <Box sx={{ flexShrink: 0, p: 3, pb: 2 }}>
+            <Grid container alignItems="center" justifyContent="space-between">
+              <Grid>
+                <Typography variant="h5" gutterBottom fontWeight="bold">
+                  {channel.name}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ fontSize: "0.8rem", color: "grey.500" }}
+                >
+                  {channelId}
+                </Typography>
+              </Grid>
+              <Grid>
+                <IconButton onClick={handleMenuOpen}>
+                  <MoreVert />
+                </IconButton>
+              </Grid>
+            </Grid>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleOpenThresholdForm}>
+                Customise Thresholds
+              </MenuItem>
+            </Menu>
+
+            <ThresholdForm
+              open={openThresholdForm}
+              handleClose={handleCloseThresholdForm}
+              channelId={channelId}
+              channelName={name}
+              defaultThresholds={defaultThresholds}
+              channelFields={fields.map((f) => f.label)}
+              onSave={handleThresholdsSave}
+              latestFeed={latestFeed}
+              labLocation={labLocation}
+            />
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              p: 3,
+              pt: 0,
+              pb: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box sx={{ flexShrink: 0 }}>
+              {fields.map((field, index) => {
+                const threshold = thresholds.find(
+                  (t) => t.fieldName === field.label
+                );
+                const defaultThreshold = defaultThresholds.find(
+                  (t) => t.fieldName === field.label
+                );
+                const latest = field.latestValue
+                  ? parseFloat(field.latestValue)
+                  : 0;
+                return (
+                  <SensorField
+                    key={index}
+                    label={field.label}
+                    value={sliderValues[index] || [latest - 10, latest + 10]}
+                    min={
+                      threshold?.minValue ??
+                      defaultThreshold?.minValue ??
+                      latest - 10
+                    }
+                    max={
+                      threshold?.maxValue ??
+                      defaultThreshold?.maxValue ??
+                      latest + 10
+                    }
+                    step={0.1}
+                    unit={threshold?.unit ?? defaultThreshold?.unit ?? ""}
+                    onSliderChange={(event, newValue) =>
+                      handleSliderChange(index, newValue)
+                    }
+                    latestValue={field.latestValue || "0.00"}
+                  />
+                );
+              })}
+              {potentialWarnings.length > 0 && (
+                <Typography variant="body2" color="warning.main" mt={2}>
+                  Warning: {potentialWarnings.join("; ")}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ flexGrow: 1 }} />
+          </Box>
+
+          <Box sx={{ flexShrink: 0, p: 3, pt: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Box
+                sx={{
+                  backgroundColor: "#f0f0f0",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  flex: 1,
+                }}
+              >
+                <Typography variant="body2">
+                  <strong>Start date:</strong>{" "}
+                  {new Date(channel.created_at).toLocaleDateString()}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  backgroundColor: "#f0f0f0",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  flex: 1,
+                }}
+              >
+                <Typography variant="body2">
+                  <strong>Last updated:</strong>{" "}
+                  {new Date(channel.updated_at).toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Box>
+            {hasChanges && (
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSaveThresholds}
+                  disabled={saving}
+                  fullWidth
+                >
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+              </Box>
             )}
           </Box>
-          <Box sx={{ flexGrow: 1 }} />
-        </Box>
-
-        <Box sx={{ flexShrink: 0, p: 3, pt: 2 }}>
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Box
-              sx={{
-                backgroundColor: "#f0f0f0",
-                borderRadius: "4px",
-                padding: "8px",
-                flex: 1,
-              }}
-            >
-              <Typography variant="body2">
-                <strong>Start date:</strong>{" "}
-                {new Date(channel.created_at).toLocaleDateString()}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                backgroundColor: "#f0f0f0",
-                borderRadius: "4px",
-                padding: "8px",
-                flex: 1,
-              }}
-            >
-              <Typography variant="body2">
-                <strong>Last updated:</strong>{" "}
-                {new Date(channel.updated_at).toLocaleDateString()}
-              </Typography>
-            </Box>
-          </Box>
-          {hasChanges && (
-            <Box sx={{ mt: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSaveThresholds}
-                disabled={saving}
-                fullWidth
-              >
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            </Box>
-          )}
-        </Box>
-      </CardContent>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <MuiAlert
+        </CardContent>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
-          {snackbar.message}
-        </MuiAlert>
-      </Snackbar>
-    </Card>
+          <MuiAlert
+            onClose={handleSnackbarClose}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </MuiAlert>
+        </Snackbar>
+      </Card>
     </>
   );
 }
@@ -1324,6 +1342,13 @@ function Controls() {
 
       <Divider my={6} />
 
+      <Typography variant="body1" mb={2} sx={{ color: "grey.600" }}>
+        Each channel is displayed below. Use the sliders to adjust thresholds
+        within the set min and max values. For advanced configurations (i.e.
+        expanding threshold range), select "Customise Thresholds" from the menu
+        on each channel.
+      </Typography>
+
       <SearchBarContainer>
         <TextField
           placeholder="Search Channel"
@@ -1370,14 +1395,14 @@ function Controls() {
           setSortDirection={setSortDirection}
         />
         <HideAuthGuard requiredRoles={["ADMIN", "SUPERUSER"]}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleOpenSettings}
-          sx={{ ml: "auto" }}
-        >
-          Manage Default Settings
-        </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleOpenSettings}
+            sx={{ ml: "auto" }}
+          >
+            Manage Default Settings
+          </Button>
         </HideAuthGuard>
       </SearchBarContainer>
 
@@ -1415,7 +1440,7 @@ function Controls() {
                   name={channel.name}
                   apiKey={channel.ApiKey[0]?.api || ""}
                   defaultThresholds={defaultThresholds}
-                  userId={userId} 
+                  userId={userId}
                   labLocation={channel.ApiKey[0]?.lab?.labLocation || "Unknown"}
                 />
               </Grid>
