@@ -2,8 +2,6 @@ import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions"; 
-
-// const prisma = new PrismaClient();
 import prisma from "../../../../lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -47,30 +45,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    let channels;
 
-    if (user.userRole === "ADMIN") {
-      // Admins see all channels
-      channels = await prisma.channel.findMany({
-        include: {
-          ApiKey: true,
+    const isAdmin = user.userRole === "ADMIN";
+
+    const channels = await prisma.channel.findMany({
+      where: isAdmin ? undefined : {
+        access: {
+          some: { userId },
         },
-      });
-    } else {
-      // Non-admins see only channels they have access to
-      channels = await prisma.channel.findMany({
-        where: {
-          access: {
-            some: {
-              userId: userId,
-            },
+      },
+      include: {
+        ApiKey: {
+          include: {
+            lab: true,
           },
         },
-        include: {
-          ApiKey: true,
-        },
-      });
-    }
+      },
+    });
+
 
     return NextResponse.json(channels, { status: 200 });
   } catch (error: any) {

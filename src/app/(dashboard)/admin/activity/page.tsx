@@ -12,6 +12,7 @@ import {
   FormControl,
   InputLabel,
   TextField,
+  InputAdornment,
 } from "@mui/material";
 
 import {
@@ -42,6 +43,7 @@ import {
   FilterList as FilterListIcon,
   RemoveRedEye as RemoveRedEyeIcon,
   Star as StarIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import { spacing } from "@mui/system";
 
@@ -180,17 +182,13 @@ const EnhancedTableHead: React.FC<EnhancedTableHeadProps> = (props) => {
   );
 };
 
-type EnhancedTableToolbarProps = {
-  numSelected: number;
-  filters: { user: string; activity: string; date: string };
-  setFilters: React.Dispatch<React.SetStateAction<any>>;
-};
-
-const EnhancedTableToolbar = ({
-  numSelected,
+const SearchControls = ({
   filters,
   setFilters,
-}: EnhancedTableToolbarProps) => {
+}: {
+  filters: { user: string; activity: string; date: string };
+  setFilters: React.Dispatch<React.SetStateAction<any>>;
+}) => {
   return (
     <Toolbar
       style={{
@@ -212,15 +210,22 @@ const EnhancedTableToolbar = ({
             user: e.target.value,
           }))
         }
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
       />
 
       <FormControl variant="outlined" size="small" style={{ minWidth: 200 }}>
-        <InputLabel shrink sx={{ backgroundColor: "white", px: 0.5 }}>
-          Activity Type
-        </InputLabel>
+        <InputLabel id="activity-type-label">Action Type</InputLabel>
         <Select
+          labelId="activity-type-label"
+          id="activity-type-select"
           value={filters.activity}
-          displayEmpty
+          label="Action Type"
           onChange={(e) =>
             setFilters((prev: typeof filters) => ({
               ...prev,
@@ -231,6 +236,11 @@ const EnhancedTableToolbar = ({
           <MenuItem value="">All</MenuItem>
           <MenuItem value="Device Added">Device Added</MenuItem>
           <MenuItem value="Device Deleted">Device Deleted</MenuItem>
+          <MenuItem value="Default threshold set">Default threshold set</MenuItem>
+          <MenuItem value="Default threshold deleted">Default threshold deleted</MenuItem>
+          <MenuItem value="Upper threshold changed">Upper threshold changed</MenuItem>
+          <MenuItem value="Lower threshold changed">Lower threshold changed</MenuItem>
+          <MenuItem value="Thresholds reset to default">Threshold reset</MenuItem>
         </Select>
       </FormControl>
 
@@ -253,19 +263,16 @@ const EnhancedTableToolbar = ({
   );
 };
 
-
 function EnhancedTable({
   rows,
   filters,
-  setFilters,
   onDataFiltered,
 }: {
   rows: Array<RowType>;
   filters: { user: string; activity: string; date: string };
-  setFilters: React.Dispatch<React.SetStateAction<any>>;
   onDataFiltered?: (data: Array<RowType>, filters: any) => void;
 }) {
-  const [order, setOrder] = React.useState<"desc" | "asc">("asc");
+  const [order, setOrder] = React.useState<"desc" | "asc">("desc");
   const [orderBy, setOrderBy] = React.useState("timestamp");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(6);
@@ -288,7 +295,12 @@ function EnhancedTable({
         deviceName.toLowerCase().includes(searchTerm);
 
       const matchesActivity =
-        filters.activity === "" || row.action === filters.activity;
+        filters.activity === "" ||
+        (filters.activity === "Upper threshold changed" && row.action.toLowerCase().includes("upper threshold changed")) ||
+        (filters.activity === "Lower threshold changed" && row.action.toLowerCase().includes("lower threshold changed")) ||
+        (filters.activity === "Default threshold set" && row.action.toLowerCase().includes("upper threshold set to")) ||
+        (filters.activity === "Default threshold deleted" && row.action.toLowerCase().includes("was deleted")) ||
+        row.action === filters.activity;
       
       let matchesDate = true;
       if (filters.date !== "") {
@@ -339,11 +351,6 @@ function EnhancedTable({
   return (
     <div>
       <Paper>
-        <EnhancedTableToolbar
-          numSelected={0}
-          filters={filters}
-          setFilters={setFilters}
-        />
         <TableContainer>
           <Table
             aria-labelledby="tableTitle"
@@ -477,14 +484,18 @@ function ActivityLogs() {
       { header: "Location", dataKey: "location" },
     ];
 
-    const data = filteredData.filter((log) => {
+    const filteredLogs = filteredData.filter((log) => {
       return (
         (currentFilters.user === "" ||
           (`${log.firstName} ${log.lastName}`).toLowerCase().includes(currentFilters.user.toLowerCase())) &&
         (currentFilters.activity === "" || log.action === currentFilters.activity) &&
         (currentFilters.date === "" || new Date(log.timestamp).toISOString().slice(0, 10) === currentFilters.date)
       );
-    }).map((row) => ({
+    });
+    
+    const sortedFilteredLogs = stableSort(filteredLogs, getComparator("desc", "timestamp"));
+    
+    const data = sortedFilteredLogs.map((row) => ({
       timestamp: new Date(row.timestamp).toLocaleString(),
       firstName: row.firstName,
       lastName: row.lastName,
@@ -492,6 +503,7 @@ function ActivityLogs() {
       action: row.action,
       location: row.location,
     }));
+  
 
     doc.setFontSize(16);
     doc.text("Activity Logs Report", 14, 15);
@@ -504,7 +516,7 @@ function ActivityLogs() {
     if (currentFilters.user)
       activeFilters.push(`User Search: "${currentFilters.user}"`);
     if (currentFilters.activity)
-      activeFilters.push(`Activity Type: ${currentFilters.activity}`);
+      activeFilters.push(`Action Type: ${currentFilters.activity}`);
     if (currentFilters.date) activeFilters.push(`Date: ${currentFilters.date}`);
 
     if (activeFilters.length > 0) {
@@ -532,15 +544,6 @@ function ActivityLogs() {
     doc.save("activity-logs.pdf");
   };
 
-  const filteredLogs = filteredData.filter((log) => {
-    return (
-      (currentFilters.user === "" ||
-        (`${log.firstName} ${log.lastName}`).toLowerCase().includes(currentFilters.user.toLowerCase())) &&
-      (currentFilters.activity === "" || log.action === currentFilters.activity) &&
-      (currentFilters.date === "" || log.timestamp.includes(currentFilters.date))
-    );
-  });
-
   return (
     <React.Fragment>
       <Grid justifyContent="space-between" container spacing={10}>
@@ -549,7 +552,14 @@ function ActivityLogs() {
             Activity Logs
           </Typography>
           <Breadcrumbs aria-label="Breadcrumb" mt={2}>
-            <Link component={NextLink} href="/">Dashboard</Link>
+          <Link
+            component={NextLink}
+            href="/"
+            underline="hover"
+            sx={{ color: 'primary.main' }} 
+          >
+            Dashboard
+          </Link>
             <Typography>Activity Logs</Typography>
           </Breadcrumbs>
         </Grid>
@@ -561,12 +571,26 @@ function ActivityLogs() {
         </Grid>
       </Grid>
       <Divider my={6} />
+      
+      {/* Standalone search controls outside any Paper */}
+      <Grid container spacing={6}>
+        <Grid size={12}>
+          <SearchControls 
+            filters={currentFilters}
+            setFilters={setCurrentFilters}
+          />
+        </Grid>
+      </Grid>
+      
+      {/* Adding margin between search and table */}
+      <Box mt={3}></Box>
+      
+      {/* Table in its own section */}
       <Grid container spacing={6}>
         <Grid size={12}>
           <EnhancedTable
             rows={filteredData}
             filters={currentFilters}
-            setFilters={setCurrentFilters}
             onDataFiltered={handleDataFiltered}
           />
         </Grid>

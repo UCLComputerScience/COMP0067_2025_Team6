@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma"; 
+import bcrypt from "bcryptjs";
 
 enum Role {
   STANDARD_USER = "STANDARD_USER",
@@ -37,43 +38,52 @@ export const authOptions: NextAuthOptions = {
           (error as any).name = "MissingCredentials";
           throw error;
         }
-
+      
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-
-        if (!user || credentials.password !== user.password) {
+      
+        // Check if user exists
+        if (!user || !user.password) {
           const error = new Error("Invalid login details");
           (error as any).name = "InvalidCredentials";
           throw error;
         }
-        
+      
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isPasswordValid) {
+          const error = new Error("Invalid login details");
+          (error as any).name = "InvalidCredentials";
+          throw error;
+        }
+      
         if (user.status !== "ACTIVE") {
           const error = new Error("This account has been deactivated. Please contact Admin.");
           (error as any).name = "DeactivatedAccount";
           throw error;
         }
-
-          // Log the login event into UsageHistory table
-          await prisma.usageHistory.create({
-            data: {
-              timestamp: new Date().toISOString(),
-              userEmail: user.email, // Use the user's email to reference the user
-              action: "Logged in", // Action description
-              metadata: {}, // Optional: You can store additional info here if needed
-            },
-          });
-          
-          return {
-            id: user.id.toString(),
-            email: user.email,
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            organisation: user.organisation || "",
-            avatar: user.avatar || "",
-            userRole: user.userRole,
-            status: user.status,
-          };
+      
+        // Log login event
+        await prisma.usageHistory.create({
+          data: {
+            timestamp: new Date().toISOString(),
+            userEmail: user.email,
+            action: "Logged in",
+            metadata: {},
+          },
+        });
+      
+        // Return safe user object
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          organisation: user.organisation || "",
+          avatar: user.avatar || "",
+          userRole: user.userRole,
+          status: user.status,
+        };
         
         return null;
       },
