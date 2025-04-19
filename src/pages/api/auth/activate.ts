@@ -1,13 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
+// import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log("🚀 Activate API route hit!");
+  console.log("Activate API route hit!");
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });

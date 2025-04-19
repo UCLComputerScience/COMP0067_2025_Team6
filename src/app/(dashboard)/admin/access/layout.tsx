@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import AuthGuard from "@/components/guards/AuthGuard"; // Import your AuthGuard
 
 export const metadata = {
