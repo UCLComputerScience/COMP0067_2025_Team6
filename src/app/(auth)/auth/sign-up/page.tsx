@@ -113,32 +113,26 @@ function SignUp() {
       <TopBar position="static">
         <Toolbar sx={{ padding: "0 16px" }}>
           <Logo src="/UCL_logo.jpg" alt="Logo" />
-          <NavButton>Home</NavButton>
-          <NavButton>About</NavButton>
-          <NavButton>Resources</NavButton>
-          <NavButton>Contact</NavButton>
-          <SearchWrapper>
-            <SearchIcon sx={{ color: "white" }} />
-            <SearchInput placeholder="Search..." />
-          </SearchWrapper>
-          <Button
-            variant="contained"
-            component={NextLink}
-            href="/auth/sign-in"
-            sx={{ backgroundColor: "white", color: "black", mr: 1 }}
-          >
-            Sign In
-          </Button>
+          <Box sx={{ marginLeft: "auto" }}>
+            <Button
+              variant="contained"
+              component={NextLink}
+              href="/auth/sign-in"
+              sx={{ backgroundColor: "white", color: "black", mr: 1 }}
+            >
+              Sign In
+            </Button>
 
-          <Button
-            variant="contained"
-            component={NextLink}
-            href="/auth/sign-up"
-            color="primary"
-            sx={{ color: "white", mr: 1 }}
-          >
-            Sign Up
-          </Button>
+            <Button
+              variant="contained"
+              component={NextLink}
+              href="/auth/sign-up"
+              color="primary"
+              sx={{ color: "white" }}
+            >
+              Sign Up
+            </Button>
+          </Box>
         </Toolbar>
       </TopBar>
 
