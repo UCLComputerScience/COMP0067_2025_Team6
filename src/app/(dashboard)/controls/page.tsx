@@ -543,10 +543,10 @@ function LabCard({ channelId, name, apiKey, defaultThresholds, userId, labLocati
   
     if (violations.length > 0) {
       const alertDescription = violations
-        .map(
-          (v) =>
-            `${v.fieldName} exceeded threshold: ${v.value}${v.unit} (Range: ${v.minValue}${v.unit} - ${v.maxValue}${v.unit})`
-        )
+        .map((v) => {
+          const unit = v.unit ?? ""; // Use empty string if v.unit is null or undefined
+          return `${v.fieldName} exceeded threshold: ${v.value}${unit} (Range: ${v.minValue}${unit} - ${v.maxValue}${unit})`;
+        })
         .join("; ");
   
       try {
