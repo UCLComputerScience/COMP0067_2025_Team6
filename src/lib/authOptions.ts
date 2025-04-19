@@ -74,8 +74,7 @@ export const authOptions: NextAuthOptions = {
             userRole: user.userRole,
             status: user.status,
           };
-        
-        return null;
+
       },
     }),
   ],

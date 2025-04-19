@@ -8,6 +8,7 @@ const config: Config = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/app/(.*)$': '<rootDir>/src/app/$1',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // ← this line changed
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
